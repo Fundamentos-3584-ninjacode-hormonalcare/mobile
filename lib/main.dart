@@ -33,10 +33,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   static  List<Widget> _widgetOptions = <Widget>[
     HomePatientsScreen(),
-    ProfileScreen(),
     AppointmentScreen(),
     MedicalRecordScreen(),
     NotificationsScreen(),
+    ProfileScreen(),
   ];
 
   void _onItemTapped(int index) {
@@ -56,10 +56,6 @@ class _HomeScreenState extends State<HomeScreen> {
             label: 'Inicio',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Perfil',
-          ),
-          BottomNavigationBarItem(
             icon: Icon(Icons.calendar_today),
             label: 'Citas',
           ),
@@ -70,6 +66,10 @@ class _HomeScreenState extends State<HomeScreen> {
           BottomNavigationBarItem(
             icon: Icon(Icons.notifications),
             label: 'Notificaciones',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Perfil',
           ),
         ],
         currentIndex: _selectedIndex,
