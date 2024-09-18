@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-
+import 'package:trabajo_moviles_ninjacode/main.dart'; // Importar HomeScreen
+import 'package:trabajo_moviles_ninjacode/scr/shared/presentation/pages/home_screen.dart';
 class SignIn extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -85,6 +86,11 @@ class _AuthFormState extends State<AuthForm> {
         print('Sign Up with Email: ${_emailController.text}');
       } else {
         print('Sign In with Email: ${_emailController.text}');
+        // Navegar a HomeScreen después de iniciar sesión
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => HomeScreen()),
+        );
       }
       print('Password: ${_passwordController.text}');
     }
@@ -187,7 +193,6 @@ class _AuthFormState extends State<AuthForm> {
     );
   }
 }
-
 
 // Pantalla de registro
 class SignUp extends StatelessWidget {
