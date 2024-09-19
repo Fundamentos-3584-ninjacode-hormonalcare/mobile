@@ -15,7 +15,7 @@ class CustomTextField extends StatelessWidget {
     return TextField(
       decoration: InputDecoration(
         filled: true,
-        fillColor: Color(0xFFF0F0F0), // Fondo gris claro
+        fillColor: Color.fromARGB(255, 200, 200, 200), // Fondo gris claro
         labelText: label,
         prefixIcon: Icon(icon, color: Colors.black),
         border: OutlineInputBorder(
@@ -38,13 +38,21 @@ class CustomDateField extends StatelessWidget {
           initialDate: DateTime.now(),
           firstDate: DateTime(2000),
           lastDate: DateTime(2100),
+          builder: (BuildContext context, Widget? child) {
+            return Theme(
+              data: Theme.of(context).copyWith(
+                dialogBackgroundColor: Color(0xFFAEBBC3), // Color verde claro
+              ),
+              child: child!,
+            );
+          },
         );
       },
       child: AbsorbPointer(
         child: TextField(
           decoration: InputDecoration(
             filled: true,
-            fillColor: Color(0xFFF0F0F0), // Fondo gris claro
+            fillColor: Color.fromARGB(255, 200, 200, 200), // Fondo gris claro
             labelText: 'Day',
             prefixIcon: Icon(Icons.calendar_today, color: Colors.black),
             border: OutlineInputBorder(
@@ -67,13 +75,21 @@ class CustomHourField extends StatelessWidget {
         showTimePicker(
           context: context,
           initialTime: TimeOfDay.now(),
+          builder: (BuildContext context, Widget? child) {
+            return Theme(
+              data: Theme.of(context).copyWith(
+                dialogBackgroundColor: Color(0xFFAEBBC3), // Color verde claro
+              ),
+              child: child!,
+            );
+          },
         );
       },
       child: AbsorbPointer(
         child: TextField(
           decoration: InputDecoration(
             filled: true,
-            fillColor: Color(0xEDECEC), // Fondo gris claro
+            fillColor: Color.fromARGB(255, 200, 200, 200), // Fondo gris claro
             labelText: 'Hour',
             prefixIcon: Icon(Icons.access_time, color: Colors.black),
             border: OutlineInputBorder(

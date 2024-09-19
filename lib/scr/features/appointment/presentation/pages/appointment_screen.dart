@@ -6,7 +6,7 @@ class AppointmentScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color(0xFF40535B), // Color de la AppBar
+        backgroundColor: Color(0xFF6A828D), // Color de la AppBar
         title: Text('Medical Appointments'),
         centerTitle: true,
         titleTextStyle: TextStyle(

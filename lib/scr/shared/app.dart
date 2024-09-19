@@ -8,6 +8,7 @@ class MyApp extends StatelessWidget {
       title: 'Medical Care App',
       theme: ThemeData(
         primaryColor: Color(0xFF6A828D),
+         dialogBackgroundColor: Color(0xFFAEBBC3), // Color verde claro
         scaffoldBackgroundColor: Color(0xFFF5F5F5),
       ),
       home: SignIn(), // Cambiar la pantalla inicial a SignIn

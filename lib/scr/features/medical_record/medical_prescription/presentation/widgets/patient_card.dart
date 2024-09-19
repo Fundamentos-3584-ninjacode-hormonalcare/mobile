@@ -45,11 +45,12 @@ class PatientCard extends StatelessWidget {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Color(0xFF40535B), // Color gris claro del botón
                   foregroundColor: Colors.white, // Texto del botón en negro
+          
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20.0),
                   ),
                 ),
-                child: Text('Consultation history'),
+                child: Text('Consultation history', textAlign: TextAlign.center,),
               ),
               SizedBox(height: 5.0),
               ElevatedButton(
@@ -64,29 +65,8 @@ class PatientCard extends StatelessWidget {
                 child: Text('Medical record'),
               ),
               SizedBox(height: 5.0),
-              ElevatedButton(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFF40535B), // Color gris claro del botón
-                  foregroundColor: Colors.white, // Texto del botón en negro
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20.0),
-                  ),
-                ),
-                child: Text('Prescriptions'),
-              ),
-              SizedBox(height: 5.0),
-              ElevatedButton(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFF40535B), // Color gris claro del botón
-                  foregroundColor: Colors.white, // Texto del botón en negro
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20.0),
-                  ),
-                ),
-                child: Text('Appointments'),
-              ),
+             
+  
             ],
           ),
         ),
