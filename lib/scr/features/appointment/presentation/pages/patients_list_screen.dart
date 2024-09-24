@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:trabajo_moviles_ninjacode/scr/features/medical_record/diagnosis/presentation/pages/consultation_screen.dart';
 
 class HomePatientsScreen extends StatelessWidget {
   final List<Map<String, String>> patients = [
@@ -15,12 +16,13 @@ class HomePatientsScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Color(0xFF6A828D),
-        title: Text("Today's Patients"), centerTitle: true,
+        title: Text("Today's Patients"),
+        centerTitle: true,
         titleTextStyle: TextStyle(
           color: Colors.white,
           fontSize: 20.0,
           fontWeight: FontWeight.bold,
-        ),   
+        ),
       ),
       body: ListView.builder(
         itemCount: patients.length,
@@ -28,41 +30,49 @@ class HomePatientsScreen extends StatelessWidget {
           return Card(
             color: Color(0xFFE0E0E0),
             margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-           child: ListTile(
-  leading: Row(
-    mainAxisSize: MainAxisSize.min,
-             children: [
-               Icon(Icons.insert_drive_file, color: Color(0xFF40535B)),
-               SizedBox(width: 8), // Espacio entre los iconos
-               CircleAvatar(
-        backgroundColor: Color(0xFF6A828D),
-        child: Icon(Icons.person, color: Colors.white),
-      ),
-             ],
-           ),
-           title: Text(
-             patients[index]['name']!,
-             style: TextStyle(color: Color.fromARGB(255, 0, 0, 0)),
-           ),
-           trailing: Container(
-             padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-             decoration: BoxDecoration(
-               color: Color(0xFF40535B),
-               borderRadius: BorderRadius.circular(8),
-             ),
-             child: Row(
-               mainAxisSize: MainAxisSize.min,
-               children: [
-                 Icon(Icons.videocam, color: Colors.white),
-                 SizedBox(width: 10),
-                 Text(
-                   patients[index]['time']!,
-                   style: TextStyle(color: Colors.white),
-                 ),
-               ],
-             ),
-           ),
-           ),
+            child: ListTile(
+              leading: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => ConsultationScreen()),
+                      );
+                    },
+                    child: Icon(Icons.insert_drive_file, color: Color(0xFF40535B)),
+                  ),
+                  SizedBox(width: 8), // Espacio entre los iconos
+                  CircleAvatar(
+                    backgroundColor: Color(0xFF6A828D),
+                    child: Icon(Icons.person, color: Colors.white),
+                  ),
+                ],
+              ),
+              title: Text(
+                patients[index]['name']!,
+                style: TextStyle(color: Color.fromARGB(255, 0, 0, 0)),
+              ),
+              trailing: Container(
+                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Color(0xFF40535B),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.videocam, color: Colors.white),
+                    SizedBox(width: 10),
+                    Text(
+                      patients[index]['time']!,
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           );
         },
       ),
