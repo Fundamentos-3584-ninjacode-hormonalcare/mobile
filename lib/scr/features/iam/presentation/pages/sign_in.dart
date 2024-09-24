@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:trabajo_moviles_ninjacode/main.dart'; // Importar HomeScreen
+import 'package:trabajo_moviles_ninjacode/scr/features/iam/domain/services/auth_service.dart';
 import 'package:trabajo_moviles_ninjacode/scr/shared/presentation/pages/home_screen.dart';
+
 class SignIn extends StatelessWidget {
+  final _authService = AuthService();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -9,10 +12,10 @@ class SignIn extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Color(0xFF6A828D),
         title: ClipRRect(
-          borderRadius: BorderRadius.circular(10.0), // Aplicar bordes redondeados
+          borderRadius: BorderRadius.circular(10.0),
           child: Image.asset(
-            '../../../../../../web/icons/Icon-192.png', // Reemplaza con la ruta correcta de tu imagen
-            height: 40, // Ajusta el tamaño según tu necesidad
+            '../../../../../../web/icons/Icon-192.png',
+            height: 40,
           ),
         ),
       ),
@@ -33,16 +36,15 @@ class SignIn extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
               SizedBox(height: 40),
-              AuthForm(isSignUp: false), // Formulario compartido para inicio de sesión
+              AuthForm(isSignUp: false),
               SizedBox(height: 40),
               Text(
                 "Don't have an account?",
                 style: TextStyle(color: Colors.black87),
               ),
-              SizedBox(height: 10), // Añadir un espacio entre el texto y el botón
+              SizedBox(height: 10),
               TextButton(
                 onPressed: () {
-                  // Navegar a la pantalla de registro
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => SignUp()),
@@ -64,9 +66,9 @@ class SignIn extends StatelessWidget {
   }
 }
 
-// Formulario reutilizable para Sign In y Sign Up
 class AuthForm extends StatefulWidget {
-  final bool isSignUp; // Definir si es Sign Up o Sign In
+  final bool isSignUp;
+
   const AuthForm({required this.isSignUp});
 
   @override
@@ -78,21 +80,31 @@ class _AuthFormState extends State<AuthForm> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _obscureText = true;
+  final _authService = AuthService();
 
-  void _submit() {
+  void _submit() async {
     if (_formKey.currentState!.validate()) {
-      // Manejar la lógica de inicio de sesión o registro
-      if (widget.isSignUp) {
-        print('Sign Up with Email: ${_emailController.text}');
-      } else {
-        print('Sign In with Email: ${_emailController.text}');
-        // Navegar a HomeScreen después de iniciar sesión
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => HomeScreen()),
+      try {
+        if (widget.isSignUp) {
+          await _authService.signUp(_emailController.text, _passwordController.text);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Usuario registrado correctamente')),
+          );
+          Navigator.pop(context);
+        } else {
+          final token = await _authService.signIn(_emailController.text, _passwordController.text);
+          if (token != null) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => HomeScreen()),
+            );
+          }
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
         );
       }
-      print('Password: ${_passwordController.text}');
     }
   }
 
@@ -101,13 +113,13 @@ class _AuthFormState extends State<AuthForm> {
     return Container(
       padding: const EdgeInsets.all(24.0),
       decoration: BoxDecoration(
-        color: Colors.blueGrey[100], // Fondo de la tarjeta de inicio de sesión
+        color: Colors.blueGrey[100],
         borderRadius: BorderRadius.circular(20),
       ),
       child: Form(
         key: _formKey,
         child: Column(
-          mainAxisSize: MainAxisSize.min, // Para evitar que el formulario crezca demasiado verticalmente
+          mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             Text(
               widget.isSignUp ? 'Sign Up' : 'Sign In',
@@ -166,7 +178,7 @@ class _AuthFormState extends State<AuthForm> {
             ),
             SizedBox(height: 20),
             MouseRegion(
-              cursor: SystemMouseCursors.click, // Cursor de "manito"
+              cursor: SystemMouseCursors.click,
               child: ElevatedButton(
                 onPressed: _submit,
                 style: ElevatedButton.styleFrom(
@@ -182,7 +194,7 @@ class _AuthFormState extends State<AuthForm> {
                 child: Text(
                   widget.isSignUp ? 'Register' : 'Enter',
                   style: TextStyle(
-                    color: Colors.white, // Cambiar el color del texto a blanco
+                    color: Colors.white,
                   ),
                 ),
               ),
@@ -194,14 +206,13 @@ class _AuthFormState extends State<AuthForm> {
   }
 }
 
-// Pantalla de registro
 class SignUp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('Sign Up'),
-        backgroundColor: Color(0xFF6A828D), // Asegurando que el color del AppBar sea el mismo
+        backgroundColor: Color(0xFF6A828D),
       ),
       body: Center(
         child: SingleChildScrollView(
@@ -210,9 +221,9 @@ class SignUp extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                SizedBox(height: MediaQuery.of(context).size.height * 0.1), // Espacio para centrar el formulario
-                AuthForm(isSignUp: true), // Formulario compartido para registro
-                SizedBox(height: MediaQuery.of(context).size.height * 0.1), // Espacio debajo del formulario
+                SizedBox(height: MediaQuery.of(context).size.height * 0.1),
+                AuthForm(isSignUp: true),
+                SizedBox(height: MediaQuery.of(context).size.height * 0.1),
               ],
             ),
           ),
