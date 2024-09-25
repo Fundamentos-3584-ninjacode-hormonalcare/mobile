@@ -19,7 +19,7 @@ class AuthService {
     if (response.statusCode == 201) {
       return json.decode(response.body); // Maneja la respuesta de registro.
     } else {
-      throw Exception('Error en el registro');
+      throw Exception('Error in registration');
     }
   }
 
@@ -39,7 +39,7 @@ class AuthService {
       await JwtStorage.saveToken(token);
       return token;
     } else {
-      throw Exception('Error en el inicio de sesión');
+      throw Exception('Error in sign-in');
     }
   }
 

@@ -88,7 +88,7 @@ class _AuthFormState extends State<AuthForm> {
         if (widget.isSignUp) {
           await _authService.signUp(_emailController.text, _passwordController.text);
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Usuario registrado correctamente')),
+            SnackBar(content: Text('User registered successfully')),
           );
           Navigator.pop(context);
         } else {
@@ -133,7 +133,7 @@ class _AuthFormState extends State<AuthForm> {
             TextFormField(
               controller: _emailController,
               decoration: InputDecoration(
-                labelText: 'Email',
+                labelText: 'Username',
                 filled: true,
                 fillColor: Colors.white,
                 border: OutlineInputBorder(
@@ -142,7 +142,7 @@ class _AuthFormState extends State<AuthForm> {
               ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
-                  return 'Please enter your email';
+                  return 'Please enter your username';
                 }
                 return null;
               },
