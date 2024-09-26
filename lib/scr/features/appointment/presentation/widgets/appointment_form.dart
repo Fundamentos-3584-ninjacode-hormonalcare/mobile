@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:trabajo_moviles_ninjacode/scr/shared/presentation/widgets/custom_widgets.dart';  // Importamos los widgets personalizados
+import 'package:trabajo_moviles_ninjacode/scr/features/appointment/data/data_sources/remote/medical_appointment_api.dart';
+import 'package:trabajo_moviles_ninjacode/scr/features/appointment/data/repositories/medical_appointment_repository.dart';
+import 'package:trabajo_moviles_ninjacode/scr/features/appointment/presentation/widgets/custom_buttons.dart';
+import 'package:confetti/confetti.dart';
 
 class AppointmentForm extends StatefulWidget {
   @override
@@ -9,22 +12,87 @@ class AppointmentForm extends StatefulWidget {
 class _AppointmentFormState extends State<AppointmentForm> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _dateController = TextEditingController();
-  final TextEditingController _timeController = TextEditingController();
+  final TextEditingController _fromTimeController = TextEditingController();
+  final TextEditingController _toTimeController = TextEditingController();
   final TextEditingController _linkController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _titleController = TextEditingController();
+  final ConfettiController _confettiController = ConfettiController();
+
+  DateTime? _selectedDate;
+  TimeOfDay? _fromTime;
+  TimeOfDay? _toTime;
+
+  final MedicalAppointmentRepository repository = MedicalAppointmentRepository(MedicalAppointmentApi());
 
   void _clearFields() {
     _dateController.clear();
-    _timeController.clear();
+    _fromTimeController.clear();
+    _toTimeController.clear();
     _linkController.clear();
-    _emailController.clear();
+    _phoneController.clear();
     _titleController.clear();
+    _selectedDate = null;
+    _fromTime = null;
+    _toTime = null;
   }
 
-  void _createEvent() {
+  Future<void> _createEvent() async {
     if (_formKey.currentState!.validate()) {
-      // Acción para crear evento
+      final patientId = await repository.getPatientIdByPhoneNumber(_phoneController.text);
+      if (patientId != null) {
+        final appointmentData = {
+          'eventDate': _selectedDate!.toIso8601String().split('T')[0],
+          'startTime': _fromTime!.format(context),
+          'endTime': _toTime!.format(context),
+          'title': _titleController.text,
+          'description': _linkController.text,
+          'doctorId': 1,
+          'patientId': patientId,
+        };
+
+        final success = await repository.createMedicalAppointment(appointmentData);
+        if (success) {
+          _confettiController.play();
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Medical appointment created successfully!')));
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to create medical appointment.')));
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Patient not found.')));
+      }
+    }
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime.now(),
+      lastDate: DateTime(2101),
+    );
+    if (picked != null) {
+      setState(() {
+        _selectedDate = picked;
+        _dateController.text = "${picked.toLocal()}".split(' ')[0];
+      });
+    }
+  }
+
+  Future<void> _selectTime(BuildContext context, TextEditingController controller, bool isFromTime) async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+    );
+    if (picked != null) {
+      setState(() {
+        if (isFromTime) {
+          _fromTime = picked;
+        } else {
+          _toTime = picked;
+        }
+        controller.text = picked.format(context);
+      });
     }
   }
 
@@ -35,216 +103,176 @@ class _AppointmentFormState extends State<AppointmentForm> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            'Date',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF40535B),
+          // Field: Meeting Title
+          TextFormField(
+            controller: _titleController,
+            decoration: InputDecoration(
+              labelText: 'Title',
+              hintText: 'Title of the meeting',
+              prefixIcon: Icon(Icons.title),
+              filled: true,
+              fillColor: Color(0xFFF5F5F5),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8.0),
+              ),
             ),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter the title of the meeting';
+              }
+              return null;
+            },
           ),
+          SizedBox(height: 16),
+
+          // Field: Date
+          TextFormField(
+            controller: _dateController,
+            decoration: InputDecoration(
+              labelText: 'Date',
+              hintText: 'Day',
+              prefixIcon: Icon(Icons.calendar_today),
+              filled: true,
+              fillColor: Color(0xFFF5F5F5),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8.0),
+              ),
+            ),
+            readOnly: true,
+            onTap: () => _selectDate(context),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please select a date';
+              }
+              if (_selectedDate != null && _selectedDate!.isBefore(DateTime.now())) {
+                return 'The date cannot be in the past';
+              }
+              return null;
+            },
+          ),
+          SizedBox(height: 16),
+
+          // Field: Time "From"
           Row(
             children: [
               Expanded(
-                child: GestureDetector(
-                  onTap: () async {
-                    DateTime? pickedDate = await showDatePicker(
-                      context: context,
-                      initialDate: DateTime.now(),
-                      firstDate: DateTime(2000),
-                      lastDate: DateTime(2100),
-                      builder: (BuildContext context, Widget? child) {
-                        return Theme(
-                          data: Theme.of(context).copyWith(
-                            dialogBackgroundColor: Color(0xFFAEBBC3), // Color verde claro
-                          ),
-                          child: child!,
-                        );
-                      },
-                    );
-                    if (pickedDate != null) {
-                      setState(() {
-                        _dateController.text = "${pickedDate.toLocal()}".split(' ')[0];
-                      });
-                    }
-                  },
-                  child: AbsorbPointer(
-                    child: TextFormField(
-                      controller: _dateController,
-                      decoration: InputDecoration(
-                        filled: true,
-                        fillColor: Color.fromARGB(255, 200, 200, 200), // Fondo gris claro
-                        labelText: 'Day',
-                        prefixIcon: Icon(Icons.calendar_today, color: Colors.black),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8.0), // Bordes redondeados
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please select a date';
-                        }
-                        return null;
-                      },
+                child: TextFormField(
+                  controller: _fromTimeController,
+                  decoration: InputDecoration(
+                    labelText: 'From',
+                    hintText: 'Hour',
+                    prefixIcon: Icon(Icons.access_time),
+                    filled: true,
+                    fillColor: Color(0xFFF5F5F5),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8.0),
                     ),
                   ),
+                  readOnly: true,
+                  onTap: () => _selectTime(context, _fromTimeController, true),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter a start time';
+                    }
+                    return null;
+                  },
                 ),
               ),
               SizedBox(width: 16),
+
+              // Field: Time "To"
               Expanded(
-                child: GestureDetector(
-                  onTap: () async {
-                    TimeOfDay? pickedTime = await showTimePicker(
-                      context: context,
-                      initialTime: TimeOfDay.now(),
-                      builder: (BuildContext context, Widget? child) {
-                        return Theme(
-                          data: Theme.of(context).copyWith(
-                            dialogBackgroundColor: Color(0xFFAEBBC3), // Color verde claro
-                          ),
-                          child: child!,
-                        );
-                      },
-                    );
-                    if (pickedTime != null) {
-                      setState(() {
-                        _timeController.text = pickedTime.format(context);
-                      });
-                    }
-                  },
-                  child: AbsorbPointer(
-                    child: TextFormField(
-                      controller: _timeController,
-                      decoration: InputDecoration(
-                        filled: true,
-                        fillColor: Color.fromARGB(255, 200, 200, 200), // Fondo gris claro
-                        labelText: 'Hour',
-                        prefixIcon: Icon(Icons.access_time, color: Colors.black),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8.0), // Bordes redondeados
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please select a time';
-                        }
-                        return null;
-                      },
+                child: TextFormField(
+                  controller: _toTimeController,
+                  decoration: InputDecoration(
+                    labelText: 'To',
+                    hintText: 'Hour',
+                    prefixIcon: Icon(Icons.access_time),
+                    filled: true,
+                    fillColor: Color(0xFFF5F5F5),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8.0),
                     ),
                   ),
+                  readOnly: true,
+                  onTap: () => _selectTime(context, _toTimeController, false),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter an end time';
+                    }
+                    if (_fromTime != null && _toTime != null) {
+                      final from = DateTime(0, 0, 0, _fromTime!.hour, _fromTime!.minute);
+                      final to = DateTime(0, 0, 0, _toTime!.hour, _toTime!.minute);
+                      if (to.isBefore(from)) {
+                        return 'End time must be after start time';
+                      }
+                    }
+                    return null;
+                  },
                 ),
               ),
             ],
           ),
           SizedBox(height: 16),
-          Text(
-            'Meeting',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF40535B),
+
+          // Field: Phone Number
+          TextFormField(
+            controller: _phoneController,
+            decoration: InputDecoration(
+              labelText: 'Contact',
+              hintText: 'Patient\'s phone number',
+              prefixIcon: Icon(Icons.phone),
+              filled: true,
+              fillColor: Color(0xFFF5F5F5),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8.0),
+              ),
             ),
+            keyboardType: TextInputType.phone,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter the patient\'s phone number';
+              }
+              return null;
+            },
           ),
+          SizedBox(height: 16),
+
+          // Field: Meeting Link
           TextFormField(
             controller: _linkController,
             decoration: InputDecoration(
+              labelText: 'Meeting Link',
+              hintText: 'Link',
+              prefixIcon: Icon(Icons.link),
               filled: true,
-              fillColor: Color.fromARGB(255, 200, 200, 200), // Fondo gris claro
-              labelText: 'Link',
-              prefixIcon: Icon(Icons.language, color: Colors.black),
+              fillColor: Color(0xFFF5F5F5),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8.0), // Bordes redondeados
-                borderSide: BorderSide.none,
+                borderRadius: BorderRadius.circular(8.0),
               ),
             ),
+            keyboardType: TextInputType.url,
             validator: (value) {
               if (value == null || value.isEmpty) {
-                return 'Please enter a link';
-              }
-              return null;
-            },
-          ),
-          SizedBox(height: 16),
-          Text(
-            'Contact',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF40535B),
-            ),
-          ),
-          TextFormField(
-            controller: _emailController,
-            decoration: InputDecoration(
-              filled: true,
-              fillColor: Color.fromARGB(255, 200, 200, 200), // Fondo gris claro
-              labelText: 'Patient\'s email',
-              prefixIcon: Icon(Icons.email, color: Colors.black),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8.0), // Bordes redondeados
-                borderSide: BorderSide.none,
-              ),
-            ),
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter an email';
-              }
-              return null;
-            },
-          ),
-          SizedBox(height: 16),
-          Text(
-            'Title',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF40535B),
-            ),
-          ),
-          TextFormField(
-            controller: _titleController,
-            decoration: InputDecoration(
-              filled: true,
-              fillColor: Color.fromARGB(255, 200, 200, 200), // Fondo gris claro
-              labelText: 'Title of the meeting',
-              prefixIcon: Icon(Icons.title, color: Colors.black),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8.0), // Bordes redondeados
-                borderSide: BorderSide.none,
-              ),
-            ),
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter a title';
+                return 'Please enter the meeting link';
               }
               return null;
             },
           ),
           SizedBox(height: 24),
-          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: _clearFields,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFFAEBBC3), // Botón "Clear" con color gris
-                  ),
-                  child: Text('Clear', style: TextStyle(color: Colors.black)),
-                ),
-              ),
-              SizedBox(width: 16),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: _createEvent,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Color(0xFF40535B), // Botón "Create event" con el color principal
-                  ),
-                  child: Text('Create event', style: TextStyle(color: Colors.white)),
-                ),
-              ),
-            ],
+
+          // Custom buttons (Clear and Create event)
+          CustomButtons(
+            onClear: _clearFields,
+            onCreate: _createEvent,
+          ),
+
+          // Confetti animation
+          ConfettiWidget(
+            confettiController: _confettiController,
+            blastDirectionality: BlastDirectionality.explosive,
+            shouldLoop: false,
+            colors: const [Colors.green, Colors.blue, Colors.pink, Colors.orange, Colors.purple],
           ),
         ],
       ),
