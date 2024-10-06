@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../domain/models/patient_model.dart';
+import '../../../diagnosis/presentation/pages/medicalrecord_screen.dart'; // Importa la pantalla de historial médico
 
 class PatientCard extends StatelessWidget {
   final Patient patient;
@@ -10,7 +11,7 @@ class PatientCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Color(0xFFAEBBC3 ), // Fondo de cada tarjeta de paciente
+        color: Color(0xFFAEBBC3), // Fondo de cada tarjeta de paciente
         borderRadius: BorderRadius.circular(15.0),
       ),
       child: Padding(
@@ -40,24 +41,17 @@ class PatientCard extends StatelessWidget {
                 ),
               ),
               SizedBox(height: 10.0),
+              // Botón de historial médico
               ElevatedButton(
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => MedicalRecordScreen()),
+                  );
+                },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFF40535B), // Color gris claro del botón
-                  foregroundColor: Colors.white, // Texto del botón en negro
-          
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20.0),
-                  ),
-                ),
-                child: Text('Consultation history', textAlign: TextAlign.center,),
-              ),
-              SizedBox(height: 5.0),
-              ElevatedButton(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFF40535B), // Color gris claro del botón
-                  foregroundColor: Colors.white, // Texto del botón en negro
+                  backgroundColor: Color(0xFF40535B), // Color gris oscuro del botón
+                  foregroundColor: Colors.white, // Texto del botón en blanco
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(20.0),
                   ),
@@ -65,8 +59,6 @@ class PatientCard extends StatelessWidget {
                 child: Text('Medical record'),
               ),
               SizedBox(height: 5.0),
-             
-  
             ],
           ),
         ),
