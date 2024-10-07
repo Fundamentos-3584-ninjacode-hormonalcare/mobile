@@ -83,6 +83,11 @@ class _ConsultationScreenState extends State<ConsultationScreen> {
                   medications.add(medication);
                 });
               },
+              onDeleteMedication: (index) {
+                setState(() {
+                  medications.removeAt(index);
+                });
+              },
             ),
             const SizedBox(height: 20),
             LabTestSection(
@@ -90,6 +95,11 @@ class _ConsultationScreenState extends State<ConsultationScreen> {
               onAddLabTest: (labTest) {
                 setState(() {
                   labTests.add(labTest);
+                });
+              },
+              onDeleteLabTest: (index) {
+                setState(() {
+                  labTests.removeAt(index);
                 });
               },
             ),

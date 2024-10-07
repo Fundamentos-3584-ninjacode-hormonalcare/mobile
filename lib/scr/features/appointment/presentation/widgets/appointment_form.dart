@@ -116,6 +116,7 @@ class _AppointmentFormState extends State<AppointmentForm> {
                 borderRadius: BorderRadius.circular(8.0),
               ),
             ),
+            style: TextStyle(fontSize: 14),
             validator: (value) {
               if (value == null || value.isEmpty) {
                 return 'Please enter the title of the meeting';
@@ -123,7 +124,7 @@ class _AppointmentFormState extends State<AppointmentForm> {
               return null;
             },
           ),
-          SizedBox(height: 16),
+          SizedBox(height: 12),
 
           // Field: Date
           TextFormField(
@@ -138,6 +139,7 @@ class _AppointmentFormState extends State<AppointmentForm> {
                 borderRadius: BorderRadius.circular(8.0),
               ),
             ),
+            style: TextStyle(fontSize: 14),
             readOnly: true,
             onTap: () => _selectDate(context),
             validator: (value) {
@@ -150,7 +152,7 @@ class _AppointmentFormState extends State<AppointmentForm> {
               return null;
             },
           ),
-          SizedBox(height: 16),
+          SizedBox(height: 12),
 
           // Field: Time "From"
           Row(
@@ -168,6 +170,7 @@ class _AppointmentFormState extends State<AppointmentForm> {
                       borderRadius: BorderRadius.circular(8.0),
                     ),
                   ),
+                  style: TextStyle(fontSize: 14),
                   readOnly: true,
                   onTap: () => _selectTime(context, _fromTimeController, true),
                   validator: (value) {
@@ -178,7 +181,7 @@ class _AppointmentFormState extends State<AppointmentForm> {
                   },
                 ),
               ),
-              SizedBox(width: 16),
+              SizedBox(width: 12),
 
               // Field: Time "To"
               Expanded(
@@ -194,6 +197,7 @@ class _AppointmentFormState extends State<AppointmentForm> {
                       borderRadius: BorderRadius.circular(8.0),
                     ),
                   ),
+                  style: TextStyle(fontSize: 14),
                   readOnly: true,
                   onTap: () => _selectTime(context, _toTimeController, false),
                   validator: (value) {
@@ -213,7 +217,7 @@ class _AppointmentFormState extends State<AppointmentForm> {
               ),
             ],
           ),
-          SizedBox(height: 16),
+          SizedBox(height: 12),
 
           // Field: Phone Number
           TextFormField(
@@ -228,6 +232,7 @@ class _AppointmentFormState extends State<AppointmentForm> {
                 borderRadius: BorderRadius.circular(8.0),
               ),
             ),
+            style: TextStyle(fontSize: 14),
             keyboardType: TextInputType.phone,
             validator: (value) {
               if (value == null || value.isEmpty) {
@@ -236,7 +241,7 @@ class _AppointmentFormState extends State<AppointmentForm> {
               return null;
             },
           ),
-          SizedBox(height: 16),
+          SizedBox(height: 12),
 
           // Field: Meeting Link
           TextFormField(
@@ -251,6 +256,7 @@ class _AppointmentFormState extends State<AppointmentForm> {
                 borderRadius: BorderRadius.circular(8.0),
               ),
             ),
+            style: TextStyle(fontSize: 14),
             keyboardType: TextInputType.url,
             validator: (value) {
               if (value == null || value.isEmpty) {
@@ -259,7 +265,7 @@ class _AppointmentFormState extends State<AppointmentForm> {
               return null;
             },
           ),
-          SizedBox(height: 24),
+          SizedBox(height: 16),
 
           // Custom buttons (Clear and Create event)
           CustomButtons(
@@ -278,4 +284,4 @@ class _AppointmentFormState extends State<AppointmentForm> {
       ),
     );
   }
-}
+} 

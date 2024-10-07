@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 class LabTestSection extends StatelessWidget {
   final List<Map<String, dynamic>> labTests;
   final Function(Map<String, dynamic>) onAddLabTest;
+  final Function(int) onDeleteLabTest;
 
   const LabTestSection({
     required this.labTests,
     required this.onAddLabTest,
+    required this.onDeleteLabTest,
   });
 
   @override
@@ -23,7 +25,11 @@ class LabTestSection extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 10),
-        ...labTests.map((labTest) => _buildLabTestItem(labTest)),
+        ...labTests.asMap().entries.map((entry) {
+          int index = entry.key;
+          Map<String, dynamic> labTest = entry.value;
+          return _buildLabTestItem(labTest, index);
+        }).toList(),
         const SizedBox(height: 10),
         ElevatedButton(
           style: ElevatedButton.styleFrom(
@@ -44,7 +50,7 @@ class LabTestSection extends StatelessWidget {
     );
   }
 
-  Widget _buildLabTestItem(Map<String, dynamic> labTest) {
+  Widget _buildLabTestItem(Map<String, dynamic> labTest, int index) {
     return Card(
       color: const Color(0xFFEDECEC),
       child: ListTile(
@@ -56,11 +62,22 @@ class LabTestSection extends StatelessWidget {
             color: Color(0xFF40535B),
           ),
         ),
-        trailing: IconButton(
-          icon: const Icon(Icons.upload_file),
-          onPressed: () {
-            // Implementar lógica de carga de archivos
-          },
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            IconButton(
+              icon: const Icon(Icons.upload_file),
+              onPressed: () {
+                // Implementar lógica de carga de archivos
+              },
+            ),
+            IconButton(
+              icon: const Icon(Icons.delete, color: Color(0xFF40535B)),
+              onPressed: () {
+                onDeleteLabTest(index);
+              },
+            ),
+          ],
         ),
       ),
     );

@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 class MedicationSection extends StatelessWidget {
   final List<Map<String, String>> medications;
   final Function(Map<String, String>) onAddMedication;
+  final Function(int) onDeleteMedication;
 
   const MedicationSection({
     required this.medications,
     required this.onAddMedication,
+    required this.onDeleteMedication,
   });
 
   @override
@@ -23,7 +25,11 @@ class MedicationSection extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 10),
-        ...medications.map((medication) => _buildMedicationItem(medication)),
+        ...medications.asMap().entries.map((entry) {
+          int index = entry.key;
+          Map<String, String> medication = entry.value;
+          return _buildMedicationItem(medication, index);
+        }).toList(),
         const SizedBox(height: 10),
         ElevatedButton(
           style: ElevatedButton.styleFrom(
@@ -44,7 +50,7 @@ class MedicationSection extends StatelessWidget {
     );
   }
 
-  Widget _buildMedicationItem(Map<String, String> medication) {
+  Widget _buildMedicationItem(Map<String, String> medication, int index) {
     return Card(
       color: const Color(0xFFEDECEC),
       child: ListTile(
@@ -59,6 +65,12 @@ class MedicationSection extends StatelessWidget {
           style: const TextStyle(
             color: Color(0xFF40535B),
           ),
+        ),
+        trailing: IconButton(
+          icon: const Icon(Icons.delete, color: Color(0xFF40535B)),
+          onPressed: () {
+            onDeleteMedication(index);
+          },
         ),
       ),
     );
