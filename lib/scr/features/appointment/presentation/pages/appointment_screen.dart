@@ -1,7 +1,17 @@
 import 'package:flutter/material.dart';
-import '../widgets/appointment_form.dart'; // Importamos el formulario
+import 'package:flutter/services.dart';
+import 'package:syncfusion_flutter_calendar/calendar.dart';
+import 'package:trabajo_moviles_ninjacode/scr/features/appointment/domain/services/appointment_service.dart';
 
-class AppointmentScreen extends StatelessWidget {
+class AppointmentScreen extends StatefulWidget {
+  @override
+  _AppointmentScreenState createState() => _AppointmentScreenState();
+}
+
+class _AppointmentScreenState extends State<AppointmentScreen> {
+  final List<Meeting> _meetings = <Meeting>[];
+  final AppointmentService _appointmentService = AppointmentService();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -17,8 +27,216 @@ class AppointmentScreen extends StatelessWidget {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: AppointmentForm(), // El formulario que contiene los campos
+        child: Center(
+          child: SizedBox(
+            width: 350, // Ajusta el ancho según tus necesidades
+            height: 400, // Ajusta la altura según tus necesidades
+            child: Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.blueAccent),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: SfCalendar(
+                view: CalendarView.week,
+                dataSource: MeetingDataSource(_meetings),
+                onTap: _calendarTapped,
+                monthViewSettings: const MonthViewSettings(
+                  appointmentDisplayMode: MonthAppointmentDisplayMode.appointment,
+                ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
+  }
+
+  void _calendarTapped(CalendarTapDetails details) {
+    if (details.targetElement == CalendarElement.calendarCell ||
+        details.targetElement == CalendarElement.appointment) {
+      _showAddEventDialog(details.date!, details.appointments);
+    }
+  }
+
+  void _showAddEventDialog(DateTime date, List<dynamic>? appointments) {
+    final TextEditingController titleController = TextEditingController();
+    final TextEditingController descriptionController = TextEditingController();
+    final TextEditingController startTimeController = TextEditingController();
+    final TextEditingController endTimeController = TextEditingController();
+    final TextEditingController doctorIdController = TextEditingController();
+    final TextEditingController patientIdController = TextEditingController();
+
+    // Precargar las horas seleccionadas
+    final DateTime startTime = date;
+    final DateTime endTime = date.add(Duration(hours: 1));
+    startTimeController.text = '${startTime.hour.toString().padLeft(2, '0')}:${startTime.minute.toString().padLeft(2, '0')}';
+    endTimeController.text = '${endTime.hour.toString().padLeft(2, '0')}:${endTime.minute.toString().padLeft(2, '0')}';
+
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Add Event'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: titleController,
+                  decoration: const InputDecoration(labelText: 'Title'),
+                ),
+                TextField(
+                  controller: descriptionController,
+                  decoration: const InputDecoration(labelText: 'Description'),
+                ),
+                TextField(
+                  controller: startTimeController,
+                  decoration: const InputDecoration(labelText: 'Start Time (HH:MM)'),
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [TimeTextInputFormatter()],
+                ),
+                TextField(
+                  controller: endTimeController,
+                  decoration: const InputDecoration(labelText: 'End Time (HH:MM)'),
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [TimeTextInputFormatter()],
+                ),
+                TextField(
+                  controller: doctorIdController,
+                  decoration: const InputDecoration(labelText: 'Doctor ID'),
+                  keyboardType: TextInputType.number,
+                ),
+                TextField(
+                  controller: patientIdController,
+                  decoration: const InputDecoration(labelText: 'Patient ID'),
+                  keyboardType: TextInputType.number,
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () async {
+                final String title = titleController.text;
+                final String description = descriptionController.text;
+                final DateTime startTime = DateTime(
+                  date.year,
+                  date.month,
+                  date.day,
+                  int.parse(startTimeController.text.split(':')[0]),
+                  int.parse(startTimeController.text.split(':')[1]),
+                );
+                final DateTime endTime = DateTime(
+                  date.year,
+                  date.month,
+                  date.day,
+                  int.parse(endTimeController.text.split(':')[0]),
+                  int.parse(endTimeController.text.split(':')[1]),
+                );
+                final int doctorId = int.parse(doctorIdController.text);
+                final int patientId = int.parse(patientIdController.text);
+
+                final appointmentData = {
+                  'eventDate': date.toIso8601String().split('T')[0],
+                  'startTime': startTime.toIso8601String(),
+                  'endTime': endTime.toIso8601String(),
+                  'title': title,
+                  'description': description,
+                  'doctorId': doctorId,
+                  'patientId': patientId,
+                };
+
+                try {
+                  final success = await _appointmentService.createAppointment(appointmentData);
+                  if (success) {
+                    setState(() {
+                      _meetings.add(Meeting(title, startTime, endTime, Colors.blue, false, description));
+                    });
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Appointment created successfully!')),
+                    );
+                  }
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Failed to create appointment: $e')),
+                  );
+                }
+
+                Navigator.of(context).pop();
+              },
+              child: const Text('Add'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class MeetingDataSource extends CalendarDataSource {
+  MeetingDataSource(List<Meeting> source) {
+    appointments = source;
+  }
+
+  @override
+  DateTime getStartTime(int index) {
+    return appointments![index].from;
+  }
+
+  @override
+  DateTime getEndTime(int index) {
+    return appointments![index].to;
+  }
+
+  @override
+  String getSubject(int index) {
+    return appointments![index].eventName;
+  }
+
+  @override
+  Color getColor(int index) {
+    return appointments![index].background;
+  }
+
+  @override
+  bool isAllDay(int index) {
+    return appointments![index].isAllDay;
+  }
+
+  @override
+  String getNotes(int index) {
+    return appointments![index].description;
+  }
+}
+
+class Meeting {
+  Meeting(this.eventName, this.from, this.to, this.background, this.isAllDay, this.description);
+
+  String eventName;
+  DateTime from;
+  DateTime to;
+  Color background;
+  bool isAllDay;
+  String description;
+}
+
+class TimeTextInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+    final text = newValue.text;
+    if (text.length == 4 && !text.contains(':')) {
+      final formattedText = '${text.substring(0, 2)}:${text.substring(2)}';
+      return newValue.copyWith(
+        text: formattedText,
+        selection: TextSelection.collapsed(offset: formattedText.length),
+      );
+    }
+    return newValue;
   }
 }
