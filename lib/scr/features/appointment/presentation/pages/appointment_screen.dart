@@ -1,4 +1,4 @@
-/*import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '../widgets/appointment_form.dart'; // Importamos el formulario
 
 class AppointmentScreen extends StatelessWidget {
@@ -17,9 +17,8 @@ class AppointmentScreen extends StatelessWidget {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: AppointmentForm(), // El formulario que contiene los campos
+        // El formulario que contiene los campos
       ),
     );
   }
 }
-*/
