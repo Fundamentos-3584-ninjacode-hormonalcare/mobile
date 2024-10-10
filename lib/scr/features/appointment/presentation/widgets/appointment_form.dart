@@ -1,10 +1,16 @@
-/*import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:trabajo_moviles_ninjacode/scr/features/appointment/data/data_sources/remote/medical_appointment_api.dart';
 import 'package:trabajo_moviles_ninjacode/scr/features/appointment/data/repositories/medical_appointment_repository.dart';
 import 'package:trabajo_moviles_ninjacode/scr/features/appointment/presentation/widgets/custom_buttons.dart';
 import 'package:confetti/confetti.dart';
+import 'package:timezone/data/latest.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
 
 class AppointmentForm extends StatefulWidget {
+  final int patientId;
+
+  AppointmentForm({required this.patientId});
+
   @override
   _AppointmentFormState createState() => _AppointmentFormState();
 }
@@ -15,7 +21,6 @@ class _AppointmentFormState extends State<AppointmentForm> {
   final TextEditingController _fromTimeController = TextEditingController();
   final TextEditingController _toTimeController = TextEditingController();
   final TextEditingController _linkController = TextEditingController();
-  final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _titleController = TextEditingController();
   final ConfettiController _confettiController = ConfettiController();
 
@@ -23,14 +28,19 @@ class _AppointmentFormState extends State<AppointmentForm> {
   TimeOfDay? _fromTime;
   TimeOfDay? _toTime;
 
-  //final MedicalAppointmentRepository repository = MedicalAppointmentRepository(MedicalAppointmentApi());
+  final MedicalAppointmentRepository repository = MedicalAppointmentRepository(MedicalAppointmentApi());
+
+  @override
+  void initState() {
+    super.initState();
+    tz.initializeTimeZones();
+  }
 
   void _clearFields() {
     _dateController.clear();
     _fromTimeController.clear();
     _toTimeController.clear();
     _linkController.clear();
-    _phoneController.clear();
     _titleController.clear();
     _selectedDate = null;
     _fromTime = null;
@@ -39,27 +49,23 @@ class _AppointmentFormState extends State<AppointmentForm> {
 
   Future<void> _createEvent() async {
     if (_formKey.currentState!.validate()) {
-      final patientId = await repository.getPatientIdByPhoneNumber(_phoneController.text);
-      if (patientId != null) {
-        final appointmentData = {
-          'eventDate': _selectedDate!.toIso8601String().split('T')[0],
-          'startTime': _fromTime!.format(context),
-          'endTime': _toTime!.format(context),
-          'title': _titleController.text,
-          'description': _linkController.text,
-          'doctorId': 1,
-          'patientId': patientId,
-        };
+      final appointmentData = {
+        'eventDate': _selectedDate!.toIso8601String().split('T')[0],
+        'startTime': _fromTime!.format(context),
+        'endTime': _toTime!.format(context),
+        'title': _titleController.text,
+        'description': _linkController.text,
+        'doctorId': 1,
+        'patientId': widget.patientId,
+      };
 
-        final success = await repository.createMedicalAppointment(appointmentData);
-        if (success) {
-          _confettiController.play();
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Medical appointment created successfully!')));
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to create medical appointment.')));
-        }
+      final success = await repository.createMedicalAppointment(appointmentData);
+      if (success) {
+        Navigator.pop(context);
+        _confettiController.play();
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Medical appointment created successfully!')));
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Patient not found.')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to create medical appointment.')));
       }
     }
   }
@@ -98,6 +104,9 @@ class _AppointmentFormState extends State<AppointmentForm> {
 
   @override
   Widget build(BuildContext context) {
+    final limaTimeZone = tz.getLocation('America/Lima');
+    final now = tz.TZDateTime.now(limaTimeZone);
+
     return Form(
       key: _formKey,
       child: Column(
@@ -146,8 +155,12 @@ class _AppointmentFormState extends State<AppointmentForm> {
               if (value == null || value.isEmpty) {
                 return 'Please select a date';
               }
-              if (_selectedDate != null && _selectedDate!.isBefore(DateTime.now())) {
-                return 'The date cannot be in the past';
+              if (_selectedDate != null) {
+                final selectedDateInLima = tz.TZDateTime.from(_selectedDate!, limaTimeZone);
+                final nowInLima = tz.TZDateTime.now(limaTimeZone);
+                if (selectedDateInLima.isBefore(nowInLima.subtract(Duration(days: 1)))) {
+                  return 'The date cannot be in the past';
+                }
               }
               return null;
             },
@@ -219,30 +232,6 @@ class _AppointmentFormState extends State<AppointmentForm> {
           ),
           SizedBox(height: 12),
 
-          // Field: Phone Number
-          TextFormField(
-            controller: _phoneController,
-            decoration: InputDecoration(
-              labelText: 'Contact',
-              hintText: 'Patient\'s phone number',
-              prefixIcon: Icon(Icons.phone),
-              filled: true,
-              fillColor: Color(0xFFF5F5F5),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8.0),
-              ),
-            ),
-            style: TextStyle(fontSize: 14),
-            keyboardType: TextInputType.phone,
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter the patient\'s phone number';
-              }
-              return null;
-            },
-          ),
-          SizedBox(height: 12),
-
           // Field: Meeting Link
           TextFormField(
             controller: _linkController,
@@ -284,4 +273,4 @@ class _AppointmentFormState extends State<AppointmentForm> {
       ),
     );
   }
-} */
+}

@@ -44,6 +44,7 @@ class _HomePatientsScreenState extends State<HomePatientsScreen> {
           'time': appointment['startTime'],
           'image': profileDetails['image'], // Assuming 'image' is the key for the profile image URL
           'eventDate': appointment['eventDate'],
+          'patientId': appointment['patientId'].toString(),
         });
       }
 
@@ -162,7 +163,7 @@ class _HomePatientsScreenState extends State<HomePatientsScreen> {
                                         return AlertDialog(
                                           title: Text('Add Medical Appointment'),
                                           titleTextStyle: TextStyle(color: Color(0xFF40535B), fontWeight: FontWeight.bold),
-                                          //content: AppointmentForm(),
+                                          content: AppointmentForm(patientId: int.parse(patients[index]['patientId']!)),
                                         );
                                       },
                                     );
