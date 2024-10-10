@@ -15,9 +15,9 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
 
   static List<Widget> _widgetOptions = <Widget>[
-    HomePatientsScreen(),
+    HomePatientsScreen(doctorId: 1,),
     PatientsListScreen(),
-    AppointmentScreen(),
+    //AppointmentScreen(),
     NotificationsScreen(),
     ProfileScreen(),
   ];
