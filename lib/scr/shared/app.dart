@@ -7,6 +7,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Medical Care App',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primaryColor: Color(0xFF6A828D),
          dialogBackgroundColor: Color(0xFFAEBBC3), // Color verde claro
