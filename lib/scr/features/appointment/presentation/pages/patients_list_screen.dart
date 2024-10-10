@@ -4,6 +4,8 @@ import 'package:trabajo_moviles_ninjacode/scr/features/appointment/presentation/
 import 'package:trabajo_moviles_ninjacode/scr/features/profile/data/data_sources/remote/patient_service.dart';
 import 'package:trabajo_moviles_ninjacode/scr/features/profile/data/data_sources/remote/profile_service.dart';
 import 'package:trabajo_moviles_ninjacode/scr/features/appointment/data/data_sources/remote/medical_appointment_api.dart';
+import 'package:timezone/data/latest.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
 
 class HomePatientsScreen extends StatefulWidget {
   final int doctorId;
@@ -32,6 +34,7 @@ class _HomePatientsScreenState extends State<HomePatientsScreen> {
     try {
       final appointments = await _appointmentApi.fetchAppointmentsForToday(widget.doctorId);
       final List<Map<String, String>> fetchedPatients = [];
+      final limaTimeZone = tz.getLocation('America/Lima');
 
       for (var appointment in appointments) {
         final patientDetails = await _patientService.fetchPatientDetails(appointment['patientId']);
@@ -40,8 +43,16 @@ class _HomePatientsScreenState extends State<HomePatientsScreen> {
           'name': profileDetails['fullName'],
           'time': appointment['startTime'],
           'image': profileDetails['image'], // Assuming 'image' is the key for the profile image URL
+          'eventDate': appointment['eventDate'],
         });
       }
+
+      // Ordenar las citas por hora
+      fetchedPatients.sort((a, b) {
+        final aTime = tz.TZDateTime.from(DateTime.parse(a['eventDate']!), limaTimeZone);
+        final bTime = tz.TZDateTime.from(DateTime.parse(b['eventDate']!), limaTimeZone);
+        return aTime.compareTo(bTime);
+      });
 
       setState(() {
         patients = fetchedPatients;
@@ -56,6 +67,9 @@ class _HomePatientsScreenState extends State<HomePatientsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final limaTimeZone = tz.getLocation('America/Lima');
+    final now = tz.TZDateTime.now(limaTimeZone);
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Color(0xFF6A828D),
@@ -74,8 +88,11 @@ class _HomePatientsScreenState extends State<HomePatientsScreen> {
             : ListView.builder(
                 itemCount: patients.length,
                 itemBuilder: (context, index) {
+                  final eventDate = tz.TZDateTime.from(DateTime.parse(patients[index]['eventDate']!), limaTimeZone);
+                  final isPast = eventDate.isBefore(now);
+
                   return Card(
-                    color: Color(0xFFE0E0E0),
+                    color: isPast ? Color(0xFFB0BEC5) : Color(0xFFE0E0E0), // Oscurecer las citas pasadas
                     margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: Stack(
                       children: [
