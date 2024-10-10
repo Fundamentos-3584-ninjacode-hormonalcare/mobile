@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'package:trabajo_moviles_ninjacode/scr/core/utils/usecases/jwt_storage.dart';
 
 class AuthService {
-  final String baseUrl = 'https://hormonal-care-backend-production.up.railway.app/api/v1/authentication';
+  final String baseUrl = 'http://localhost:8080/api/v1/authentication';
 
   Future<Map<String, dynamic>> signUp(String username, String password) async {
     final response = await http.post(
@@ -17,7 +17,7 @@ class AuthService {
     );
 
     if (response.statusCode == 201) {
-      return json.decode(response.body); // Maneja la respuesta de registro.
+      return json.decode(response.body); 
     } else {
       throw Exception('Error in registration');
     }
@@ -36,8 +36,20 @@ class AuthService {
     if (response.statusCode == 200) {
       final responseData = json.decode(response.body);
       final token = responseData['token'];
-      await JwtStorage.saveToken(token);
-      return token;
+      final userId = responseData['id'].toString(); // Ensure userId is a string
+
+      // Add logging to diagnose the issue
+      print('Response Data: $responseData');
+      print('Token: $token');
+      print('User ID: $userId');
+
+      if (token != null && userId != null) {
+        await JwtStorage.saveToken(token);
+        await JwtStorage.saveUserId(userId);
+        return token;
+      } else {
+        throw Exception('Token or User ID is null');
+      }
     } else {
       throw Exception('Error in sign-in');
     }
@@ -45,5 +57,6 @@ class AuthService {
 
   Future<void> logout() async {
     await JwtStorage.removeToken();
+    await JwtStorage.removeUserId();
   }
 }

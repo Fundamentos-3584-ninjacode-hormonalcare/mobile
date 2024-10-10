@@ -5,10 +5,14 @@ import 'package:trabajo_moviles_ninjacode/scr/features/profile/domain/models/pat
 import 'package:trabajo_moviles_ninjacode/scr/core/utils/usecases/jwt_storage.dart';
 
 class MedicalAppointmentApi {
-  static const String _baseUrl = 'https://hormonal-care-backend-production.up.railway.app/api/v1';
+  static const String _baseUrl = 'http://localhost:8080/api/v1';
 
   Future<String?> _getToken() async {
     return await JwtStorage.getToken();
+  }
+
+  Future<String?> _getUserId() async {
+    return await JwtStorage.getUserId();
   }
 
   Future<ProfileModel?> getProfile(int profileId) async {
@@ -39,6 +43,9 @@ class MedicalAppointmentApi {
 
   Future<bool> createMedicalAppointment(Map<String, dynamic> appointmentData) async {
     final token = await _getToken();
+    final userId = await _getUserId();
+    appointmentData['userId'] = userId; // Add userId to the appointment data
+
     final response = await http.post(
       Uri.parse('$_baseUrl/medicalAppointment'),
       headers: {
