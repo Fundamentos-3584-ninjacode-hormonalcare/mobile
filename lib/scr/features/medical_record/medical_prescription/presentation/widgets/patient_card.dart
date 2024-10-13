@@ -36,7 +36,9 @@ class PatientCard extends StatelessWidget {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => MedicalRecordScreen()),
+                    MaterialPageRoute(
+                      builder: (context) => MedicalRecordScreen(patientId: patient.patientRecordId),
+                    ),
                   );
                 },
                 style: ElevatedButton.styleFrom(
