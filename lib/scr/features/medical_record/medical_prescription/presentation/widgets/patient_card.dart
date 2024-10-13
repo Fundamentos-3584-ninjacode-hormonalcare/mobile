@@ -16,14 +16,14 @@ class PatientCard extends StatelessWidget {
       ),
       child: Padding(
         padding: const EdgeInsets.all(12.0),
-        child: SingleChildScrollView( // Envolver en SingleChildScrollView
+        child: SingleChildScrollView(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.person, size: 50.0, color: Color(0xFF40535B)), // Ícono de paciente 0xFF40535B
+              Icon(Icons.person, size: 50.0, color: Color(0xFF40535B)), // Ícono de paciente
               SizedBox(height: 10.0),
               Text(
-                patient.name,
+                patient.profile?.fullName ?? 'Unknown', // Mostrar el nombre completo del perfil
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   color: const Color.fromARGB(255, 0, 0, 0),
@@ -31,17 +31,7 @@ class PatientCard extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              SizedBox(height: 5.0),
-              Text(
-                patient.condition,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Colors.black, // Color gris claro para el subtítulo
-                  fontSize: 14.0,
-                ),
-              ),
-              SizedBox(height: 10.0),
-              // Botón de historial médico
+              SizedBox(height: 10.0), // Botón de historial médico
               ElevatedButton(
                 onPressed: () {
                   Navigator.push(
