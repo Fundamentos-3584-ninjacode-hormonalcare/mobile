@@ -22,7 +22,7 @@ class _MedicalRecordScreenState extends State<MedicalRecordScreen> with SingleTi
   late Future<List<Medication>> _medicationsFuture;
   late Future<List<Prescription>> _prescriptionsFuture;
   late Future<List<Treatment>> _treatmentsFuture; // Añadir Future para tratamientos
-  final int medicalRecordId = 1; // Definir el medicalRecordId aquí
+  final int medicalRecordId = 10; // Definir el medicalRecordId aquí
 
   @override
   void initState() {

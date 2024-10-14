@@ -16,7 +16,7 @@ class PatientsListService {
     };
 
     List<Patient> patients = [];
-    for (int id = 1; id <= 1; id++) {
+    for (int id = 1; id <= 2; id++) {
       final response = await http.get(Uri.parse('$baseUrl/$id'), headers: headers);
       if (response.statusCode == 200) {
         final patientData = json.decode(response.body);
