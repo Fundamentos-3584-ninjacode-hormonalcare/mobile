@@ -17,40 +17,56 @@ class MedicalAppointmentApi {
     return await JwtStorage.getToken();
   }
 
-  Future<String?> _getUserId() async {
+  Future<int?> _getUserId() async {
     return await JwtStorage.getUserId();
   }
 
-  Future<ProfileService?> getProfile(int profileId) async {
+  Future<Map<String, dynamic>?> getProfile(int profileId) async {
     final token = await _getToken();
+    if (token == null) {
+      throw Exception('Token not found');
+    }
+
     final response = await http.get(
       Uri.parse('$_baseUrl/profile/profile/$profileId'),
       headers: {'Authorization': 'Bearer $token'},
     );
 
     if (response.statusCode == 200) {
-      return ProfileService.fromJson(jsonDecode(response.body));
+      return jsonDecode(response.body);
+    } else if (response.statusCode == 401) {
+      throw Exception('Unauthorized: Invalid or expired token');
+    } else {
+      throw Exception('Failed to load profile details');
     }
-    return null;
   }
 
-  Future<PatientService?> getPatient(int patientId) async {
+  Future<Map<String, dynamic>?> getPatient(int patientId) async {
     final token = await _getToken();
+    if (token == null) {
+      throw Exception('Token not found');
+    }
+
     final response = await http.get(
       Uri.parse('$_baseUrl/medical-record/patient/$patientId'),
       headers: {'Authorization': 'Bearer $token'},
     );
 
     if (response.statusCode == 200) {
-      return PatientService.fromJson(jsonDecode(response.body));
+      return jsonDecode(response.body);
     } else if (response.statusCode == 401) {
       throw Exception('Unauthorized: Invalid or expired token');
+    } else {
+      throw Exception('Failed to load patient details');
     }
-    return null;
   }
 
   Future<List<Map<String, dynamic>>> fetchAppointmentsForToday(int doctorId) async {
     final token = await _getToken();
+    if (token == null) {
+      throw Exception('Token not found');
+    }
+
     final response = await http.get(
       Uri.parse('$_baseUrl/medicalAppointment?doctorId=$doctorId'),
       headers: {'Authorization': 'Bearer $token'},
@@ -65,6 +81,8 @@ class MedicalAppointmentApi {
         return eventDate.year == today.year && eventDate.month == today.month && eventDate.day == today.day;
       }).toList();
       return todayAppointments;
+    } else if (response.statusCode == 401) {
+      throw Exception('Unauthorized: Invalid or expired token');
     } else {
       throw Exception('Failed to load appointments');
     }
@@ -73,6 +91,10 @@ class MedicalAppointmentApi {
   Future<bool> createMedicalAppointment(Map<String, dynamic> appointmentData) async {
     final token = await _getToken();
     final userId = await _getUserId();
+    if (token == null || userId == null) {
+      throw Exception('Token or user ID not found');
+    }
+
     appointmentData['userId'] = userId; // Add userId to the appointment data
 
     final response = await http.post(
@@ -84,6 +106,12 @@ class MedicalAppointmentApi {
       body: jsonEncode(appointmentData),
     );
 
-    return response.statusCode == 201;
+    if (response.statusCode == 201) {
+      return true;
+    } else if (response.statusCode == 401) {
+      throw Exception('Unauthorized: Invalid or expired token');
+    } else {
+      throw Exception('Failed to create appointment');
+    }
   }
 }
