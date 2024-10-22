@@ -43,12 +43,37 @@ class _AppointmentFormState extends State<AppointmentForm> {
     _selectedDate = null;
   }
 
+  Future<bool> _isTimeSlotAvailable(String startTime, String endTime) async {
+    final existingAppointments = await repository.fetchAppointmentsForToday(1); // Assuming doctorId is 1
+    final newStart = DateTime.parse("${_selectedDate!.toIso8601String().split('T')[0]} $startTime:00");
+    final newEnd = DateTime.parse("${_selectedDate!.toIso8601String().split('T')[0]} $endTime:00");
+
+    for (var appointment in existingAppointments) {
+      final existingStart = DateTime.parse("${appointment['eventDate']} ${appointment['startTime']}:00");
+      final existingEnd = DateTime.parse("${appointment['eventDate']} ${appointment['endTime']}:00");
+
+      if (newStart.isBefore(existingEnd) && newEnd.isAfter(existingStart)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   Future<void> _createEvent() async {
     if (_formKey.currentState!.validate()) {
+      final startTime = _fromTimeController.text;
+      final endTime = _toTimeController.text;
+
+      if (!await _isTimeSlotAvailable(startTime, endTime)) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('The selected time slot is not available.')));
+        return;
+      }
+
       final appointmentData = {
         'eventDate': _selectedDate!.toIso8601String().split('T')[0],
-        'startTime': _fromTimeController.text,
-        'endTime': _toTimeController.text,
+        'startTime': startTime,
+        'endTime': endTime,
         'title': _titleController.text,
         'description': _linkController.text,
         'doctorId': 1,
