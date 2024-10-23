@@ -5,6 +5,7 @@ import 'package:trabajo_moviles_ninjacode/scr/features/appointment/presentation/
 import 'package:confetti/confetti.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+import 'package:trabajo_moviles_ninjacode/scr/core/utils/usecases/jwt_storage.dart';
 
 class AppointmentForm extends StatefulWidget {
   final int patientId;
@@ -44,7 +45,14 @@ class _AppointmentFormState extends State<AppointmentForm> {
   }
 
   Future<bool> _isTimeSlotAvailable(String startTime, String endTime) async {
-    final existingAppointments = await repository.fetchAppointmentsForToday(1); // Assuming doctorId is 1
+    final userId = await JwtStorage.getUserId();
+    final role = await JwtStorage.getRole();
+
+    if (role != 'ROLE_DOCTOR') {
+      throw Exception('Only doctors can create appointments');
+    }
+
+    final existingAppointments = await repository.fetchAppointmentsForToday(userId!);
     final newStart = DateTime.parse("${_selectedDate!.toIso8601String().split('T')[0]} $startTime:00");
     final newEnd = DateTime.parse("${_selectedDate!.toIso8601String().split('T')[0]} $endTime:00");
 
@@ -70,13 +78,15 @@ class _AppointmentFormState extends State<AppointmentForm> {
         return;
       }
 
+      final userId = await JwtStorage.getUserId();
+
       final appointmentData = {
         'eventDate': _selectedDate!.toIso8601String().split('T')[0],
         'startTime': startTime,
         'endTime': endTime,
         'title': _titleController.text,
         'description': _linkController.text,
-        'doctorId': 1,
+        'doctorId': userId,
         'patientId': widget.patientId,
       };
 
@@ -122,96 +132,25 @@ class _AppointmentFormState extends State<AppointmentForm> {
     final limaTimeZone = tz.getLocation('America/Lima');
     final now = tz.TZDateTime.now(limaTimeZone);
 
-    return Form(
-      key: _formKey,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Field: Meeting Title
-          TextFormField(
-            controller: _titleController,
-            decoration: InputDecoration(
-              labelText: 'Title',
-              hintText: 'Title of the meeting',
-              prefixIcon: Icon(Icons.title),
-              filled: true,
-              fillColor: Color(0xFFF5F5F5),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8.0),
-              ),
-            ),
-            style: TextStyle(fontSize: 14),
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter the title of the meeting';
-              }
-              return null;
-            },
-          ),
-          SizedBox(height: 12),
-
-          // Field: Date
-          TextFormField(
-            controller: _dateController,
-            decoration: InputDecoration(
-              labelText: 'Date',
-              hintText: 'Day',
-              prefixIcon: Icon(Icons.calendar_today),
-              filled: true,
-              fillColor: Color(0xFFF5F5F5),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8.0),
-              ),
-            ),
-            style: TextStyle(fontSize: 14),
-            readOnly: true,
-            onTap: () => _selectDate(context),
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please select a date';
-              }
-              if (_selectedDate != null) {
-                final selectedDateInLima = tz.TZDateTime.from(_selectedDate!, limaTimeZone);
-                final nowInLima = tz.TZDateTime.now(limaTimeZone);
-                if (selectedDateInLima.isBefore(nowInLima.subtract(Duration(days: 1)))) {
-                  return 'The date cannot be in the past';
-                }
-              }
-              return null;
-            },
-          ),
-          SizedBox(height: 12),
-
-          // Field: Time "From"
-          Row(
-            children: [
-              Expanded(
-                child: TextFormField(
-                  controller: _fromTimeController,
+    return SingleChildScrollView(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.6, // Ajusta el valor según sea necesario
+        ),
+        child: Form(
+          key: _formKey,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Field: Meeting Title
+                TextFormField(
+                  controller: _titleController,
                   decoration: InputDecoration(
-                    labelText: 'From',
-                    hintText: 'Hour',
-                    prefixIcon: Icon(Icons.access_time),
-                    filled: true,
-                    fillColor: Color(0xFFF5F5F5),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8.0),
-                    ),
-                  ),
-                  style: TextStyle(fontSize: 14),
-                  validator: _validateTime,
-                ),
-              ),
-              SizedBox(width: 12),
-
-              // Field: Time "To"
-              Expanded(
-                child: TextFormField(
-                  controller: _toTimeController,
-                  decoration: InputDecoration(
-                    labelText: 'To',
-                    hintText: 'Hour',
-                    prefixIcon: Icon(Icons.access_time),
+                    labelText: 'Title',
+                    hintText: 'Title of the meeting',
+                    prefixIcon: Icon(Icons.title),
                     filled: true,
                     fillColor: Color(0xFFF5F5F5),
                     border: OutlineInputBorder(
@@ -220,63 +159,136 @@ class _AppointmentFormState extends State<AppointmentForm> {
                   ),
                   style: TextStyle(fontSize: 14),
                   validator: (value) {
-                    final error = _validateTime(value);
-                    if (error != null) return error;
-                    if (_fromTimeController.text.isNotEmpty && value != null) {
-                      final fromTime = _fromTimeController.text.split(':').map(int.parse).toList();
-                      final toTime = value.split(':').map(int.parse).toList();
-                      final from = DateTime(0, 0, 0, fromTime[0], fromTime[1]);
-                      final to = DateTime(0, 0, 0, toTime[0], toTime[1]);
-                      if (to.isBefore(from)) {
-                        return 'End time must be after start time';
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter the title of the meeting';
+                    }
+                    return null;
+                  },
+                ),
+                SizedBox(height: 12),
+
+                // Field: Date
+                TextFormField(
+                  controller: _dateController,
+                  decoration: InputDecoration(
+                    labelText: 'Date',
+                    hintText: 'Day',
+                    prefixIcon: Icon(Icons.calendar_today),
+                    filled: true,
+                    fillColor: Color(0xFFF5F5F5),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                  ),
+                  style: TextStyle(fontSize: 14),
+                  readOnly: true,
+                  onTap: () => _selectDate(context),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please select a date';
+                    }
+                    if (_selectedDate != null) {
+                      final selectedDateInLima = tz.TZDateTime.from(_selectedDate!, limaTimeZone);
+                      final nowInLima = tz.TZDateTime.now(limaTimeZone);
+                      if (selectedDateInLima.isBefore(nowInLima.subtract(Duration(days: 1)))) {
+                        return 'The date cannot be in the past';
                       }
                     }
                     return null;
                   },
                 ),
-              ),
-            ],
-          ),
-          SizedBox(height: 12),
+                SizedBox(height: 12),
 
-          // Field: Meeting Link
-          TextFormField(
-            controller: _linkController,
-            decoration: InputDecoration(
-              labelText: 'Meeting Link',
-              hintText: 'Link',
-              prefixIcon: Icon(Icons.link),
-              filled: true,
-              fillColor: Color(0xFFF5F5F5),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8.0),
-              ),
+                // Field: Time "From"
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _fromTimeController,
+                        decoration: InputDecoration(
+                          labelText: 'From',
+                          hintText: 'Hour',
+                          prefixIcon: Icon(Icons.access_time),
+                          filled: true,
+                          fillColor: Color(0xFFF5F5F5),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8.0),
+                          ),
+                        ),
+                        style: TextStyle(fontSize: 14),
+                        validator: _validateTime,
+                      ),
+                    ),
+                    SizedBox(width: 12),
+
+                    // Field: Time "To"
+                    Expanded(
+                      child: TextFormField(
+                        controller: _toTimeController,
+                        decoration: InputDecoration(
+                          labelText: 'To',
+                          hintText: 'Hour',
+                          prefixIcon: Icon(Icons.access_time),
+                          filled: true,
+                          fillColor: Color(0xFFF5F5F5),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8.0),
+                          ),
+                        ),
+                        style: TextStyle(fontSize: 14),
+                        validator: (value) {
+                          final error = _validateTime(value);
+                          if (error != null) return error;
+                          if (_fromTimeController.text.isNotEmpty && value != null) {
+                            final fromTime = _fromTimeController.text.split(':').map(int.parse).toList();
+                            final toTime = value.split(':').map(int.parse).toList();
+                            final from = DateTime(0, 0, 0, fromTime[0], fromTime[1]);
+                            final to = DateTime(0, 0, 0, toTime[0], toTime[1]);
+                            if (to.isBefore(from)) {
+                              return 'End time must be after start time';
+                            }
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 12),
+
+                // Field: Meeting Link
+                TextFormField(
+                  controller: _linkController,
+                  decoration: InputDecoration(
+                    labelText: 'Meeting Link',
+                    hintText: 'Link',
+                    prefixIcon: Icon(Icons.link),
+                    filled: true,
+                    fillColor: Color(0xFFF5F5F5),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                  ),
+                  style: TextStyle(fontSize: 14),
+                  keyboardType: TextInputType.url,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter the meeting link';
+                    }
+                    return null;
+                  },
+                ),
+                SizedBox(height: 16),
+
+                // Custom buttons (Clear and Create event)
+                CustomButtons(
+                  onClear: _clearFields,
+                  onCreate: _createEvent,
+                ),
+              ],
             ),
-            style: TextStyle(fontSize: 14),
-            keyboardType: TextInputType.url,
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter the meeting link';
-              }
-              return null;
-            },
           ),
-          SizedBox(height: 16),
-
-          // Custom buttons (Clear and Create event)
-          CustomButtons(
-            onClear: _clearFields,
-            onCreate: _createEvent,
-          ),
-
-          // Confetti animation
-          ConfettiWidget(
-            confettiController: _confettiController,
-            blastDirectionality: BlastDirectionality.explosive,
-            shouldLoop: false,
-            colors: const [Colors.green, Colors.blue, Colors.pink, Colors.orange, Colors.purple],
-          ),
-        ],
+        ),
       ),
     );
   }

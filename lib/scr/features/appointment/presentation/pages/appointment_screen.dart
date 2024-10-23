@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
-import '../widgets/appointment_form.dart'; // Importamos el formulario
-
+import '../widgets/appointment_form.dart'; 
 class AppointmentScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color(0xFF6A828D), // Color de la AppBar
+        backgroundColor: Color(0xFF6A828D), 
         title: Text('Medical Appointments'),
         centerTitle: true,
         titleTextStyle: TextStyle(
@@ -17,7 +16,7 @@ class AppointmentScreen extends StatelessWidget {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        // El formulario que contiene los campos
+        
       ),
     );
   }

@@ -87,10 +87,12 @@ class AuthService {
     }
   }
 
-  
-
   Future<int?> getUserId() async {
     return await JwtStorage.getUserId();
+  }
+
+  Future<String?> getRole() async {
+    return await JwtStorage.getRole();
   }
 
   Future<void> logout() async {

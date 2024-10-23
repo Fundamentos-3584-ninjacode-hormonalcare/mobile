@@ -160,10 +160,36 @@ class _HomePatientsScreenState extends State<HomePatientsScreen> {
                                     showDialog(
                                       context: context,
                                       builder: (BuildContext context) {
-                                        return AlertDialog(
-                                          title: Text('Add Medical Appointment'),
-                                          titleTextStyle: TextStyle(color: Color(0xFF40535B), fontWeight: FontWeight.bold),
-                                          content: AppointmentForm(patientId: int.parse(patients[index]['patientId']!)),
+                                        return Dialog(
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                          child: Container(
+                                            width: MediaQuery.of(context).size.width * 0.8, // Ajusta el valor según sea necesario
+                                            constraints: BoxConstraints(
+                                              maxHeight: MediaQuery.of(context).size.height * 0.6, // Ajusta el valor según sea necesario
+                                            ),
+                                            child: SingleChildScrollView(
+                                              child: Padding(
+                                                padding: const EdgeInsets.all(16.0),
+                                                child: Column(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    Text(
+                                                      'Add Medical Appointment',
+                                                      style: TextStyle(
+                                                        color: Color(0xFF40535B),
+                                                        fontWeight: FontWeight.bold,
+                                                        fontSize: 20,
+                                                      ),
+                                                    ),
+                                                    SizedBox(height: 16),
+                                                    AppointmentForm(patientId: int.parse(patients[index]['patientId']!)),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                          ),
                                         );
                                       },
                                     );
