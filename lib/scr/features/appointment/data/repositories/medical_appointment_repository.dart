@@ -8,4 +8,9 @@ class MedicalAppointmentRepository {
   Future<bool> createMedicalAppointment(Map<String, dynamic> appointmentData) async {
     return await api.createMedicalAppointment(appointmentData);
   }
+
+    Future<List<Map<String, dynamic>>> fetchAppointmentsForToday(int doctorId ) async {
+    return await api.fetchAppointmentsForToday(doctorId);
+
+  }
 }

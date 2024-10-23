@@ -25,8 +25,6 @@ class _AppointmentFormState extends State<AppointmentForm> {
   final ConfettiController _confettiController = ConfettiController();
 
   DateTime? _selectedDate;
-  TimeOfDay? _fromTime;
-  TimeOfDay? _toTime;
 
   final MedicalAppointmentRepository repository = MedicalAppointmentRepository(MedicalAppointmentApi());
 
@@ -43,16 +41,39 @@ class _AppointmentFormState extends State<AppointmentForm> {
     _linkController.clear();
     _titleController.clear();
     _selectedDate = null;
-    _fromTime = null;
-    _toTime = null;
+  }
+
+  Future<bool> _isTimeSlotAvailable(String startTime, String endTime) async {
+    final existingAppointments = await repository.fetchAppointmentsForToday(1); // Assuming doctorId is 1
+    final newStart = DateTime.parse("${_selectedDate!.toIso8601String().split('T')[0]} $startTime:00");
+    final newEnd = DateTime.parse("${_selectedDate!.toIso8601String().split('T')[0]} $endTime:00");
+
+    for (var appointment in existingAppointments) {
+      final existingStart = DateTime.parse("${appointment['eventDate']} ${appointment['startTime']}:00");
+      final existingEnd = DateTime.parse("${appointment['eventDate']} ${appointment['endTime']}:00");
+
+      if (newStart.isBefore(existingEnd) && newEnd.isAfter(existingStart)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   Future<void> _createEvent() async {
     if (_formKey.currentState!.validate()) {
+      final startTime = _fromTimeController.text;
+      final endTime = _toTimeController.text;
+
+      if (!await _isTimeSlotAvailable(startTime, endTime)) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('The selected time slot is not available.')));
+        return;
+      }
+
       final appointmentData = {
         'eventDate': _selectedDate!.toIso8601String().split('T')[0],
-        'startTime': _fromTime!.format(context),
-        'endTime': _toTime!.format(context),
+        'startTime': startTime,
+        'endTime': endTime,
         'title': _titleController.text,
         'description': _linkController.text,
         'doctorId': 1,
@@ -85,21 +106,15 @@ class _AppointmentFormState extends State<AppointmentForm> {
     }
   }
 
-  Future<void> _selectTime(BuildContext context, TextEditingController controller, bool isFromTime) async {
-    final TimeOfDay? picked = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.now(),
-    );
-    if (picked != null) {
-      setState(() {
-        if (isFromTime) {
-          _fromTime = picked;
-        } else {
-          _toTime = picked;
-        }
-        controller.text = picked.format(context);
-      });
+  String? _validateTime(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Please enter a time';
     }
+    final timeRegExp = RegExp(r'^([01]\d|2[0-3]):[0-5]\d$');
+    if (!timeRegExp.hasMatch(value)) {
+      return 'Please enter a valid time in 24-hour format (HH:mm)';
+    }
+    return null;
   }
 
   @override
@@ -184,14 +199,7 @@ class _AppointmentFormState extends State<AppointmentForm> {
                     ),
                   ),
                   style: TextStyle(fontSize: 14),
-                  readOnly: true,
-                  onTap: () => _selectTime(context, _fromTimeController, true),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter a start time';
-                    }
-                    return null;
-                  },
+                  validator: _validateTime,
                 ),
               ),
               SizedBox(width: 12),
@@ -211,15 +219,14 @@ class _AppointmentFormState extends State<AppointmentForm> {
                     ),
                   ),
                   style: TextStyle(fontSize: 14),
-                  readOnly: true,
-                  onTap: () => _selectTime(context, _toTimeController, false),
                   validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter an end time';
-                    }
-                    if (_fromTime != null && _toTime != null) {
-                      final from = DateTime(0, 0, 0, _fromTime!.hour, _fromTime!.minute);
-                      final to = DateTime(0, 0, 0, _toTime!.hour, _toTime!.minute);
+                    final error = _validateTime(value);
+                    if (error != null) return error;
+                    if (_fromTimeController.text.isNotEmpty && value != null) {
+                      final fromTime = _fromTimeController.text.split(':').map(int.parse).toList();
+                      final toTime = value.split(':').map(int.parse).toList();
+                      final from = DateTime(0, 0, 0, fromTime[0], fromTime[1]);
+                      final to = DateTime(0, 0, 0, toTime[0], toTime[1]);
                       if (to.isBefore(from)) {
                         return 'End time must be after start time';
                       }

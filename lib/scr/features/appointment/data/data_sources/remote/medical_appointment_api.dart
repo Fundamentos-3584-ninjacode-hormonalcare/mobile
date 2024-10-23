@@ -68,7 +68,7 @@ class MedicalAppointmentApi {
     }
 
     final response = await http.get(
-      Uri.parse('$_baseUrl/medicalAppointment?doctorId=$doctorId'),
+      Uri.parse('$_baseUrl/medicalAppointment/medicalAppointments/doctor/1'),
       headers: {'Authorization': 'Bearer $token'},
     );
 

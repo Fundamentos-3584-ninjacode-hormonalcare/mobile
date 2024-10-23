@@ -39,7 +39,7 @@ class PatientCard extends StatelessWidget {
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: const Color.fromARGB(255, 0, 0, 0),
-                      fontSize: avatarRadius/4,
+                      fontSize: avatarRadius / 4,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -57,9 +57,9 @@ class PatientCard extends StatelessWidget {
                       backgroundColor: Color(0xFF40535B), // Color gris oscuro del botón
                       foregroundColor: Colors.white, // Texto del botón en blanco
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(avatarRadius/8),
+                        borderRadius: BorderRadius.circular(avatarRadius / 8),
                       ),
-                      fixedSize: Size(avatarRadius * 2.4, avatarRadius /2), // Tamaño fijo del botón (ancho, alto)
+                      fixedSize: Size(avatarRadius * 2.4, avatarRadius / 2), // Tamaño fijo del botón (ancho, alto)
                       textStyle: TextStyle(
                         fontSize: avatarRadius / 5, // Tamaño del texto del botón
                       ),
