@@ -55,6 +55,11 @@ class AuthService {
     }
   }
 
+
+  Future<String?> getUserId() async {
+    return await JwtStorage.getUserId();
+  }
+
   Future<void> logout() async {
     await JwtStorage.removeToken();
     await JwtStorage.removeUserId();
