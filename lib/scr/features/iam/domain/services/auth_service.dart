@@ -88,7 +88,6 @@ class AuthService {
   }
 
   Future<void> logout() async {
-    await JwtStorage.removeToken();
-    await JwtStorage.removeUserId();
+    await JwtStorage.clearAll();
   }
 }
