@@ -4,6 +4,7 @@ import 'package:trabajo_moviles_ninjacode/scr/features/appointment/presentation/
 import 'package:trabajo_moviles_ninjacode/scr/features/profile/data/data_sources/remote/patient_service.dart';
 import 'package:trabajo_moviles_ninjacode/scr/features/profile/data/data_sources/remote/profile_service.dart';
 import 'package:trabajo_moviles_ninjacode/scr/features/appointment/data/data_sources/remote/medical_appointment_api.dart';
+import 'package:trabajo_moviles_ninjacode/scr/core/utils/usecases/jwt_storage.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
@@ -32,6 +33,13 @@ class _HomePatientsScreenState extends State<HomePatientsScreen> {
 
   Future<void> _fetchPatients() async {
     try {
+      final userId = await JwtStorage.getUserId();
+      final role = await JwtStorage.getRole();
+
+      if (role != 'ROLE_DOCTOR') {
+        throw Exception('Only doctors can view patients');
+      }
+
       final appointments = await _appointmentApi.fetchAppointmentsForToday(widget.doctorId);
       final List<Map<String, String>> fetchedPatients = [];
       final limaTimeZone = tz.getLocation('America/Lima');
@@ -105,7 +113,9 @@ class _HomePatientsScreenState extends State<HomePatientsScreen> {
                                 onTap: () {
                                   Navigator.push(
                                     context,
-                                    MaterialPageRoute(builder: (context) => ConsultationScreen()),
+                                    MaterialPageRoute(
+                                      builder: (context) => ConsultationScreen(patientId: int.parse(patients[index]['patientId']!)),
+                                    ),
                                   );
                                 },
                                 child: Icon(Icons.insert_drive_file, color: Color(0xFF40535B)),
