@@ -107,6 +107,27 @@ class MedicalAppointmentApi {
     }
   }
 
+  Future<List<Map<String, dynamic>>> fetchAllAppointments() async {
+    final token = await _getToken();
+    final doctorId = await _getDoctorId();
+    if (token == null) {
+      throw Exception('Token not found');
+    }
+
+    final response = await http.get(
+      Uri.parse('$_baseUrl/medicalAppointment/medicalAppointments/doctor/$doctorId'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode == 200) {
+      return List<Map<String, dynamic>>.from(json.decode(response.body));
+    } else if (response.statusCode == 401) {
+      throw Exception('Unauthorized: Invalid or expired token');
+    } else {
+      throw Exception('Failed to load appointments');
+    }
+  }
+
   Future<bool> createMedicalAppointment(Map<String, dynamic> appointmentData) async {
     final token = await _getToken();
     final userId = await _getUserId();

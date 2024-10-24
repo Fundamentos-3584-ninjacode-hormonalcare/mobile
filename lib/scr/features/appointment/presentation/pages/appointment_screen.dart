@@ -13,6 +13,37 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
   final MedicalAppointmentApi _appointmentService = MedicalAppointmentApi();
 
   @override
+  void initState() {
+    super.initState();
+    _loadAppointments();
+  }
+
+  Future<void> _loadAppointments() async {
+    try {
+      final appointments = await _appointmentService.fetchAllAppointments();
+      setState(() {
+        _meetings.clear();
+        for (var appointment in appointments) {
+          final DateTime startTime = DateTime.parse('${appointment['eventDate']}T${appointment['startTime']}:00');
+          final DateTime endTime = DateTime.parse('${appointment['eventDate']}T${appointment['endTime']}:00');
+          _meetings.add(Meeting(
+            appointment['title'],
+            startTime,
+            endTime,
+            Colors.blue,
+            false,
+            appointment['description'],
+          ));
+        }
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load appointments: $e')),
+      );
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
