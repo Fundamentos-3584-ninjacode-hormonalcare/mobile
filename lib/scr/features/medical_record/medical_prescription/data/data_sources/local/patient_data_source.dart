@@ -1,13 +1,14 @@
 import 'package:trabajo_moviles_ninjacode/scr/features/medical_record/medical_prescription/domain/models/patient_model.dart';
+import '../../../domain/models/services/patients_list_service.dart';
 
 class PatientsDataSource {
-  List<Patient> getPatients() {
-    return [
-      Patient(name: 'Ana María López', condition: 'Hypothyroidism'),
-      Patient(name: 'Carlos Alberto Ramírez', condition: 'Diabetes type 2'),
-      Patient(name: 'Sofía Gabriela Mendoza', condition: 'Polycystic Ovary Syndrome'),
-      Patient(name: 'Diego Fernando Acosta', condition: 'Cushing\'s Disease'),
-      // Agrega más pacientes
-    ];
+  final PatientsListService _patientsListService = PatientsListService();
+
+  Future<List<Patient>> getPatients() async {
+    try {
+      return await _patientsListService.getPatients();
+    } catch (e) {
+      throw Exception('Error fetching patients: $e');
+    }
   }
 }

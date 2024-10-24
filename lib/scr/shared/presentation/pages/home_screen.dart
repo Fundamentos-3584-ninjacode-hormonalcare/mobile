@@ -4,7 +4,9 @@ import 'package:trabajo_moviles_ninjacode/scr/features/medical_record/medical_pr
 import 'package:trabajo_moviles_ninjacode/scr/features/medical_record/medical_prescription/presentation/pages/medical_prescription_screen.dart';
 import 'package:trabajo_moviles_ninjacode/scr/features/appointment/presentation/pages/appointment_screen.dart';
 import 'package:trabajo_moviles_ninjacode/scr/features/notifications/presentation/pages/notification_screen.dart';
-import 'package:trabajo_moviles_ninjacode/scr/features/profile/presentation/pages/profile_screen.dart';
+import 'package:trabajo_moviles_ninjacode/scr/features/profile/presentation/pages/doctor_profile_screen.dart';
+import 'package:trabajo_moviles_ninjacode/scr/features/profile/presentation/pages/patient_profile_screen.dart';
+import 'package:trabajo_moviles_ninjacode/scr/core/utils/usecases/jwt_storage.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -13,14 +15,29 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
+  String? role;
 
   static List<Widget> _widgetOptions = <Widget>[
-    HomePatientsScreen(),
+    HomePatientsScreen(doctorId: 1,),
     PatientsListScreen(),
     AppointmentScreen(),
     NotificationsScreen(),
-    ProfileScreen(),
+    DoctorProfileScreen(), // Placeholder, will be replaced dynamically
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRole();
+  }
+
+  Future<void> _loadRole() async {
+    final storedRole = await JwtStorage.getRole();
+    setState(() {
+      role = storedRole;
+      _widgetOptions[4] = role == 'ROLE_DOCTOR' ? DoctorProfileScreen() : PatientProfileScreen();
+    });
+  }
 
   void _onItemTapped(int index) {
     setState(() {

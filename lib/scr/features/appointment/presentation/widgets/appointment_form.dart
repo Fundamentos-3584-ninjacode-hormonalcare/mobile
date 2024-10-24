@@ -3,8 +3,15 @@ import 'package:trabajo_moviles_ninjacode/scr/features/appointment/data/data_sou
 import 'package:trabajo_moviles_ninjacode/scr/features/appointment/data/repositories/medical_appointment_repository.dart';
 import 'package:trabajo_moviles_ninjacode/scr/features/appointment/presentation/widgets/custom_buttons.dart';
 import 'package:confetti/confetti.dart';
+import 'package:timezone/data/latest.dart' as tz;
+import 'package:timezone/timezone.dart' as tz;
+import 'package:trabajo_moviles_ninjacode/scr/core/utils/usecases/jwt_storage.dart';
 
 class AppointmentForm extends StatefulWidget {
+  final int patientId;
+
+  AppointmentForm({required this.patientId});
+
   @override
   _AppointmentFormState createState() => _AppointmentFormState();
 }
@@ -15,51 +22,81 @@ class _AppointmentFormState extends State<AppointmentForm> {
   final TextEditingController _fromTimeController = TextEditingController();
   final TextEditingController _toTimeController = TextEditingController();
   final TextEditingController _linkController = TextEditingController();
-  final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _titleController = TextEditingController();
   final ConfettiController _confettiController = ConfettiController();
 
   DateTime? _selectedDate;
-  TimeOfDay? _fromTime;
-  TimeOfDay? _toTime;
 
   final MedicalAppointmentRepository repository = MedicalAppointmentRepository(MedicalAppointmentApi());
+
+  @override
+  void initState() {
+    super.initState();
+    tz.initializeTimeZones();
+  }
 
   void _clearFields() {
     _dateController.clear();
     _fromTimeController.clear();
     _toTimeController.clear();
     _linkController.clear();
-    _phoneController.clear();
     _titleController.clear();
     _selectedDate = null;
-    _fromTime = null;
-    _toTime = null;
+  }
+
+  Future<bool> _isTimeSlotAvailable(String startTime, String endTime) async {
+    final userId = await JwtStorage.getUserId();
+    final role = await JwtStorage.getRole();
+
+    if (role != 'ROLE_DOCTOR') {
+      throw Exception('Only doctors can create appointments');
+    }
+
+    final existingAppointments = await repository.fetchAppointmentsForToday(userId!);
+    final newStart = DateTime.parse("${_selectedDate!.toIso8601String().split('T')[0]} $startTime:00");
+    final newEnd = DateTime.parse("${_selectedDate!.toIso8601String().split('T')[0]} $endTime:00");
+
+    for (var appointment in existingAppointments) {
+      final existingStart = DateTime.parse("${appointment['eventDate']} ${appointment['startTime']}:00");
+      final existingEnd = DateTime.parse("${appointment['eventDate']} ${appointment['endTime']}:00");
+
+      if (newStart.isBefore(existingEnd) && newEnd.isAfter(existingStart)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   Future<void> _createEvent() async {
     if (_formKey.currentState!.validate()) {
-      final patientId = await repository.getPatientIdByPhoneNumber(_phoneController.text);
-      if (patientId != null) {
-        final appointmentData = {
-          'eventDate': _selectedDate!.toIso8601String().split('T')[0],
-          'startTime': _fromTime!.format(context),
-          'endTime': _toTime!.format(context),
-          'title': _titleController.text,
-          'description': _linkController.text,
-          'doctorId': 1,
-          'patientId': patientId,
-        };
+      final startTime = _fromTimeController.text;
+      final endTime = _toTimeController.text;
 
-        final success = await repository.createMedicalAppointment(appointmentData);
-        if (success) {
-          _confettiController.play();
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Medical appointment created successfully!')));
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to create medical appointment.')));
-        }
+      if (!await _isTimeSlotAvailable(startTime, endTime)) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('The selected time slot is not available.')));
+        return;
+      }
+
+      final userId = await JwtStorage.getUserId();
+
+      final appointmentData = {
+        'eventDate': _selectedDate!.toIso8601String().split('T')[0],
+        'startTime': startTime,
+        'endTime': endTime,
+        'title': _titleController.text,
+        'description': _linkController.text,
+        'doctorId': userId,
+        'patientId': widget.patientId,
+      };
+
+      final success = await repository.createMedicalAppointment(appointmentData);
+      if (success) {
+        Navigator.pop(context);
+        _confettiController.play();
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Medical appointment created successfully!')));
       } else {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Patient not found.')));
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Failed to create medical appointment.')));
       }
     }
   }
@@ -79,91 +116,41 @@ class _AppointmentFormState extends State<AppointmentForm> {
     }
   }
 
-  Future<void> _selectTime(BuildContext context, TextEditingController controller, bool isFromTime) async {
-    final TimeOfDay? picked = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay.now(),
-    );
-    if (picked != null) {
-      setState(() {
-        if (isFromTime) {
-          _fromTime = picked;
-        } else {
-          _toTime = picked;
-        }
-        controller.text = picked.format(context);
-      });
+  String? _validateTime(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Please enter a time';
     }
+    final timeRegExp = RegExp(r'^([01]\d|2[0-3]):[0-5]\d$');
+    if (!timeRegExp.hasMatch(value)) {
+      return 'Please enter a valid time in 24-hour format (HH:mm)';
+    }
+    return null;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Form(
-      key: _formKey,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          // Field: Meeting Title
-          TextFormField(
-            controller: _titleController,
-            decoration: InputDecoration(
-              labelText: 'Title',
-              hintText: 'Title of the meeting',
-              prefixIcon: Icon(Icons.title),
-              filled: true,
-              fillColor: Color(0xFFF5F5F5),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8.0),
-              ),
-            ),
-            style: TextStyle(fontSize: 14),
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter the title of the meeting';
-              }
-              return null;
-            },
-          ),
-          SizedBox(height: 12),
+    final limaTimeZone = tz.getLocation('America/Lima');
+    final now = tz.TZDateTime.now(limaTimeZone);
 
-          // Field: Date
-          TextFormField(
-            controller: _dateController,
-            decoration: InputDecoration(
-              labelText: 'Date',
-              hintText: 'Day',
-              prefixIcon: Icon(Icons.calendar_today),
-              filled: true,
-              fillColor: Color(0xFFF5F5F5),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8.0),
-              ),
-            ),
-            style: TextStyle(fontSize: 14),
-            readOnly: true,
-            onTap: () => _selectDate(context),
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please select a date';
-              }
-              if (_selectedDate != null && _selectedDate!.isBefore(DateTime.now())) {
-                return 'The date cannot be in the past';
-              }
-              return null;
-            },
-          ),
-          SizedBox(height: 12),
-
-          // Field: Time "From"
-          Row(
-            children: [
-              Expanded(
-                child: TextFormField(
-                  controller: _fromTimeController,
+    return SingleChildScrollView(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.6, // Ajusta el valor según sea necesario
+        ),
+        child: Form(
+          key: _formKey,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Field: Meeting Title
+                TextFormField(
+                  controller: _titleController,
                   decoration: InputDecoration(
-                    labelText: 'From',
-                    hintText: 'Hour',
-                    prefixIcon: Icon(Icons.access_time),
+                    labelText: 'Title',
+                    hintText: 'Title of the meeting',
+                    prefixIcon: Icon(Icons.title),
                     filled: true,
                     fillColor: Color(0xFFF5F5F5),
                     border: OutlineInputBorder(
@@ -171,26 +158,22 @@ class _AppointmentFormState extends State<AppointmentForm> {
                     ),
                   ),
                   style: TextStyle(fontSize: 14),
-                  readOnly: true,
-                  onTap: () => _selectTime(context, _fromTimeController, true),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter a start time';
+                      return 'Please enter the title of the meeting';
                     }
                     return null;
                   },
                 ),
-              ),
-              SizedBox(width: 12),
+                SizedBox(height: 12),
 
-              // Field: Time "To"
-              Expanded(
-                child: TextFormField(
-                  controller: _toTimeController,
+                // Field: Date
+                TextFormField(
+                  controller: _dateController,
                   decoration: InputDecoration(
-                    labelText: 'To',
-                    hintText: 'Hour',
-                    prefixIcon: Icon(Icons.access_time),
+                    labelText: 'Date',
+                    hintText: 'Day',
+                    prefixIcon: Icon(Icons.calendar_today),
                     filled: true,
                     fillColor: Color(0xFFF5F5F5),
                     border: OutlineInputBorder(
@@ -199,89 +182,114 @@ class _AppointmentFormState extends State<AppointmentForm> {
                   ),
                   style: TextStyle(fontSize: 14),
                   readOnly: true,
-                  onTap: () => _selectTime(context, _toTimeController, false),
+                  onTap: () => _selectDate(context),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter an end time';
+                      return 'Please select a date';
                     }
-                    if (_fromTime != null && _toTime != null) {
-                      final from = DateTime(0, 0, 0, _fromTime!.hour, _fromTime!.minute);
-                      final to = DateTime(0, 0, 0, _toTime!.hour, _toTime!.minute);
-                      if (to.isBefore(from)) {
-                        return 'End time must be after start time';
+                    if (_selectedDate != null) {
+                      final selectedDateInLima = tz.TZDateTime.from(_selectedDate!, limaTimeZone);
+                      final nowInLima = tz.TZDateTime.now(limaTimeZone);
+                      if (selectedDateInLima.isBefore(nowInLima.subtract(Duration(days: 1)))) {
+                        return 'The date cannot be in the past';
                       }
                     }
                     return null;
                   },
                 ),
-              ),
-            ],
-          ),
-          SizedBox(height: 12),
+                SizedBox(height: 12),
 
-          // Field: Phone Number
-          TextFormField(
-            controller: _phoneController,
-            decoration: InputDecoration(
-              labelText: 'Contact',
-              hintText: 'Patient\'s phone number',
-              prefixIcon: Icon(Icons.phone),
-              filled: true,
-              fillColor: Color(0xFFF5F5F5),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8.0),
-              ),
+                // Field: Time "From"
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        controller: _fromTimeController,
+                        decoration: InputDecoration(
+                          labelText: 'From',
+                          hintText: 'Hour',
+                          prefixIcon: Icon(Icons.access_time),
+                          filled: true,
+                          fillColor: Color(0xFFF5F5F5),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8.0),
+                          ),
+                        ),
+                        style: TextStyle(fontSize: 14),
+                        validator: _validateTime,
+                      ),
+                    ),
+                    SizedBox(width: 12),
+
+                    // Field: Time "To"
+                    Expanded(
+                      child: TextFormField(
+                        controller: _toTimeController,
+                        decoration: InputDecoration(
+                          labelText: 'To',
+                          hintText: 'Hour',
+                          prefixIcon: Icon(Icons.access_time),
+                          filled: true,
+                          fillColor: Color(0xFFF5F5F5),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8.0),
+                          ),
+                        ),
+                        style: TextStyle(fontSize: 14),
+                        validator: (value) {
+                          final error = _validateTime(value);
+                          if (error != null) return error;
+                          if (_fromTimeController.text.isNotEmpty && value != null) {
+                            final fromTime = _fromTimeController.text.split(':').map(int.parse).toList();
+                            final toTime = value.split(':').map(int.parse).toList();
+                            final from = DateTime(0, 0, 0, fromTime[0], fromTime[1]);
+                            final to = DateTime(0, 0, 0, toTime[0], toTime[1]);
+                            if (to.isBefore(from)) {
+                              return 'End time must be after start time';
+                            }
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 12),
+
+                // Field: Meeting Link
+                TextFormField(
+                  controller: _linkController,
+                  decoration: InputDecoration(
+                    labelText: 'Meeting Link',
+                    hintText: 'Link',
+                    prefixIcon: Icon(Icons.link),
+                    filled: true,
+                    fillColor: Color(0xFFF5F5F5),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                  ),
+                  style: TextStyle(fontSize: 14),
+                  keyboardType: TextInputType.url,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter the meeting link';
+                    }
+                    return null;
+                  },
+                ),
+                SizedBox(height: 16),
+
+                // Custom buttons (Clear and Create event)
+                CustomButtons(
+                  onClear: _clearFields,
+                  onCreate: _createEvent,
+                ),
+              ],
             ),
-            style: TextStyle(fontSize: 14),
-            keyboardType: TextInputType.phone,
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter the patient\'s phone number';
-              }
-              return null;
-            },
           ),
-          SizedBox(height: 12),
-
-          // Field: Meeting Link
-          TextFormField(
-            controller: _linkController,
-            decoration: InputDecoration(
-              labelText: 'Meeting Link',
-              hintText: 'Link',
-              prefixIcon: Icon(Icons.link),
-              filled: true,
-              fillColor: Color(0xFFF5F5F5),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8.0),
-              ),
-            ),
-            style: TextStyle(fontSize: 14),
-            keyboardType: TextInputType.url,
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter the meeting link';
-              }
-              return null;
-            },
-          ),
-          SizedBox(height: 16),
-
-          // Custom buttons (Clear and Create event)
-          CustomButtons(
-            onClear: _clearFields,
-            onCreate: _createEvent,
-          ),
-
-          // Confetti animation
-          ConfettiWidget(
-            confettiController: _confettiController,
-            blastDirectionality: BlastDirectionality.explosive,
-            shouldLoop: false,
-            colors: const [Colors.green, Colors.blue, Colors.pink, Colors.orange, Colors.purple],
-          ),
-        ],
+        ),
       ),
     );
   }
-} 
+}

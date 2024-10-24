@@ -1,4 +1,3 @@
-// custom_buttons.dart
 import 'package:flutter/material.dart';
 
 class CustomButtons extends StatelessWidget {
@@ -31,7 +30,7 @@ class CustomButtons extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: Color(0xFF40535B), // Botón "Create event" con el color principal
             ),
-            child: Text('Create event', style: TextStyle(color: Colors.white)),
+            child: Text('Create event', style: TextStyle(color: Colors.white), textAlign: TextAlign.center),
           ),
         ),
       ],

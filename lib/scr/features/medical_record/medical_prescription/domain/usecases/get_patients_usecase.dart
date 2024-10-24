@@ -4,7 +4,7 @@ import 'package:trabajo_moviles_ninjacode/scr/features/medical_record/medical_pr
 class GetPatientsUseCase {
   final PatientsDataSource dataSource = PatientsDataSource();
 
-  List<Patient> execute() {
-    return dataSource.getPatients();
+  Future<List<Patient>> execute() async {
+    return await dataSource.getPatients();
   }
 }

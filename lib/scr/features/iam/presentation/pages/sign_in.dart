@@ -98,6 +98,10 @@ class _AuthFormState extends State<AuthForm> {
               context,
               MaterialPageRoute(builder: (context) => HomeScreen()),
             );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Invalid credentials')),
+            );
           }
         }
       } catch (e) {
