@@ -31,40 +31,44 @@ class _HomePatientsScreenState extends State<HomePatientsScreen> {
   }
 
   Future<void> _fetchPatients() async {
-    try {
-      final appointments = await _appointmentApi.fetchAppointmentsForToday(widget.doctorId);
-      final List<Map<String, String>> fetchedPatients = [];
-      final limaTimeZone = tz.getLocation('America/Lima');
+  try {
+    final appointments = await _appointmentApi.fetchAppointmentsForToday(widget.doctorId);
+    final List<Map<String, String>> fetchedPatients = [];
+    final limaTimeZone = tz.getLocation('America/Lima');
 
-      for (var appointment in appointments) {
-        final patientDetails = await _patientService.fetchPatientDetails(appointment['patientId']);
-        final profileDetails = await _profileService.fetchProfileDetails(patientDetails['profileId']);
-        fetchedPatients.add({
-          'name': profileDetails['fullName'],
-          'time': appointment['startTime'],
-          'image': profileDetails['image'], // Assuming 'image' is the key for the profile image URL
-          'eventDate': appointment['eventDate'],
-          'patientId': appointment['patientId'].toString(),
-        });
+    for (var appointment in appointments) {
+      final profileId = await _appointmentApi.getProfileIdByPatientId(appointment['patientId']);
+      if (profileId != null) {
+        final profileDetails = await _appointmentApi.getProfile(profileId);
+        if (profileDetails != null) {
+          fetchedPatients.add({
+            'name': profileDetails['fullName'],
+            'time': appointment['startTime'],
+            'image': profileDetails['image'], // Assuming 'image' is the key for the profile image URL
+            'eventDate': appointment['eventDate'],
+            'patientId': appointment['patientId'].toString(),
+          });
+        }
       }
-
-      // Ordenar las citas por hora
-      fetchedPatients.sort((a, b) {
-        final aTime = tz.TZDateTime.from(DateTime.parse(a['eventDate']!), limaTimeZone);
-        final bTime = tz.TZDateTime.from(DateTime.parse(b['eventDate']!), limaTimeZone);
-        return aTime.compareTo(bTime);
-      });
-
-      setState(() {
-        patients = fetchedPatients;
-        errorMessage = '';
-      });
-    } catch (e) {
-      setState(() {
-        errorMessage = 'Error fetching patients: $e';
-      });
     }
+
+    // Ordenar las citas por hora
+    fetchedPatients.sort((a, b) {
+      final aTime = tz.TZDateTime.from(DateTime.parse(a['eventDate']!), limaTimeZone);
+      final bTime = tz.TZDateTime.from(DateTime.parse(b['eventDate']!), limaTimeZone);
+      return aTime.compareTo(bTime);
+    });
+
+    setState(() {
+      patients = fetchedPatients;
+      errorMessage = '';
+    });
+  } catch (e) {
+    setState(() {
+      errorMessage = 'Error fetching patients: $e';
+    });
   }
+}
 
   @override
   Widget build(BuildContext context) {

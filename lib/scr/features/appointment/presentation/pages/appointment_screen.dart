@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
-import 'package:trabajo_moviles_ninjacode/scr/features/appointment/domain/services/appointment_service.dart';
+import 'package:trabajo_moviles_ninjacode/scr/features/appointment/data/data_sources/remote/medical_appointment_api.dart';
 
 class AppointmentScreen extends StatefulWidget {
   @override
@@ -10,7 +10,7 @@ class AppointmentScreen extends StatefulWidget {
 
 class _AppointmentScreenState extends State<AppointmentScreen> {
   final List<Meeting> _meetings = <Meeting>[];
-  final AppointmentService _appointmentService = AppointmentService();
+  final MedicalAppointmentApi _appointmentService = MedicalAppointmentApi();
 
   @override
   Widget build(BuildContext context) {
@@ -153,7 +153,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
                 };
 
                 try {
-                  final success = await _appointmentService.createAppointment(appointmentData);
+                  final success = await _appointmentService.createMedicalAppointment(appointmentData);
                   if (success) {
                     setState(() {
                       _meetings.add(Meeting(title, startTime, endTime, Colors.blue, false, description));

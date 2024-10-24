@@ -1,8 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:trabajo_moviles_ninjacode/scr/core/utils/usecases/jwt_storage.dart';
-import 'package:trabajo_moviles_ninjacode/scr/features/profile/data/data_sources/remote/patient_service.dart';
-import 'package:trabajo_moviles_ninjacode/scr/features/profile/data/data_sources/remote/profile_service.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
@@ -41,23 +39,38 @@ class MedicalAppointmentApi {
     }
   }
 
-  Future<Map<String, dynamic>?> getPatient(int patientId) async {
+  Future<int?> getProfileIdByPatientId(int patientId) async {
     final token = await _getToken();
     if (token == null) {
       throw Exception('Token not found');
     }
 
     final response = await http.get(
-      Uri.parse('$_baseUrl/medical-record/patient/$patientId'),
+      Uri.parse('$_baseUrl/medical-record/patient/$patientId/profile-id'),
       headers: {'Authorization': 'Bearer $token'},
     );
 
     if (response.statusCode == 200) {
-      return jsonDecode(response.body);
+      return int.parse(response.body);
     } else if (response.statusCode == 401) {
       throw Exception('Unauthorized: Invalid or expired token');
     } else {
-      throw Exception('Failed to load patient details');
+      throw Exception('Failed to load profile ID');
+    }
+  }
+
+  Future<int> getDoctorIdByProfileId(int profileId) async {
+    final token = await _getToken();
+    final response = await http.get(
+      Uri.parse('$_baseUrl/doctor/doctor/profile/$profileId'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      return data['id'];
+    } else {
+      throw Exception('Failed to load doctor ID');
     }
   }
 
@@ -68,7 +81,7 @@ class MedicalAppointmentApi {
     }
 
     final response = await http.get(
-      Uri.parse('$_baseUrl/medicalAppointment/medicalAppointments/doctor/1'),
+      Uri.parse('$_baseUrl/medicalAppointment/medicalAppointments/doctor/$doctorId'),
       headers: {'Authorization': 'Bearer $token'},
     );
 
