@@ -79,6 +79,10 @@ class MedicalAppointmentApi {
     }
   }
 
+  Future<int> getDoctorId() async {
+    return await _getDoctorId();
+  }
+
   Future<List<Map<String, dynamic>>> fetchAppointmentsForToday() async {
     final doctorId = await _getDoctorId();
     final token = await _getToken();
@@ -125,6 +129,45 @@ class MedicalAppointmentApi {
       throw Exception('Unauthorized: Invalid or expired token');
     } else {
       throw Exception('Failed to load appointments');
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> fetchPatients() async {
+    final token = await _getToken();
+    final doctorId = await _getDoctorId();
+    if (token == null) {
+      throw Exception('Token not found');
+    }
+
+    final response = await http.get(
+      Uri.parse('$_baseUrl/medical-record/patient/doctor/$doctorId'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode == 200) {
+      final List<Map<String, dynamic>> patients = List<Map<String, dynamic>>.from(json.decode(response.body));
+      final List<Map<String, dynamic>> patientProfiles = [];
+
+      for (var patient in patients) {
+        final profileResponse = await http.get(
+          Uri.parse('$_baseUrl/profile/profile/${patient['profileId']}'),
+          headers: {'Authorization': 'Bearer $token'},
+        );
+
+        if (profileResponse.statusCode == 200) {
+          final profileData = json.decode(profileResponse.body);
+          patientProfiles.add({
+            'patientId': patient['id'],
+            'fullName': profileData['fullName'],
+          });
+        }
+      }
+
+      return patientProfiles;
+    } else if (response.statusCode == 401) {
+      throw Exception('Unauthorized: Invalid or expired token');
+    } else {
+      throw Exception('Failed to load patients');
     }
   }
 

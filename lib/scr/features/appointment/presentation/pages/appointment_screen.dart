@@ -11,11 +11,14 @@ class AppointmentScreen extends StatefulWidget {
 class _AppointmentScreenState extends State<AppointmentScreen> {
   final List<Meeting> _meetings = <Meeting>[];
   final MedicalAppointmentApi _appointmentService = MedicalAppointmentApi();
+  List<Map<String, dynamic>> _patients = [];
+  int? _selectedPatientId;
 
   @override
   void initState() {
     super.initState();
     _loadAppointments();
+    _loadPatients();
   }
 
   Future<void> _loadAppointments() async {
@@ -39,6 +42,19 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to load appointments: $e')),
+      );
+    }
+  }
+
+  Future<void> _loadPatients() async {
+    try {
+      final patients = await _appointmentService.fetchPatients();
+      setState(() {
+        _patients = patients;
+      });
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load patients: $e')),
       );
     }
   }
@@ -94,8 +110,6 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
     final TextEditingController descriptionController = TextEditingController();
     final TextEditingController startTimeController = TextEditingController();
     final TextEditingController endTimeController = TextEditingController();
-    final TextEditingController doctorIdController = TextEditingController();
-    final TextEditingController patientIdController = TextEditingController();
 
     // Precargar las horas seleccionadas
     final DateTime startTime = date;
@@ -132,15 +146,20 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
                   keyboardType: TextInputType.number,
                   inputFormatters: [TimeTextInputFormatter()],
                 ),
-                TextField(
-                  controller: doctorIdController,
-                  decoration: const InputDecoration(labelText: 'Doctor ID'),
-                  keyboardType: TextInputType.number,
-                ),
-                TextField(
-                  controller: patientIdController,
-                  decoration: const InputDecoration(labelText: 'Patient ID'),
-                  keyboardType: TextInputType.number,
+                DropdownButtonFormField<int>(
+                  value: _selectedPatientId,
+                  items: _patients.map((patient) {
+                    return DropdownMenuItem<int>(
+                      value: patient['patientId'],
+                      child: Text(patient['fullName']),
+                    );
+                  }).toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedPatientId = value;
+                    });
+                  },
+                  decoration: const InputDecoration(labelText: 'Choose a Patient'),
                 ),
               ],
             ),
@@ -170,17 +189,22 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
                   int.parse(endTimeController.text.split(':')[0]),
                   int.parse(endTimeController.text.split(':')[1]),
                 );
-                final int doctorId = int.parse(doctorIdController.text);
-                final int patientId = int.parse(patientIdController.text);
+
+                if (_selectedPatientId == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Please choose a patient')),
+                  );
+                  return;
+                }
 
                 final appointmentData = {
                   'eventDate': date.toIso8601String().split('T')[0],
-                  'startTime': startTime.toIso8601String(),
-                  'endTime': endTime.toIso8601String(),
+                  'startTime': startTimeController.text, // Formato HH:MM
+                  'endTime': endTimeController.text, // Formato HH:MM
                   'title': title,
                   'description': description,
-                  'doctorId': doctorId,
-                  'patientId': patientId,
+                  'doctorId': await _appointmentService.getDoctorId(),
+                  'patientId': _selectedPatientId,
                 };
 
                 try {
