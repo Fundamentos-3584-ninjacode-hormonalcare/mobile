@@ -32,7 +32,7 @@ class _HomePatientsScreenState extends State<HomePatientsScreen> {
 
   Future<void> _fetchPatients() async {
   try {
-    final appointments = await _appointmentApi.fetchAppointmentsForToday(widget.doctorId);
+    final appointments = await _appointmentApi.fetchAppointmentsForToday();
     final List<Map<String, String>> fetchedPatients = [];
     final limaTimeZone = tz.getLocation('America/Lima');
 

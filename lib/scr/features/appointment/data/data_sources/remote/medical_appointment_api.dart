@@ -59,8 +59,13 @@ class MedicalAppointmentApi {
     }
   }
 
-  Future<int> getDoctorIdByProfileId(int profileId) async {
+  Future<int> _getDoctorId() async {
     final token = await _getToken();
+    final profileId = await JwtStorage.getProfileId();
+    if (profileId == null) {
+      throw Exception('Profile ID not found');
+    }
+
     final response = await http.get(
       Uri.parse('$_baseUrl/doctor/doctor/profile/$profileId'),
       headers: {'Authorization': 'Bearer $token'},
@@ -74,7 +79,8 @@ class MedicalAppointmentApi {
     }
   }
 
-  Future<List<Map<String, dynamic>>> fetchAppointmentsForToday(int doctorId) async {
+  Future<List<Map<String, dynamic>>> fetchAppointmentsForToday() async {
+    final doctorId = await _getDoctorId();
     final token = await _getToken();
     if (token == null) {
       throw Exception('Token not found');
