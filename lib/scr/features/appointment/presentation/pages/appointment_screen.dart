@@ -75,10 +75,11 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Center(
-          child: SizedBox(
-            width: 350, // Ajusta el ancho según tus necesidades
-            height: 400, // Ajusta la altura según tus necesidades
-            child: Container(
+          child: LayoutBuilder(
+            builder: (BuildContext context, BoxConstraints constraints) {
+              return Container(
+              width: constraints.maxWidth * 0.9, // Ajusta el ancho según tus necesidades
+              height: constraints.maxHeight * 0.8,// Ajusta la altura según tus necesidades
               decoration: BoxDecoration(
                 border: Border.all(color: Colors.blueAccent),
                 borderRadius: BorderRadius.circular(10),
@@ -91,12 +92,13 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
                   appointmentDisplayMode: MonthAppointmentDisplayMode.appointment,
                 ),
               ),
-            ),
-          ),
+            );
+          },
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   void _calendarTapped(CalendarTapDetails details) {
     if (details.targetElement == CalendarElement.calendarCell ||
