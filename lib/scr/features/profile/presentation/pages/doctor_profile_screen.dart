@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:trabajo_moviles_ninjacode/scr/features/iam/presentation/pages/sign_in.dart';
 import 'package:trabajo_moviles_ninjacode/scr/features/profile/data/data_sources/remote/profile_service.dart';
 import 'package:trabajo_moviles_ninjacode/scr/core/utils/usecases/jwt_storage.dart';
 import 'package:trabajo_moviles_ninjacode/scr/features/iam/domain/services/auth_service.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import '../widgets/profile_picture_widget.dart';
 import '../widgets/profile_field_widget.dart';
 import '../widgets/logout_button_widget.dart';
-import '../widgets/save_cancel_buttons_widget.dart';
-import '../widgets/edit_mode_widget.dart';
+import '../widgets/edit_mode_doctor_widget.dart';
+import 'package:trabajo_moviles_ninjacode/scr/features/iam/presentation/pages/sign_in.dart';
 
 class DoctorProfileScreen extends StatefulWidget {
   @override
@@ -16,28 +17,36 @@ class DoctorProfileScreen extends StatefulWidget {
 
 class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
   bool isEditing = false;
-  Future<Map<String, dynamic>>? _profileDetails;
-  Future<Map<String, dynamic>>? _doctorProfessionalDetails;
+  Future<Map<String, dynamic>>? _doctorProfileDetails;
   final AuthService _authService = AuthService();
+  final ProfileService _profileService = ProfileService();
+  int? _doctorId;
 
   @override
   void initState() {
     super.initState();
-    _loadProfileDetails();
+    _loadDoctorProfileDetails();
   }
 
-  Future<void> _loadProfileDetails() async {
-    final userId = await JwtStorage.getUserId();
+  Future<void> _loadDoctorProfileDetails() async {
     final profileId = await JwtStorage.getProfileId();
 
-    if (userId != null && profileId != null) {
+    if (profileId != null) {
+      final profileDetails = await _profileService.fetchProfileDetails(profileId);
+      final doctorProfessionalDetails = await _profileService.fetchDoctorProfessionalDetails(profileId);
+
+      final combinedDetails = {
+        ...profileDetails,
+        ...doctorProfessionalDetails,
+      };
+
       setState(() {
-        _profileDetails = ProfileService().fetchProfileDetails(userId);
-        _doctorProfessionalDetails = ProfileService().fetchDoctorProfessionalDetails(profileId);
+        _doctorProfileDetails = Future.value(combinedDetails);
+        _doctorId = doctorProfessionalDetails['id'];
       });
     } else {
-      // Maneja el caso en que no se encuentran los IDs
-      print('User ID or Profile ID not found');
+      // Maneja el caso en que no se encuentra el profile ID
+      print('Profile ID not found');
     }
   }
 
@@ -82,6 +91,21 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
     );
   }
 
+  Future<void> _saveDoctorProfileDetails(Map<String, dynamic> updatedDoctorProfile) async {
+    if (_doctorId != null) {
+      try {
+        await _profileService.updateDoctorProfile(_doctorId!, updatedDoctorProfile);
+        print('Doctor profile updated successfully');
+        toggleEditMode();
+        _loadDoctorProfileDetails();
+      } catch (e) {
+        print('Error updating doctor profile: $e');
+      }
+    } else {
+      print('Doctor ID not found');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -123,7 +147,7 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
             // Display fields or editable fields based on edit mode
             if (!isEditing) ...[
               FutureBuilder<Map<String, dynamic>>(
-                future: _profileDetails,
+                future: _doctorProfileDetails,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return Center(child: CircularProgressIndicator());
@@ -132,34 +156,21 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
                   } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
                     return Center(child: Text('No data found'));
                   } else {
-                    final profile = snapshot.data!;
+                    final doctorProfile = snapshot.data!;
+                    final fullName = doctorProfile['fullName'] ?? '';
+                    final nameParts = fullName.split(' ');
+                    final firstName = nameParts.isNotEmpty ? nameParts[0] : '';
+                    final lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
+
                     return Column(
                       children: [
-                        ProfileFieldWidget(label: "Full Name", value: profile['fullName'] ?? ''),
-                        ProfileFieldWidget(label: "Gender", value: profile['gender'] ?? ''),
-                        ProfileFieldWidget(label: "Phone Number", value: profile['phoneNumber'] ?? ''),
-                        ProfileFieldWidget(label: "Birthday", value: profile['birthday'] ?? ''),
-                        // Add more fields as needed
-                      ],
-                    );
-                  }
-                },
-              ),
-              FutureBuilder<Map<String, dynamic>>(
-                future: _doctorProfessionalDetails,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return Center(child: CircularProgressIndicator());
-                  } else if (snapshot.hasError) {
-                    return Center(child: Text('Error: ${snapshot.error}'));
-                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return Center(child: Text('No data found'));
-                  } else {
-                    final professionalDetails = snapshot.data!;
-                    return Column(
-                      children: [
-                        ProfileFieldWidget(label: "Professional ID", value: professionalDetails['professionalIdentificationNumber']?.toString() ?? ''),
-                        ProfileFieldWidget(label: "Subspecialty", value: professionalDetails['subSpecialty'] ?? ''),
+                        ProfileFieldWidget(label: "First Name", value: firstName),
+                        ProfileFieldWidget(label: "Last Name", value: lastName),
+                        ProfileFieldWidget(label: "Gender", value: doctorProfile['gender'] ?? ''),
+                        ProfileFieldWidget(label: "Phone Number", value: doctorProfile['phoneNumber'] ?? ''),
+                        ProfileFieldWidget(label: "Birthday", value: doctorProfile['birthday'] ?? ''),
+                        ProfileFieldWidget(label: "Professional ID Number", value: doctorProfile['professionalIdentificationNumber']?.toString() ?? ''),
+                        ProfileFieldWidget(label: "SubSpecialty", value: doctorProfile['subSpecialty'] ?? ''),
                         // Add more fields as needed
                       ],
                     );
@@ -167,16 +178,27 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
                 },
               ),
             ] else ...[
-              EditModeWidget(),
+              FutureBuilder<Map<String, dynamic>>(
+                future: _doctorProfileDetails,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(child: CircularProgressIndicator());
+                  } else if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return Center(child: Text('No data found'));
+                  } else {
+                    return EditModeDoctorWidget(
+                      doctorProfile: snapshot.data!,
+                      onCancel: toggleEditMode,
+                      onSave: (updatedDoctorProfile) {
+                        _saveDoctorProfileDetails(updatedDoctorProfile);
+                      },
+                    );
+                  }
+                },
+              ),
             ],
-
-            SizedBox(height: 20.0),
-
-            // Save and Cancel buttons in edit mode
-            if (isEditing) SaveCancelButtonsWidget(onCancel: toggleEditMode, onSave: () {
-              // Save functionality
-              toggleEditMode();
-            }),
           ],
         ),
       ),

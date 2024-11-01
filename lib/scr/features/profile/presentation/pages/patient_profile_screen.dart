@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:trabajo_moviles_ninjacode/scr/features/profile/data/data_sources/remote/profile_service.dart';
 import 'package:trabajo_moviles_ninjacode/scr/core/utils/usecases/jwt_storage.dart';
 import 'package:trabajo_moviles_ninjacode/scr/features/iam/domain/services/auth_service.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 import '../widgets/profile_picture_widget.dart';
 import '../widgets/profile_field_widget.dart';
 import '../widgets/logout_button_widget.dart';
-import '../widgets/save_cancel_buttons_widget.dart';
 import '../widgets/edit_mode_widget.dart';
 import 'package:trabajo_moviles_ninjacode/scr/features/iam/presentation/pages/sign_in.dart';
 
@@ -18,6 +19,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
   bool isEditing = false;
   Future<Map<String, dynamic>>? _profileDetails;
   final AuthService _authService = AuthService();
+  final ProfileService _profileService = ProfileService();
 
   @override
   void initState() {
@@ -30,7 +32,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
 
     if (userId != null) {
       setState(() {
-        _profileDetails = ProfileService().fetchProfileDetails(userId);
+        _profileDetails = _profileService.fetchProfileDetails(userId);
       });
     } else {
       // Maneja el caso en que no se encuentra el user ID
@@ -77,6 +79,29 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
         );
       },
     );
+  }
+
+  Future<void> _saveProfileDetails(Map<String, dynamic> updatedProfile) async {
+    final profileId = await JwtStorage.getProfileId();
+    if (profileId != null) {
+      final response = await http.put(
+        Uri.parse('http://localhost:8080/api/v1/profile/profile/$profileId/full-update'),
+        headers: {'Authorization': 'Bearer your_token', 'Content-Type': 'application/json'},
+        body: json.encode(updatedProfile),
+      );
+
+      if (response.statusCode == 200) {
+        // Actualización exitosa
+        print('Profile updated successfully');
+        toggleEditMode();
+        _loadProfileDetails();
+      } else {
+        // Manejar error
+        print('Error updating profile: ${response.body}');
+      }
+    } else {
+      print('Profile ID not found');
+    }
   }
 
   @override
@@ -149,16 +174,27 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                 },
               ),
             ] else ...[
-              EditModeWidget(),
+              FutureBuilder<Map<String, dynamic>>(
+                future: _profileDetails,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return Center(child: CircularProgressIndicator());
+                  } else if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return Center(child: Text('No data found'));
+                  } else {
+                    return EditModeWidget(
+                      profile: snapshot.data!,
+                      onCancel: toggleEditMode,
+                      onSave: (updatedProfile) {
+                        _saveProfileDetails(updatedProfile);
+                      },
+                    );
+                  }
+                },
+              ),
             ],
-
-            SizedBox(height: 20.0),
-
-            // Save and Cancel buttons in edit mode
-            if (isEditing) SaveCancelButtonsWidget(onCancel: toggleEditMode, onSave: () {
-              // Save functionality
-              toggleEditMode();
-            }),
           ],
         ),
       ),
