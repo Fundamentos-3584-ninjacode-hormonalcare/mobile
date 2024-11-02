@@ -6,6 +6,8 @@ import '../../../medical_prescription/domain/models/profile_model.dart';
 import '../../domain/models/medication_model.dart';
 import '../../domain/models/prescription_model.dart';
 import '../../domain/models/treatment_model.dart'; // Importa el modelo de tratamiento
+import '../../domain/models/medicationpost_model.dart'; // Importa el modelo de MedicationPost
+import '../../domain/models/prescriptionpost_model.dart';
 
 class MedicalRecordService {
   final String baseUrl = 'http://localhost:8080/api/v1/medical-record/patient/record';
@@ -13,6 +15,7 @@ class MedicalRecordService {
   final String medicationsUrl = 'http://localhost:8080/api/v1/medical-record/medications';
   final String prescriptionsUrl = 'http://localhost:8080/api/v1/medical-record/medications/prescriptions';
   final String treatmentsUrl = 'http://localhost:8080/api/v1/medical-record/treatments/medicalRecordId'; // URL base para tratamientos
+  final String treatmentspostUrl = 'http://localhost:8080/api/v1/medical-record/treatments'; // URL base para tratamientos
 
   Future<Patient> getPatientById(String patientId) async {
     final token = await JwtStorage.getToken();
@@ -93,5 +96,56 @@ class MedicalRecordService {
       print('Error fetching treatments: ${response.body}');
       throw Exception('Error fetching treatments');
     }
+    
+  }
+
+    Future<http.Response> addMedication(MedicationPost medicationPost) async {
+  final token = await JwtStorage.getToken();
+  final headers = {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer $token',
+  };
+
+  final response = await http.post(
+    Uri.parse(medicationsUrl),
+    headers: headers,
+    body: json.encode(medicationPost.toJson()),
+  );
+
+  return response;
+}
+
+Future<http.Response> addPrescription(PrescriptionPost prescriptionPost) async {
+    final token = await JwtStorage.getToken();
+    final headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $token',
+    };
+
+    final response = await http.post(
+      Uri.parse(prescriptionsUrl),
+      headers: headers,
+      body: json.encode(prescriptionPost.toJson()),
+    );
+
+    return response;
+  }
+  Future<http.Response> addTreatment(Treatment treatment) async {
+    final token = await JwtStorage.getToken();
+      print('Tokenzzz: $token'); // Agrega este log para verificar el token
+
+    final headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $token',
+    };
+
+    final response = await http.post(
+      Uri.parse(treatmentspostUrl),
+      headers: headers,
+      body: json.encode(treatment.toJson()),
+    );
+
+    return response;
   }
 }
+
