@@ -1,9 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:trabajo_moviles_ninjacode/scr/features/iam/domain/services/auth_service.dart';
 import 'package:trabajo_moviles_ninjacode/scr/shared/presentation/pages/home_screen.dart';
+import 'package:trabajo_moviles_ninjacode/scr/features/iam/presentation/pages/select_user_type.dart';
 
-class SignIn extends StatelessWidget {
+class SignIn extends StatefulWidget {
+  @override
+  _SignInState createState() => _SignInState();
+}
+
+class _SignInState extends State<SignIn> {
+  final _formKey = GlobalKey<FormState>();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  bool _obscureText = true;
   final _authService = AuthService();
+
+  void _submit() async {
+    if (_formKey.currentState!.validate()) {
+      try {
+        final token = await _authService.signIn(_emailController.text, _passwordController.text);
+        if (token != null) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => HomeScreen()),
+          );
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Invalid credentials')),
+          );
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +68,13 @@ class SignIn extends StatelessWidget {
                 textAlign: TextAlign.center,
               ),
               SizedBox(height: 40),
-              AuthForm(isSignUp: false),
+              AuthForm(
+                isSignUp: false,
+                onSubmit: _submit,
+                formKey: _formKey,
+                emailController: _emailController,
+                passwordController: _passwordController,
+              ),
               SizedBox(height: 40),
               Text(
                 "Don't have an account?",
@@ -47,14 +85,13 @@ class SignIn extends StatelessWidget {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => SignUp()),
+                    MaterialPageRoute(builder: (context) => SelectUserType()),
                   );
                 },
                 child: Text(
                   'Sign up',
                   style: TextStyle(
                     color: Colors.blueGrey[700],
-                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ),
@@ -66,172 +103,69 @@ class SignIn extends StatelessWidget {
   }
 }
 
-class AuthForm extends StatefulWidget {
+class AuthForm extends StatelessWidget {
   final bool isSignUp;
+  final VoidCallback onSubmit;
+  final GlobalKey<FormState> formKey;
+  final TextEditingController emailController;
+  final TextEditingController passwordController;
 
-  const AuthForm({required this.isSignUp});
-
-  @override
-  _AuthFormState createState() => _AuthFormState();
-}
-
-class _AuthFormState extends State<AuthForm> {
-  final _formKey = GlobalKey<FormState>();
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-  bool _obscureText = true;
-  final _authService = AuthService();
-
-  void _submit() async {
-    if (_formKey.currentState!.validate()) {
-      try {
-        if (widget.isSignUp) {
-          await _authService.signUp(_emailController.text, _passwordController.text);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('User registered successfully')),
-          );
-          Navigator.pop(context);
-        } else {
-          final token = await _authService.signIn(_emailController.text, _passwordController.text);
-          if (token != null) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => HomeScreen()),
-            );
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Invalid credentials')),
-            );
-          }
-        }
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
-      }
-    }
-  }
+  const AuthForm({
+    Key? key,
+    required this.isSignUp,
+    required this.onSubmit,
+    required this.formKey,
+    required this.emailController,
+    required this.passwordController,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(24.0),
-      decoration: BoxDecoration(
-        color: Colors.blueGrey[100],
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Text(
-              widget.isSignUp ? 'Sign Up' : 'Sign In',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
-            ),
-            SizedBox(height: 20),
-            TextFormField(
-              controller: _emailController,
-              decoration: InputDecoration(
-                labelText: 'Username',
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter your username';
-                }
-                return null;
-              },
-            ),
-            SizedBox(height: 20),
-            TextFormField(
-              controller: _passwordController,
-              obscureText: _obscureText,
-              decoration: InputDecoration(
-                labelText: 'Password',
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    _obscureText ? Icons.visibility_off : Icons.visibility,
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      _obscureText = !_obscureText;
-                    });
-                  },
-                ),
-              ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter your password';
-                }
-                return null;
-              },
-            ),
-            SizedBox(height: 20),
-            MouseRegion(
-              cursor: SystemMouseCursors.click,
-              child: ElevatedButton(
-                onPressed: _submit,
-                style: ElevatedButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 80,
-                    vertical: 15,
-                  ),
-                  backgroundColor: Colors.blueGrey[700],
-                ),
-                child: Text(
-                  widget.isSignUp ? 'Register' : 'Enter',
-                  style: TextStyle(
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class SignUp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Sign Up'),
-        backgroundColor: Color(0xFF6A828D),
-      ),
-      body: Center(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                SizedBox(height: MediaQuery.of(context).size.height * 0.1),
-                AuthForm(isSignUp: true),
-                SizedBox(height: MediaQuery.of(context).size.height * 0.1),
-              ],
-            ),
+    return Form(
+      key: formKey,
+      child: Column(
+        children: [
+          TextFormField(
+            controller: emailController,
+            decoration: InputDecoration(labelText: 'Email'),
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter your email';
+              }
+              return null;
+            },
           ),
-        ),
+          TextFormField(
+            controller: passwordController,
+            decoration: InputDecoration(labelText: 'Password'),
+            obscureText: true,
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please enter your password';
+              }
+              return null;
+            },
+          ),
+          if (isSignUp)
+            TextFormField(
+              decoration: InputDecoration(labelText: 'Confirm Password'),
+              obscureText: true,
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'Please confirm your password';
+                }
+                if (value != passwordController.text) {
+                  return 'Passwords do not match';
+                }
+                return null;
+              },
+            ),
+          SizedBox(height: 20),
+          ElevatedButton(
+            onPressed: onSubmit,
+            child: Text(isSignUp ? 'Sign Up' : 'Sign In'),
+          ),
+        ],
       ),
     );
   }
