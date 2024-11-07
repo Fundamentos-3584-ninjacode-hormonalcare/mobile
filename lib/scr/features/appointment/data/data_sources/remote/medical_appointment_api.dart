@@ -197,4 +197,65 @@ class MedicalAppointmentApi {
       throw Exception('Failed to create appointment');
     }
   }
+
+  Future<bool> updateMedicalAppointment(
+    String medicalAppointmentId,
+    String eventDate,
+    String startTime,
+    String endTime,
+    String title,
+    String description,
+    int doctorId,
+    int patientId,
+  ) async {
+    final token = await _getToken();
+    if (token == null) {
+      throw Exception('Token not found');
+    }
+
+    final String url = '$_baseUrl/medicalAppointment/$medicalAppointmentId';
+
+    // Obtener los datos existentes de la cita médica
+    final existingAppointmentResponse = await http.get(
+      Uri.parse(url),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (existingAppointmentResponse.statusCode != 200) {
+      throw Exception('Failed to fetch existing appointment data');
+    }
+
+    final existingAppointmentData = jsonDecode(existingAppointmentResponse.body);
+
+    // Construir el cuerpo de la solicitud PUT con los datos proporcionados y los datos existentes
+    final updatedAppointmentData = {
+      'eventDate': eventDate,
+      'startTime': startTime,
+      'endTime': endTime,
+      'title': title,
+      'description': description,
+      'doctorId': existingAppointmentData['doctorId'],
+      'patientId': patientId,
+    };
+
+    final response = await http.put(
+      Uri.parse(url),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode(updatedAppointmentData),
+    );
+
+    if (response.statusCode == 200) {
+      return true;
+    } else if (response.statusCode == 401) {
+      throw Exception('Unauthorized: Invalid or expired token');
+    } else {
+      throw Exception('Failed to update appointment');
+    }
+  }
 }
