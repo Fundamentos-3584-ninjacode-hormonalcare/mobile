@@ -171,7 +171,7 @@ class MedicalAppointmentApi {
     }
   }
 
-  Future<bool> createMedicalAppointment(Map<String, dynamic> appointmentData) async {
+  Future<Map<String, dynamic>> createMedicalAppointment(Map<String, dynamic> appointmentData) async {
     final token = await _getToken();
     final userId = await _getUserId();
     if (token == null || userId == null) {
@@ -190,7 +190,7 @@ class MedicalAppointmentApi {
     );
 
     if (response.statusCode == 201) {
-      return true;
+      return jsonDecode(response.body);
     } else if (response.statusCode == 401) {
       throw Exception('Unauthorized: Invalid or expired token');
     } else {
@@ -207,6 +207,7 @@ class MedicalAppointmentApi {
     String description,
     int doctorId,
     int patientId,
+    String color, // Añadir el color aquí
   ) async {
     final token = await _getToken();
     if (token == null) {
@@ -239,6 +240,7 @@ class MedicalAppointmentApi {
       'description': description,
       'doctorId': existingAppointmentData['doctorId'],
       'patientId': patientId,
+      'color': color, // Añadir el color aquí
     };
 
     final response = await http.put(
@@ -256,6 +258,28 @@ class MedicalAppointmentApi {
       throw Exception('Unauthorized: Invalid or expired token');
     } else {
       throw Exception('Failed to update appointment');
+    }
+  }
+  Future<bool> deleteMedicalAppointment(String medicalAppointmentId) async {
+    final token = await _getToken();
+    if (token == null) {
+      throw Exception('Token not found');
+    }
+
+    final response = await http.delete(
+      Uri.parse('$_baseUrl/medicalAppointment/$medicalAppointmentId'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+    );
+
+    if (response.statusCode == 200) {
+      return true;
+    } else if (response.statusCode == 401) {
+      throw Exception('Unauthorized: Invalid or expired token');
+    } else {
+      throw Exception('Failed to delete appointment');
     }
   }
 }
