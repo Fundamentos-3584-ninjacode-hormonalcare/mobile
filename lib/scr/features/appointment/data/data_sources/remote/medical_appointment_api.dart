@@ -301,7 +301,7 @@ class MedicalAppointmentApi {
       },
     );
 
-    if (response.statusCode == 200) {
+    if (response.statusCode == 204) {
       return true;
     } else if (response.statusCode == 401) {
       throw Exception('Unauthorized: Invalid or expired token');

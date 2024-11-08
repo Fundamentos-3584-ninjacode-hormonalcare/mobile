@@ -36,14 +36,12 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
     super.initState();
     _loadAppointments();
     _loadPatients();
-    calendarDataSource = MeetingDataSource(_meetings); // Inicialización aquí
+    calendarDataSource = MeetingDataSource(_meetings); 
   }
 
  Future<void> _loadAppointments() async {
   try {
     final appointments = await _appointmentService.fetchAllAppointments();
-
-    // Procesa los datos antes de setState
     final List<Meeting> loadedMeetings = appointments.map<Meeting>((appointment) {
       final startTime = DateTime.parse('${appointment['eventDate']}T${appointment['startTime']}:00');
       final endTime = DateTime.parse('${appointment['eventDate']}T${appointment['endTime']}:00');
@@ -66,14 +64,14 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
       _meetings.addAll(loadedMeetings);
       calendarDataSource = MeetingDataSource(_meetings); // Refresca calendarDataSource
     });
-
-  } catch (e) {
+  } 
+  catch (e) {
     print('Error loading appointments: $e');
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Failed to load appointments: $e')),
     );
   }
-}
+  }
 
 
 
@@ -90,82 +88,80 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
     }
   }
 
-    Future<void> _updateAppointment(Meeting meeting) async {
-  try {
-    print('Updating appointment with ID: ${meeting.id}');
-    print('Start time: ${meeting.from.toIso8601String().split('T')[0]} ${meeting.from.hour.toString().padLeft(2, '0')}:${meeting.from.minute.toString().padLeft(2, '0')}');
-    print('End time: ${meeting.to.hour.toString().padLeft(2, '0')}:${meeting.to.minute.toString().padLeft(2, '0')}');
-    print('Event name: ${meeting.eventName}');
-    print('Description: ${meeting.description}');
-    print('Doctor ID: ${await _appointmentService.getDoctorId()}');
-    print('Patient ID: $_selectedPatientId');
-    print('Color: ${meeting.background.value.toRadixString(16)}');
+  
+  Future<void> _updateAppointment(Meeting meeting) async {
+    try {
+      print('Updating appointment with ID: ${meeting.id}');
+      print('Start time: ${meeting.from.toIso8601String().split('T')[0]} ${meeting.from.hour.toString().padLeft(2, '0')}:${meeting.from.minute.toString().padLeft(2, '0')}');
+      print('End time: ${meeting.to.hour.toString().padLeft(2, '0')}:${meeting.to.minute.toString().padLeft(2, '0')}');
+      print('Event name: ${meeting.eventName}');
+      print('Description: ${meeting.description}');
+      print('Doctor ID: ${await _appointmentService.getDoctorId()}');
+      print('Patient ID: $_selectedPatientId');
+      print('Color: ${meeting.background.value.toRadixString(16)}');
 
-    final success = await _appointmentService.updateMedicalAppointment(
-      meeting.id, // Assuming 'id' is the unique identifier for the appointment
-      meeting.from.toIso8601String().split('T')[0],
-      '${meeting.from.hour.toString().padLeft(2, '0')}:${meeting.from.minute.toString().padLeft(2, '0')}',
-      '${meeting.to.hour.toString().padLeft(2, '0')}:${meeting.to.minute.toString().padLeft(2, '0')}',
-      meeting.eventName,
-      meeting.description,
-      await _appointmentService.getDoctorId(),
-      _selectedPatientId!,
-      meeting.background.value.toRadixString(16),
-    );
-
-    if (success) {
-      await _loadAppointments();  // Recarga las citas
-
-      setState(() {}); // Refresca la pantalla con el nuevo dataSource
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Appointment updated successfully!')),
+      final success = await _appointmentService.updateMedicalAppointment(
+        meeting.id, 
+        meeting.from.toIso8601String().split('T')[0],
+        '${meeting.from.hour.toString().padLeft(2, '0')}:${meeting.from.minute.toString().padLeft(2, '0')}',
+        '${meeting.to.hour.toString().padLeft(2, '0')}:${meeting.to.minute.toString().padLeft(2, '0')}',
+        meeting.eventName,
+        meeting.description,
+        await _appointmentService.getDoctorId(),
+        _selectedPatientId!,
+        meeting.background.value.toRadixString(16),
       );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to update appointment')),
-      );
-    }
-  } catch (e) {
+
+      if (success) {
+        await _loadAppointments();  
+
+        setState(() {}); 
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Appointment updated successfully!')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update appointment')),
+        );
+      }
+    } catch (e) {
     print('Error updating appointment: $e');
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Failed to update appointment: $e')),
     );
   }
-}
+  }
 
-Future<void> _deleteAppointment(String appointmentId) async {
-  try {
-    final success = await _appointmentService.deleteMedicalAppointment(appointmentId);
-    if (success) {
-      await _loadAppointments(); // Recargar citas
+  Future<void> _deleteAppointment(String appointmentId) async {
+    try {
+      final success = await _appointmentService.deleteMedicalAppointment(appointmentId);
+      if (success) {
+        await _loadAppointments(); 
 
-      // Refrescar calendarDataSource y asegurar actualización visual inmediata
-      setState(() {
-        calendarDataSource = MeetingDataSource(_meetings);
-      });
+        setState(() {}); 
 
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Appointment deleted successfully!')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to delete appointment')),
+        );
+      }
+    } catch (e) {
+      print('Error deleting appointment: $e');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Appointment deleted successfully!')),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to delete appointment')),
+        SnackBar(content: Text('Failed to delete appointment: $e')),
       );
     }
-  } catch (e) {
-    print('Error deleting appointment: $e');
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Failed to delete appointment: $e')),
-    );
   }
-}
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color(0xFF6A828D), // Color de la AppBar
+        backgroundColor: Color(0xFF6A828D), 
         title: Text('Medical Appointments'),
         centerTitle: true,
         titleTextStyle: TextStyle(
@@ -196,8 +192,8 @@ Future<void> _deleteAppointment(String appointmentId) async {
           child: LayoutBuilder(
             builder: (BuildContext context, BoxConstraints constraints) {
               return Container(
-                width: constraints.maxWidth * 0.9, // Ajusta el ancho según tus necesidades
-                height: constraints.maxHeight * 0.8, // Ajusta la altura según tus necesidades
+                width: constraints.maxWidth, 
+                height: constraints.maxHeight, 
                 decoration: BoxDecoration(
                   border: Border.all(color: Colors.blueAccent),
                   borderRadius: BorderRadius.circular(10),
