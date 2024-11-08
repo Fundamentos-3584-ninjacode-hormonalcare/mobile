@@ -41,7 +41,7 @@ class _HomePatientsScreenState extends State<HomePatientsScreen> {
         throw Exception('Only doctors can view patients');
       }
 
-      final appointments = await _appointmentApi.fetchAppointmentsForToday(widget.doctorId);
+      final appointments = await _appointmentApi.fetchAppointmentsForTodayPatientListScreen(widget.doctorId);
       final List<Map<String, String>> fetchedPatients = [];
       final limaTimeZone = tz.getLocation('America/Lima');
 
