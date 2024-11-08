@@ -88,6 +88,28 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
     }
   }
 
+  Future<void> _createAppointment(Map<String, dynamic> appointmentData) async {
+    try {
+      final success = await _appointmentService.createMedicalAppointment(appointmentData);
+      if (success) {
+        await _loadAppointments(); // Recargar las citas después de crear una nueva
+        setState(() {}); // Asegúrate de que la pantalla se actualice
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Appointment created successfully!')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to create appointment')),
+        );
+      }
+    } catch (e) {
+      print('Error creating appointment: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to create appointment: $e')),
+      );
+    }
+  }
+
   
   Future<void> _updateAppointment(Meeting meeting) async {
     try {
@@ -370,17 +392,17 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
     );
   }
 
-  void _showAddEventDialog(DateTime date, List<dynamic>? appointments) {
+    void _showAddEventDialog(DateTime date, List<dynamic>? appointments) {
     final TextEditingController titleController = TextEditingController();
     final TextEditingController descriptionController = TextEditingController();
     final TextEditingController startTimeController = TextEditingController();
     final TextEditingController endTimeController = TextEditingController();
-
+  
     final DateTime startTime = date;
     final DateTime endTime = date.add(Duration(hours: 1));
     startTimeController.text = '${startTime.hour.toString().padLeft(2, '0')}:${startTime.minute.toString().padLeft(2, '0')}';
     endTimeController.text = '${endTime.hour.toString().padLeft(2, '0')}:${endTime.minute.toString().padLeft(2, '0')}';
-
+  
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -462,14 +484,14 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
                   int.parse(endTimeController.text.split(':')[0]),
                   int.parse(endTimeController.text.split(':')[1]),
                 );
-
+  
                 if (_selectedPatientId == null) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('Please choose a patient')),
                   );
                   return;
                 }
-
+  
                 final appointmentData = {
                   'eventDate': date.toIso8601String().split('T')[0],
                   'startTime': startTimeController.text, // Formato HH:MM
@@ -480,25 +502,9 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
                   'patientId': _selectedPatientId,
                   'color': _selectedColor.value.toRadixString(16), // Save color as hex string
                 };
-
-                try {
-                  final success = await _appointmentService.createMedicalAppointment(appointmentData);
-                  if (success == true) {
-                    await _loadAppointments(); 
-                    setState(() {
-                      calendarDataSource = MeetingDataSource(_meetings);
-                    });
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Appointment created successfully!')),
-                    );
-                  }
-                } catch (e) {
-                  print('Error creating appointment: $e');
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Failed to create appointment: $e')),
-                  );
-                }
-
+  
+                await _createAppointment(appointmentData);
+  
                 Navigator.of(context).pop();
               },
               child: const Text('Add'),
@@ -508,7 +514,6 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
       },
     );
   }
-
 }
 
 class MeetingDataSource extends CalendarDataSource {

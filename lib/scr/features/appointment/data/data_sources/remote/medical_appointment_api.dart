@@ -198,15 +198,15 @@ class MedicalAppointmentApi {
     }
   }
 
-  Future<Map<String, dynamic>> createMedicalAppointment(Map<String, dynamic> appointmentData) async {
+  Future<bool> createMedicalAppointment(Map<String, dynamic> appointmentData) async {
     final token = await _getToken();
     final userId = await _getUserId();
     if (token == null || userId == null) {
       throw Exception('Token or user ID not found');
     }
-
+  
     appointmentData['userId'] = userId; // Add userId to the appointment data
-
+  
     final response = await http.post(
       Uri.parse('$_baseUrl/medicalAppointment'),
       headers: {
@@ -215,9 +215,9 @@ class MedicalAppointmentApi {
       },
       body: jsonEncode(appointmentData),
     );
-
+  
     if (response.statusCode == 201) {
-      return jsonDecode(response.body);
+      return true;
     } else if (response.statusCode == 401) {
       throw Exception('Unauthorized: Invalid or expired token');
     } else {
