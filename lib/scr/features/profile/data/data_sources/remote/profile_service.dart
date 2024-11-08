@@ -19,6 +19,22 @@ class ProfileService {
     }
   }
 
+  Future<void> updateProfile(int profileId, Map<String, dynamic> updatedProfile) async {
+    final token = await JwtStorage.getToken();
+    final response = await http.put(
+      Uri.parse('$baseUrl/profile/profile/$profileId/full-update'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: json.encode(updatedProfile),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to update profile');
+    }
+  }
+
   Future<Map<String, dynamic>> fetchDoctorProfessionalDetails(int profileId) async {
     final token = await JwtStorage.getToken();
     final response = await http.get(
@@ -30,6 +46,22 @@ class ProfileService {
       return json.decode(response.body);
     } else {
       throw Exception('Failed to load doctor professional details');
+    }
+  }
+
+  Future<void> updateDoctorProfile(int doctorId, Map<String, dynamic> updatedDoctorProfile) async {
+    final token = await JwtStorage.getToken();
+    final response = await http.put(
+      Uri.parse('$baseUrl/doctor/doctor/$doctorId'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: json.encode(updatedDoctorProfile),
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to update doctor profile');
     }
   }
 }

@@ -1,31 +1,35 @@
 import 'package:flutter/material.dart';
 
-class EditModeWidget extends StatefulWidget {
-  final Map<String, dynamic> profile;
+class EditModeDoctorWidget extends StatefulWidget {
+  final Map<String, dynamic> doctorProfile;
   final Function onCancel;
   final Function(Map<String, dynamic>) onSave;
 
-  const EditModeWidget({Key? key, required this.profile, required this.onCancel, required this.onSave}) : super(key: key);
+  const EditModeDoctorWidget({Key? key, required this.doctorProfile, required this.onCancel, required this.onSave}) : super(key: key);
 
   @override
-  _EditModeWidgetState createState() => _EditModeWidgetState();
+  _EditModeDoctorWidgetState createState() => _EditModeDoctorWidgetState();
 }
 
-class _EditModeWidgetState extends State<EditModeWidget> {
+class _EditModeDoctorWidgetState extends State<EditModeDoctorWidget> {
   late TextEditingController firstNameController;
   late TextEditingController lastNameController;
   late TextEditingController genderController;
   late TextEditingController birthdayController;
   late TextEditingController phoneNumberController;
+  late TextEditingController professionalIdentificationNumberController;
+  late TextEditingController subSpecialtyController;
 
   @override
   void initState() {
     super.initState();
-    firstNameController = TextEditingController(text: widget.profile['firstName'] ?? '');
-    lastNameController = TextEditingController(text: widget.profile['lastName'] ?? '');
-    genderController = TextEditingController(text: widget.profile['gender'] ?? '');
-    birthdayController = TextEditingController(text: widget.profile['birthday'] ?? '');
-    phoneNumberController = TextEditingController(text: widget.profile['phoneNumber'] ?? '');
+    firstNameController = TextEditingController(text: widget.doctorProfile['firstName'] ?? '');
+    lastNameController = TextEditingController(text: widget.doctorProfile['lastName'] ?? '');
+    genderController = TextEditingController(text: widget.doctorProfile['gender'] ?? '');
+    birthdayController = TextEditingController(text: widget.doctorProfile['birthday'] ?? '');
+    phoneNumberController = TextEditingController(text: widget.doctorProfile['phoneNumber'] ?? '');
+    professionalIdentificationNumberController = TextEditingController(text: widget.doctorProfile['professionalIdentificationNumber']?.toString() ?? '');
+    subSpecialtyController = TextEditingController(text: widget.doctorProfile['subSpecialty'] ?? '');
   }
 
   @override
@@ -37,6 +41,8 @@ class _EditModeWidgetState extends State<EditModeWidget> {
         _buildEditableField("Gender", genderController),
         _buildEditableField("Birthday", birthdayController),
         _buildEditableField("Phone number", phoneNumberController),
+        _buildEditableField("Professional ID Number", professionalIdentificationNumberController),
+        _buildEditableField("SubSpecialty", subSpecialtyController),
         SizedBox(height: 20.0),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -49,14 +55,16 @@ class _EditModeWidgetState extends State<EditModeWidget> {
             ),
             ElevatedButton(
               onPressed: () {
-                final updatedProfile = {
+                final updatedDoctorProfile = {
                   "firstName": firstNameController.text,
                   "lastName": lastNameController.text,
                   "gender": genderController.text,
                   "phoneNumber": phoneNumberController.text,
                   "birthday": birthdayController.text,
+                  "professionalIdentificationNumber": int.tryParse(professionalIdentificationNumberController.text) ?? 0,
+                  "subSpecialty": subSpecialtyController.text,
                 };
-                widget.onSave(updatedProfile);
+                widget.onSave(updatedDoctorProfile);
               },
               child: Text('Save'),
             ),
@@ -88,6 +96,8 @@ class _EditModeWidgetState extends State<EditModeWidget> {
     genderController.dispose();
     birthdayController.dispose();
     phoneNumberController.dispose();
+    professionalIdentificationNumberController.dispose();
+    subSpecialtyController.dispose();
     super.dispose();
   }
 }

@@ -4,6 +4,8 @@ import 'package:trabajo_moviles_ninjacode/scr/features/appointment/presentation/
 import 'package:trabajo_moviles_ninjacode/scr/features/profile/data/data_sources/remote/patient_service.dart';
 import 'package:trabajo_moviles_ninjacode/scr/features/profile/data/data_sources/remote/profile_service.dart';
 import 'package:trabajo_moviles_ninjacode/scr/features/appointment/data/data_sources/remote/medical_appointment_api.dart';
+import 'package:trabajo_moviles_ninjacode/scr/core/utils/usecases/jwt_storage.dart';
+import 'package:trabajo_moviles_ninjacode/scr/features/appointment/presentation/widgets/info_appointment.dart'; // Importa el widget InfoAppointment
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
@@ -31,44 +33,50 @@ class _HomePatientsScreenState extends State<HomePatientsScreen> {
   }
 
   Future<void> _fetchPatients() async {
-  try {
-    final appointments = await _appointmentApi.fetchAppointmentsForToday();
-    final List<Map<String, String>> fetchedPatients = [];
-    final limaTimeZone = tz.getLocation('America/Lima');
+    try {
+      final userId = await JwtStorage.getUserId();
+      final role = await JwtStorage.getRole();
 
-    for (var appointment in appointments) {
-      final profileId = await _appointmentApi.getProfileIdByPatientId(appointment['patientId']);
-      if (profileId != null) {
-        final profileDetails = await _appointmentApi.getProfile(profileId);
-        if (profileDetails != null) {
-          fetchedPatients.add({
-            'name': profileDetails['fullName'],
-            'time': appointment['startTime'],
-            'image': profileDetails['image'], // Assuming 'image' is the key for the profile image URL
-            'eventDate': appointment['eventDate'],
-            'patientId': appointment['patientId'].toString(),
-          });
-        }
+      if (role != 'ROLE_DOCTOR') {
+        throw Exception('Only doctors can view patients');
       }
+
+      final appointments = await _appointmentApi.fetchAppointmentsForToday(widget.doctorId);
+      final List<Map<String, String>> fetchedPatients = [];
+      final limaTimeZone = tz.getLocation('America/Lima');
+
+      for (var appointment in appointments) {
+        final patientDetails = await _patientService.fetchPatientDetails(appointment['patientId']);
+        final profileDetails = await _profileService.fetchProfileDetails(patientDetails['profileId']);
+        fetchedPatients.add({
+          'name': profileDetails['fullName'],
+          'time': appointment['startTime'],
+          'endTime': appointment['endTime'],
+          'image': profileDetails['image'], // Assuming 'image' is the key for the profile image URL
+          'eventDate': appointment['eventDate'],
+          'patientId': appointment['patientId'].toString(),
+          'title': appointment['title'],
+          'description': appointment['description'],
+        });
+      }
+
+      // Ordenar las citas por hora
+      fetchedPatients.sort((a, b) {
+        final aTime = tz.TZDateTime.from(DateTime.parse(a['eventDate']!), limaTimeZone);
+        final bTime = tz.TZDateTime.from(DateTime.parse(b['eventDate']!), limaTimeZone);
+        return aTime.compareTo(bTime);
+      });
+
+      setState(() {
+        patients = fetchedPatients;
+        errorMessage = '';
+      });
+    } catch (e) {
+      setState(() {
+        errorMessage = 'Error fetching patients: $e';
+      });
     }
-
-    // Ordenar las citas por hora
-    fetchedPatients.sort((a, b) {
-      final aTime = tz.TZDateTime.from(DateTime.parse(a['eventDate']!), limaTimeZone);
-      final bTime = tz.TZDateTime.from(DateTime.parse(b['eventDate']!), limaTimeZone);
-      return aTime.compareTo(bTime);
-    });
-
-    setState(() {
-      patients = fetchedPatients;
-      errorMessage = '';
-    });
-  } catch (e) {
-    setState(() {
-      errorMessage = 'Error fetching patients: $e';
-    });
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -109,7 +117,9 @@ class _HomePatientsScreenState extends State<HomePatientsScreen> {
                                 onTap: () {
                                   Navigator.push(
                                     context,
-                                    MaterialPageRoute(builder: (context) => ConsultationScreen()),
+                                    MaterialPageRoute(
+                                      builder: (context) => ConsultationScreen(patientId: int.parse(patients[index]['patientId']!)),
+                                    ),
                                   );
                                 },
                                 child: Icon(Icons.insert_drive_file, color: Color(0xFF40535B)),
@@ -127,22 +137,39 @@ class _HomePatientsScreenState extends State<HomePatientsScreen> {
                           ),
                           trailing: Padding(
                             padding: EdgeInsets.only(right: 16), // Move the container to the left
-                            child: Container(
-                              padding: EdgeInsets.symmetric(horizontal: 4, vertical: 4), // Adjusted padding
-                              decoration: BoxDecoration(
-                                color: Color(0xFF40535B),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(Icons.videocam, color: Colors.white),
-                                  SizedBox(width: 4), // Adjusted spacing
-                                  Text(
-                                    patients[index]['time']!,
-                                    style: TextStyle(color: Colors.white),
-                                  ),
-                                ],
+                            child: GestureDetector(
+                              onTap: () {
+                                showDialog(
+                                  context: context,
+                                  builder: (BuildContext context) {
+                                    return InfoAppointment(
+                                      patientName: patients[index]['name']!,
+                                      appointmentTime: patients[index]['time']!,
+                                      endTime: patients[index]['endTime']!,
+                                      appointmentDate: patients[index]['eventDate']!,
+                                      title: patients[index]['title']!,
+                                      description: patients[index]['description']!,
+                                    );
+                                  },
+                                );
+                              },
+                              child: Container(
+                                padding: EdgeInsets.symmetric(horizontal: 4, vertical: 4), // Adjusted padding
+                                decoration: BoxDecoration(
+                                  color: Color(0xFF40535B),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(Icons.videocam, color: Colors.white),
+                                    SizedBox(width: 4), // Adjusted spacing
+                                    Text(
+                                      patients[index]['time']!,
+                                      style: TextStyle(color: Colors.white),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),

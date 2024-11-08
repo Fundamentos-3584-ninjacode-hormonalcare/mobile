@@ -1,6 +1,6 @@
 class Treatment {
-  final String description;
-  final int medicalRecordId;
+  String description;
+  int medicalRecordId;
 
   Treatment({required this.description, required this.medicalRecordId});
 
@@ -9,5 +9,12 @@ class Treatment {
       description: json['description'],
       medicalRecordId: json['medicalRecordId'],
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'description': description,
+      'medicalRecordId': medicalRecordId,
+    };
   }
 }
