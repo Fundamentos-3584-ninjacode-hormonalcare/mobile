@@ -280,277 +280,274 @@ class _MedicalRecordScreenState extends State<MedicalRecordScreen> with SingleTi
 
 
 Widget _buildDiagnosisAndTreatmentsTab(int medicalRecordId) {
-  print('medicalrecordid: ${medicalRecordId}');
-    return FutureBuilder<List<Medication>>(
-      future: MedicalRecordService().getMedicationsByRecordId(medicalRecordId),
-      builder: (context, medicationSnapshot) {
-        if (medicationSnapshot.connectionState == ConnectionState.waiting) {
-          return Center(child: CircularProgressIndicator());
-        } else if (medicationSnapshot.hasError) {
-          return Center(child: Text('Error: ${medicationSnapshot.error}'));
-        } else if (!medicationSnapshot.hasData || medicationSnapshot.data!.isEmpty) {
-          return Center(child: Text('No medications found'));
-        } else {
-          final medications = medicationSnapshot.data!;
+  print('medicalrecordid: $medicalRecordId');
+  return FutureBuilder<List<Medication>>(
+    future: MedicalRecordService().getMedicationsByRecordId(medicalRecordId),
+    builder: (context, medicationSnapshot) {
+      if (medicationSnapshot.connectionState == ConnectionState.waiting) {
+        return Center(child: CircularProgressIndicator());
+      } else if (medicationSnapshot.hasError) {
+        return Center(child: Text('Error: ${medicationSnapshot.error}'));
+      } else {
+        final medications = medicationSnapshot.data ?? [];
 
-          return FutureBuilder<List<Prescription>>(
-            future: MedicalRecordService().getPrescriptions(),
-            builder: (context, prescriptionSnapshot) {
-              if (prescriptionSnapshot.connectionState == ConnectionState.waiting) {
-                return Center(child: CircularProgressIndicator());
-              } else if (prescriptionSnapshot.hasError) {
-                return Center(child: Text('Error: ${prescriptionSnapshot.error}'));
-              } else if (!prescriptionSnapshot.hasData || prescriptionSnapshot.data!.isEmpty) {
-                return Center(child: Text('No prescriptions found'));
-              } else {
-                final allPrescriptions = prescriptionSnapshot.data!;
-                final prescriptionIds = medications.map((med) => med.prescriptionId).toSet();
-                final prescriptions = allPrescriptions.where((prescription) => prescriptionIds.contains(prescription.id)).toList();
+        return FutureBuilder<List<Prescription>>(
+          future: MedicalRecordService().getPrescriptions(),
+          builder: (context, prescriptionSnapshot) {
+            if (prescriptionSnapshot.connectionState == ConnectionState.waiting) {
+              return Center(child: CircularProgressIndicator());
+            } else if (prescriptionSnapshot.hasError) {
+              return Center(child: Text('Error: ${prescriptionSnapshot.error}'));
+            } else {
+              final allPrescriptions = prescriptionSnapshot.data ?? [];
+              final prescriptionIds = medications.map((med) => med.prescriptionId).toSet();
+              final prescriptions = allPrescriptions.where((prescription) => prescriptionIds.contains(prescription.id)).toList();
 
-                return FutureBuilder<List<Treatment>>(
-                  future: MedicalRecordService().getTreatmentsByRecordId(medicalRecordId),
-                  builder: (context, treatmentSnapshot) {
-                    if (treatmentSnapshot.connectionState == ConnectionState.waiting) {
-                      return Center(child: CircularProgressIndicator());
-                    } else if (treatmentSnapshot.hasError) {
-                      return Center(child: Text('Error: ${treatmentSnapshot.error}'));
-                    } else if (!treatmentSnapshot.hasData || treatmentSnapshot.data!.isEmpty) {
-                      return Center(child: Text('No treatments found'));
-                    } else {
-                      final treatments = treatmentSnapshot.data!;
+              return FutureBuilder<List<Treatment>>(
+                future: MedicalRecordService().getTreatmentsByRecordId(medicalRecordId),
+                builder: (context, treatmentSnapshot) {
+                  if (treatmentSnapshot.connectionState == ConnectionState.waiting) {
+                    return Center(child: CircularProgressIndicator());
+                  } else {
+                    final treatments = treatmentSnapshot.data ?? [];
 
-                      return ListView(
-                        padding: EdgeInsets.all(16),
-                        children: [
-                          // Diagnosis Section
-                          Container(
-                            padding: EdgeInsets.all(16),
-                            margin: EdgeInsets.only(bottom: 20),
-                            decoration: BoxDecoration(
-                              color: Colors.grey[200],
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Diagnosis',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                SizedBox(height: 10),
-                                ...prescriptions.map((prescription) {
-                                  return Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Align(
-                                        alignment: Alignment.centerRight,
-                                        child: Text(
-                                          _formatDate(prescription.prescriptionDate),
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ),
-                                      SizedBox(height: 10),
-                                      Text(
-                                        prescription.notes,
-                                        style: TextStyle(fontSize: 14),
-                                      ),
-                                      SizedBox(height: 20),
-                                    ],
-                                  );
-                                }).toList(),
-                                Center(
-                                  child: ElevatedButton(
-                                    onPressed: () {
-                                      showDialog(
-                                        context: context,
-                                        builder: (context) => _AddPrescriptionDialog(),
-                                      );
-                                    },
-                                    child: Text('Add Prescription'),
-                                  ),
-                                ),
-                              ],
-                            ),
+                    return ListView(
+                      padding: EdgeInsets.all(16),
+                      children: [
+                        // Diagnosis Section
+                        Container(
+                          padding: EdgeInsets.all(16),
+                          margin: EdgeInsets.only(bottom: 20),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[200],
+                            borderRadius: BorderRadius.circular(10),
                           ),
-
-                          // Medication Section
-                          Container(
-                            padding: EdgeInsets.all(16),
-                            margin: EdgeInsets.only(bottom: 20),
-                            decoration: BoxDecoration(
-                              color: Colors.grey[200],
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Medication',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Diagnosis',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
                                 ),
-                                SizedBox(height: 10),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              ),
+                              SizedBox(height: 10),
+                              if (prescriptions.isEmpty)
+                                Center(child: Text('No prescriptions found')),
+                              ...prescriptions.map((prescription) {
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Expanded(
+                                    Align(
+                                      alignment: Alignment.centerRight,
                                       child: Text(
-                                        'Medication',
+                                        _formatDate(prescription.prescriptionDate),
                                         style: TextStyle(
                                           fontSize: 12,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),
                                     ),
+                                    SizedBox(height: 10),
+                                    Text(
+                                      prescription.notes,
+                                      style: TextStyle(fontSize: 14),
+                                    ),
+                                    SizedBox(height: 20),
+                                  ],
+                                );
+                              }).toList(),
+                              Center(
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    showDialog(
+                                      context: context,
+                                      builder: (context) => _AddPrescriptionDialog(),
+                                    );
+                                  },
+                                  child: Text('Add Prescription'),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        // Medication Section
+                        Container(
+                          padding: EdgeInsets.all(16),
+                          margin: EdgeInsets.only(bottom: 20),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[200],
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Medication',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              SizedBox(height: 10),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      'Medication',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Text(
+                                      'Concentration',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Text(
+                                      'Unit',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                  Expanded(
+                                    child: Text(
+                                      'Frequency',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              SizedBox(height: 10),
+                              if (medications.isEmpty)
+                                Center(child: Text('No medications found')),
+                              ...medications.map((medication) {
+                                return Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
                                     Expanded(
                                       child: Text(
-                                        'Concentration',
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                                        medication.drugName,
+                                        style: TextStyle(fontSize: 14),
+                                      ),
+                                    ),
+                                    Expanded(
+                                      child: Text(
+                                        medication.quantity,
+                                        style: TextStyle(fontSize: 14),
                                         textAlign: TextAlign.center,
                                       ),
                                     ),
                                     Expanded(
                                       child: Text(
-                                        'Unit',
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                                        medication.concentration,
+                                        style: TextStyle(fontSize: 14),
                                         textAlign: TextAlign.center,
                                       ),
                                     ),
                                     Expanded(
                                       child: Text(
-                                        'Frequency',
-                                        style: TextStyle(
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                                        medication.frequency,
+                                        style: TextStyle(fontSize: 14),
                                         textAlign: TextAlign.center,
                                       ),
                                     ),
                                   ],
+                                );
+                              }).toList(),
+                              SizedBox(height: 20),
+                              Center(
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    showDialog(
+                                      context: context,
+                                      builder: (context) => _AddMedicationDialog(),
+                                    );
+                                  },
+                                  child: Text('Add Medication'),
                                 ),
-                                SizedBox(height: 10),
-                                ...medications.map((medication) {
-                                  return Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Expanded(
-                                        child: Text(
-                                          medication.drugName,
-                                          style: TextStyle(fontSize: 14),
-                                        ),
-                                      ),
-                                      Expanded(
-                                        child: Text(
-                                          medication.quantity,
-                                          style: TextStyle(fontSize: 14),
-                                          textAlign: TextAlign.center,
-                                        ),
-                                      ),
-                                      Expanded(
-                                        child: Text(
-                                          medication.concentration,
-                                          style: TextStyle(fontSize: 14),
-                                          textAlign: TextAlign.center,
-                                        ),
-                                      ),
-                                      Expanded(
-                                        child: Text(
-                                          medication.frequency,
-                                          style: TextStyle(fontSize: 14),
-                                          textAlign: TextAlign.center,
-                                        ),
-                                      ),
-                                    ],
-                                  );
-                                }).toList(),
-                                SizedBox(height: 20),
-                                Center(
-                                  child: ElevatedButton(
-                                    onPressed: () {
-                                      showDialog(
-                                        context: context,
-                                        builder: (context) => _AddMedicationDialog(),
-                                      );
-                                    },
-                                    child: Text('Add Medication'),
-                                  ),
-                                ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
-                          // Treatment Section
-                          // Treatment Section
-Container(
-  padding: EdgeInsets.all(16),
-  margin: EdgeInsets.only(bottom: 20),
-  decoration: BoxDecoration(
-    color: Colors.grey[200],
-    borderRadius: BorderRadius.circular(10),
-  ),
-  child: Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(
-        'Treatment',
-        style: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-      SizedBox(height: 10),
-      ...treatments.map((treatment) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              treatment.description,
-              style: TextStyle(fontSize: 14),
-            ),
-            SizedBox(height: 10),
-          ],
-        );
-      }).toList(),
-      Center(
-        child: ElevatedButton(
-          onPressed: () {
-            showDialog(
-              context: context,
-              builder: (context) => _AddTreatmentDialog(medicalRecordId),
-            );
+                        ),
+
+                        // Treatment Section
+                        Container(
+                          padding: EdgeInsets.all(16),
+                          margin: EdgeInsets.only(bottom: 20),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[200],
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Treatment',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              SizedBox(height: 10),
+                              if (treatments.isEmpty && !treatmentSnapshot.hasError)
+                                Center(child: Text('No treatments found')),
+                              ...treatments.map((treatment) {
+                                return Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      treatment.description,
+                                      style: TextStyle(fontSize: 14),
+                                    ),
+                                    SizedBox(height: 10),
+                                  ],
+                                );
+                              }).toList(),
+                              Center(
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    showDialog(
+                                      context: context,
+                                      builder: (context) => _AddTreatmentDialog(medicalRecordId),
+                                    );
+                                  },
+                                  child: Text('Add Treatment'),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    );
+                  }
+                },
+              );
+            }
           },
-          child: Text('Add Treatment'),
-        ),
-      ),
-      
-    ],
-  ),
-),
-                        ],
-                      );
-                    }
-                  },
-                );
-              }
-            },
-          );
-        }
-      },
-    );
-  }
+        );
+      }
+    },
+  );
+}
 
   Widget _AddMedicationDialog() {
     final _formKey = GlobalKey<FormState>();
