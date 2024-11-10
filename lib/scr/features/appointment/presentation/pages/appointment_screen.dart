@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:syncfusion_flutter_calendar/calendar.dart';
 import 'package:trabajo_moviles_ninjacode/scr/features/appointment/data/data_sources/remote/medical_appointment_api.dart';
+import 'package:flutter/services.dart';
 
 class AppointmentScreen extends StatefulWidget {
   @override
@@ -36,44 +36,41 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
     super.initState();
     _loadAppointments();
     _loadPatients();
-    calendarDataSource = MeetingDataSource(_meetings); 
+    calendarDataSource = MeetingDataSource(_meetings);
   }
 
- Future<void> _loadAppointments() async {
-  try {
-    final appointments = await _appointmentService.fetchAllAppointments();
-    final List<Meeting> loadedMeetings = appointments.map<Meeting>((appointment) {
-      final startTime = DateTime.parse('${appointment['eventDate']}T${appointment['startTime']}:00');
-      final endTime = DateTime.parse('${appointment['eventDate']}T${appointment['endTime']}:00');
-      final colorValue = appointment['color'] ?? '0xFF039BE5';
-      final color = Color(int.parse(colorValue.startsWith('0x') ? colorValue : '0x$colorValue'));
+  Future<void> _loadAppointments() async {
+    try {
+      final appointments = await _appointmentService.fetchAllAppointments();
+      final List<Meeting> loadedMeetings = appointments.map<Meeting>((appointment) {
+        final startTime = DateTime.parse('${appointment['eventDate']}T${appointment['startTime']}:00');
+        final endTime = DateTime.parse('${appointment['eventDate']}T${appointment['endTime']}:00');
+        final colorValue = appointment['color'] ?? '0xFF039BE5';
+        final color = Color(int.parse(colorValue.startsWith('0x') ? colorValue : '0x$colorValue'));
 
-      return Meeting(
-        appointment['title'],
-        startTime,
-        endTime,
-        color,
-        false,
-        appointment['description'],
-        appointment['id'].toString(),
+        return Meeting(
+          appointment['title'],
+          startTime,
+          endTime,
+          color,
+          false,
+          appointment['description'],
+          appointment['id'].toString(),
+        );
+      }).toList();
+
+      setState(() {
+        _meetings.clear();
+        _meetings.addAll(loadedMeetings);
+        calendarDataSource = MeetingDataSource(_meetings); // Refresca calendarDataSource
+      });
+    } catch (e) {
+      print('Error loading appointments: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load appointments: $e')),
       );
-    }).toList();
-
-    setState(() {
-      _meetings.clear();
-      _meetings.addAll(loadedMeetings);
-      calendarDataSource = MeetingDataSource(_meetings); // Refresca calendarDataSource
-    });
-  } 
-  catch (e) {
-    print('Error loading appointments: $e');
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Failed to load appointments: $e')),
-    );
+    }
   }
-  }
-
-
 
   Future<void> _loadPatients() async {
     try {
@@ -88,27 +85,142 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
     }
   }
 
-  Future<void> _createAppointment(Map<String, dynamic> appointmentData) async {
-    try {
-      final success = await _appointmentService.createMedicalAppointment(appointmentData);
-      if (success) {
-        await _loadAppointments(); // Recargar las citas después de crear una nueva
-        setState(() {}); // Asegúrate de que la pantalla se actualice
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Appointment created successfully!')),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to create appointment')),
-        );
-      }
-    } catch (e) {
-      print('Error creating appointment: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to create appointment: $e')),
-      );
+  @override
+Widget build(BuildContext context) {
+  return Scaffold(
+    appBar: AppBar(
+      backgroundColor: Color(0xFF6A828D),
+      title: Text('Medical Appointments'),
+      centerTitle: true,
+      titleTextStyle: TextStyle(
+        color: Colors.white,
+        fontSize: 20.0,
+        fontWeight: FontWeight.bold,
+      ),
+    ),
+    body: Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Center(
+        child: LayoutBuilder(
+          builder: (BuildContext context, BoxConstraints constraints) {
+            return Container(
+              width: constraints.maxWidth,
+              height: constraints.maxHeight,
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.blueAccent),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Stack(
+                children: [
+                  SfCalendar(
+                    key: ValueKey(_calendarView),
+                    view: _calendarView == CalendarView.workWeek
+                        ? CalendarView.timelineDay
+                        : _calendarView,
+                    dataSource: calendarDataSource,
+                    initialDisplayDate: DateTime.now(), // Muestra hoy como inicio
+                    onViewChanged: (ViewChangedDetails details) {
+                      print('Calendar view is now: $_calendarView');
+                    },
+                    onTap: _calendarTapped,
+                    onDragEnd: (AppointmentDragEndDetails details) {
+                      if (details.appointment != null) {
+                        final Meeting meeting = details.appointment as Meeting;
+                        _updateAppointment(meeting);
+                      }
+                    },
+                    onAppointmentResizeEnd: (AppointmentResizeEndDetails details) {
+                      if (details.appointment != null) {
+                        final Meeting meeting = details.appointment as Meeting;
+                        _updateAppointment(meeting);
+                      }
+                    },
+                    monthViewSettings: _calendarView == CalendarView.month
+                        ? MonthViewSettings(
+                            showAgenda: true, // Activamos la vista de agenda
+                            appointmentDisplayMode: MonthAppointmentDisplayMode.appointment,
+                          )
+                        : const MonthViewSettings(
+                            appointmentDisplayMode: MonthAppointmentDisplayMode.appointment,
+                          ),
+                    timeSlotViewSettings: TimeSlotViewSettings(
+                      timeIntervalHeight: 50,
+                      timeIntervalWidth: 60,
+                      timeInterval: Duration(minutes: 60),
+                      startHour: 0,
+                      endHour: 24,
+                      nonWorkingDays: <int>[DateTime.saturday, DateTime.sunday],
+                    ),
+                  ),
+                  Positioned(
+                    top: 0,
+                    right: 10,
+                    child: DropdownButton<CalendarView>(
+                      value: _calendarView,
+                      onChanged: (CalendarView? newValue) {
+                        setState(() {
+                          _calendarView = newValue!;
+                          print('Calendar view changed to: $_calendarView');
+                        });
+                      },
+                      items: const [
+                        DropdownMenuItem(
+                          value: CalendarView.day,
+                          child: Text('Day'),
+                        ),
+                        DropdownMenuItem(
+                          value: CalendarView.week,
+                          child: Text('Week'),
+                        ),
+                        DropdownMenuItem(
+                          value: CalendarView.month,
+                          child: Text('Month'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+      ),
+    ),
+  );
+}
+
+
+  void _calendarTapped(CalendarTapDetails details) {
+    if (details.targetElement == CalendarElement.appointment && details.appointments != null) {
+      final Meeting meeting = details.appointments!.first as Meeting;
+      _showEventDetailsDialog(meeting);
+    } else if (details.targetElement == CalendarElement.calendarCell) {
+      _showAddEventDialog(details.date!, details.appointments);
     }
   }
+
+
+  Future<void> _createAppointment(Map<String, dynamic> appointmentData) async {
+  try {
+    final success = await _appointmentService.createMedicalAppointment(appointmentData);
+    if (success) {
+      await _loadAppointments(); // Recargar las citas después de crear una nueva
+      setState(() {}); // Asegúrate de que la pantalla se actualice
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Appointment created successfully!')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to create appointment')),
+      );
+    }
+  } catch (e) {
+    print('Error creating appointment: $e');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Failed to create appointment: $e')),
+    );
+  }
+}
 
   
   Future<void> _updateAppointment(Meeting meeting) async {
@@ -179,84 +291,6 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Color(0xFF6A828D), 
-        title: Text('Medical Appointments'),
-        centerTitle: true,
-        titleTextStyle: TextStyle(
-          color: Colors.white,
-          fontSize: 20.0,
-          fontWeight: FontWeight.bold,
-        ),
-        actions: [
-          DropdownButton<CalendarView>(
-            value: _calendarView,
-            onChanged: (CalendarView? newValue) {
-              setState(() {
-                _calendarView = newValue!;
-              });
-            },
-            items: CalendarView.values.map((CalendarView view) {
-              return DropdownMenuItem<CalendarView>(
-                value: view,
-                child: Text(view.toString().split('.').last),
-              );
-            }).toList(),
-          ),
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Center(
-          child: LayoutBuilder(
-            builder: (BuildContext context, BoxConstraints constraints) {
-              return Container(
-                width: constraints.maxWidth, 
-                height: constraints.maxHeight, 
-                decoration: BoxDecoration(
-                  border: Border.all(color: Colors.blueAccent),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: SfCalendar(
-                  view: _calendarView,
-                  dataSource: calendarDataSource, // Cambiado aquí para usar calendarDataSource
-                  onTap: _calendarTapped,
-                  onDragEnd: (AppointmentDragEndDetails details) {
-                    if (details.appointment != null) {
-                      final Meeting meeting = details.appointment as Meeting;
-                      _updateAppointment(meeting);
-                    }
-                  },
-                  onAppointmentResizeEnd: (AppointmentResizeEndDetails details) {
-                    if (details.appointment != null) {
-                      final Meeting meeting = details.appointment as Meeting;
-                      _updateAppointment(meeting);
-                    }
-                  },
-                  monthViewSettings: const MonthViewSettings(
-                    appointmentDisplayMode: MonthAppointmentDisplayMode.appointment,
-                  ),
-                ),
-
-              );
-            },
-          ),
-        ),
-      ),
-    );
-  }
-
-    void _calendarTapped(CalendarTapDetails details) {
-    if (details.targetElement == CalendarElement.appointment && details.appointments != null) {
-      final Meeting meeting = details.appointments!.first as Meeting;
-      _showEventDetailsDialog(meeting);
-    } else if (details.targetElement == CalendarElement.calendarCell) {
-      _showAddEventDialog(details.date!, details.appointments);
-    }
-  }
   
     void _showEventDetailsDialog(Meeting meeting) {
     final TextEditingController titleController = TextEditingController(text: meeting.eventName);
