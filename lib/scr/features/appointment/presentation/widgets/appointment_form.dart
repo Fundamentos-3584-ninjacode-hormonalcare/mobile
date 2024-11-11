@@ -52,7 +52,7 @@ class _AppointmentFormState extends State<AppointmentForm> {
       throw Exception('Only doctors can create appointments');
     }
 
-    final existingAppointments = await repository.fetchAppointmentsForToday();
+    final existingAppointments = await repository.fetchAppointmentsForToday(userId!);
     final newStart = DateTime.parse("${_selectedDate!.toIso8601String().split('T')[0]} $startTime:00");
     final newEnd = DateTime.parse("${_selectedDate!.toIso8601String().split('T')[0]} $endTime:00");
 

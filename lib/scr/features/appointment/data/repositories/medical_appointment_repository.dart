@@ -11,7 +11,8 @@ class MedicalAppointmentRepository {
     return response['success'] == true;
   }
 
-  Future<List<Map<String, dynamic>>> fetchAppointmentsForToday() async {
-    return await api.fetchAppointmentsForToday();
+    Future<List<Map<String, dynamic>>> fetchAppointmentsForToday(int doctorId ) async {
+    return await api.fetchAppointmentsForToday(doctorId);
+
   }
 }
