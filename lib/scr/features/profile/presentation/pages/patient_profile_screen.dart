@@ -85,7 +85,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
     final profileId = await JwtStorage.getProfileId();
     if (profileId != null) {
       final response = await http.put(
-        Uri.parse('https://hormonal-care-backend-production.up.railway.app/api/v1/profile/profile/$profileId/full-update'),
+        Uri.parse('http://localhost:8080/api/v1/profile/profile/$profileId/full-update'),
         headers: {'Authorization': 'Bearer your_token', 'Content-Type': 'application/json'},
         body: json.encode(updatedProfile),
       );

@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class InfoAppointment extends StatelessWidget {
   final String patientName;
@@ -42,7 +40,6 @@ class InfoAppointment extends StatelessWidget {
                   fontSize: screenWidth * 0.06,
                 ),
               ),
-              _buildInfoCard(Icons.title, 'Title', title, screenWidth),
               SizedBox(height: screenHeight * 0.015),
               _buildInfoCard(Icons.person, 'Patient', patientName, screenWidth),
               SizedBox(height: screenHeight * 0.015),
@@ -52,7 +49,9 @@ class InfoAppointment extends StatelessWidget {
               SizedBox(height: screenHeight * 0.015),
               _buildInfoCard(Icons.access_time, 'End Time', endTime, screenWidth),
               SizedBox(height: screenHeight * 0.015),
-              _buildDescriptionCard(context, screenWidth),
+              _buildInfoCard(Icons.title, 'Title', title, screenWidth),
+              SizedBox(height: screenHeight * 0.015),
+              _buildInfoCard(Icons.description, 'Description', description, screenWidth),
               SizedBox(height: screenHeight * 0.015),
               ElevatedButton(
                 onPressed: () {
@@ -71,6 +70,31 @@ class InfoAppointment extends StatelessWidget {
                   shadowColor: Colors.grey,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8),
+                  ),
+                ).copyWith(
+                  elevation: WidgetStateProperty.resolveWith<double>(
+                    (Set<WidgetState> states) {
+                      if (states.contains(WidgetState.pressed)) {
+                        return 8; // Elevación cuando se hace clic
+                      }
+                      return 2; // Elevación normal
+                    },
+                  ),
+                  backgroundColor: WidgetStateProperty.resolveWith<Color>(
+                    (Set<WidgetState> states) {
+                      if (states.contains(WidgetState.pressed)) {
+                        return Color(0xFF40535B); // Fondo oscuro cuando se hace clic
+                      }
+                      return Colors.white; // Fondo claro normal
+                    },
+                  ),
+                  foregroundColor: WidgetStateProperty.resolveWith<Color>(
+                    (Set<WidgetState> states) {
+                      if (states.contains(WidgetState.pressed)) {
+                        return Colors.white; // Texto blanco cuando se hace clic
+                      }
+                      return Color(0xFF40535B); // Texto oscuro normal
+                    },
                   ),
                 ),
               ),
@@ -117,68 +141,6 @@ class InfoAppointment extends StatelessWidget {
                 ],
               ),
             ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDescriptionCard(BuildContext context, double screenWidth) {
-    return Card(
-      color: Color(0xFFE0F7FA),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-      ),
-      elevation: 4,
-      child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: screenWidth * 0.03, vertical: screenWidth * 0.02),
-        child: Row(
-          children: [
-            Icon(Icons.description, color: Color(0xFF00796B), size: screenWidth * 0.07),
-            SizedBox(width: screenWidth * 0.03),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Description',
-                    style: TextStyle(
-                      fontSize: screenWidth * 0.04,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF00796B),
-                    ),
-                  ),
-                  SizedBox(height: screenWidth * 0.005),
-                  Text(
-                    description,
-                    style: TextStyle(
-                      fontSize: screenWidth * 0.035,
-                      color: Color(0xFF00796B),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            IconButton(
-              icon: Icon(Icons.copy, color: Color(0xFF00796B)),
-              onPressed: () {
-                Clipboard.setData(ClipboardData(text: description));
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Link copied to clipboard')),
-                );
-              },
-            ),
-            // IconButton(
-            //   icon: Icon(Icons.open_in_new, color: Color(0xFF00796B)),
-            //   onPressed: () async {
-            //     final Uri url = Uri.parse(description);
-            //     if (await canLaunchUrl(url)) {
-            //       await launchUrl(url);
-            //     } else {
-            //       throw 'Could not launch $description';
-            //     }
-            //   },
-            // ),
           ],
         ),
       ),

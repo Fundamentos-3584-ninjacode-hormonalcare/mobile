@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trabajo_moviles_ninjacode/scr/core/utils/usecases/jwt_storage.dart';
 
 class AuthService {
-  final String baseUrl = 'https://hormonal-care-backend-production.up.railway.app/api/v1';
+  final String baseUrl = 'http://localhost:8080/api/v1';
 
   Future<Map<String, dynamic>> signUp(String username, String password) async {
     final response = await http.post(
