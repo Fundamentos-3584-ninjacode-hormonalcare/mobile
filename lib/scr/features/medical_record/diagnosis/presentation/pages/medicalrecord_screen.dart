@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart'; // Importa la librería intl para formatear fechas
+import 'package:flutter_spinbox/flutter_spinbox.dart'; // Importa la librería flutter_spinbox para usar SpinBox
+import 'package:flutter/services.dart'; // Importa la librería services para usar FilteringTextInputFormatter
 import '../../../medical_prescription/domain/models/patient_model.dart';
 import '../../domain/models/medication_model.dart';
 import '../../domain/models/prescription_model.dart';
@@ -7,6 +9,7 @@ import '../../domain/models/treatment_model.dart';
 import '../../domain/services/medicalrecord_service.dart';
 import '../../domain/models/medicationpost_model.dart';
 import '../../domain/models/prescriptionpost_model.dart';
+import '../../domain/models/medicaltype_model.dart';
 
 class MedicalRecordScreen extends StatefulWidget {
   final String patientId;
@@ -292,16 +295,14 @@ Widget _buildDiagnosisAndTreatmentsTab(int medicalRecordId) {
         final medications = medicationSnapshot.data ?? [];
 
         return FutureBuilder<List<Prescription>>(
-          future: MedicalRecordService().getPrescriptions(),
-          builder: (context, prescriptionSnapshot) {
-            if (prescriptionSnapshot.connectionState == ConnectionState.waiting) {
-              return Center(child: CircularProgressIndicator());
-            } else if (prescriptionSnapshot.hasError) {
-              return Center(child: Text('Error: ${prescriptionSnapshot.error}'));
-            } else {
-              final allPrescriptions = prescriptionSnapshot.data ?? [];
-              final prescriptionIds = medications.map((med) => med.prescriptionId).toSet();
-              final prescriptions = allPrescriptions.where((prescription) => prescriptionIds.contains(prescription.id)).toList();
+          future: MedicalRecordService().getPrescriptionsByRecordId(medicalRecordId),
+            builder: (context, prescriptionSnapshot) {
+              if (prescriptionSnapshot.connectionState == ConnectionState.waiting) {
+                return Center(child: CircularProgressIndicator());
+              } else if (prescriptionSnapshot.hasError) {
+                return Center(child: Text('Error: ${prescriptionSnapshot.error}'));
+              } else {
+                final prescriptions = prescriptionSnapshot.data ?? [];
 
               return FutureBuilder<List<Treatment>>(
                 future: MedicalRecordService().getTreatmentsByRecordId(medicalRecordId),
@@ -363,10 +364,10 @@ Widget _buildDiagnosisAndTreatmentsTab(int medicalRecordId) {
                                   onPressed: () {
                                     showDialog(
                                       context: context,
-                                      builder: (context) => _AddPrescriptionDialog(),
+                                      builder: (context) => _AddPrescriptionDialog(medicalRecordId),
                                     );
                                   },
-                                  child: Text('Add Prescription'),
+                                  child: Text('Add Diagnosis'),
                                 ),
                               ),
                             ],
@@ -479,7 +480,7 @@ Widget _buildDiagnosisAndTreatmentsTab(int medicalRecordId) {
                                   onPressed: () {
                                     showDialog(
                                       context: context,
-                                      builder: (context) => _AddMedicationDialog(),
+                                      builder: (context) => _AddMedicationDialog(medicalRecordId),
                                     );
                                   },
                                   child: Text('Add Medication'),
@@ -549,10 +550,10 @@ Widget _buildDiagnosisAndTreatmentsTab(int medicalRecordId) {
   );
 }
 
-  Widget _AddMedicationDialog() {
+  Widget _AddMedicationDialog(int medicalRecordId) {
     final _formKey = GlobalKey<FormState>();
     final _medicationPost = MedicationPost(
-      medicalRecordId: 0,
+      medicalRecordId: medicalRecordId,
       medicalTypeId: 0,
       prescriptionId: 0,
       name: '',
@@ -563,143 +564,205 @@ Widget _buildDiagnosisAndTreatmentsTab(int medicalRecordId) {
       timesPerDay: 0,
       timePeriod: '',
     );
-
-    
-    Future<void> _submitForm() async {
-      if (_formKey.currentState!.validate()) {
-        _formKey.currentState!.save();
-        try {
-          final response = await MedicalRecordService().addMedication(_medicationPost);
-          print('Response status: ${response.statusCode}');
-          if (response.statusCode == 200 || response.statusCode == 201) {
-            Navigator.of(context).pop();
-            setState(() {}); // Recargar la sección de medicamentos
-          } else {
-            print('Error posting medication: ${response.body}');
-            throw Exception('Error posting medication');
-          }
-        } catch (e) {
-          print(e);
-        }
-      }
+    Future<List<MedicalType>> _medicalTypesFuture() async {
+      return await MedicalRecordService().fetchMedicalTypes();
     }
 
+    Future<List<Prescription>> _fetchPrescriptions() async {
+      return await MedicalRecordService().getPrescriptionsByRecordId(medicalRecordId);
+    }
+  
 
+    
     return AlertDialog(
-      title: Text('Add Medication'),
-      content: Form(
-        key: _formKey,
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              TextFormField(
-                decoration: InputDecoration(
-                  labelText: 'Medical Record ID',
-                  border: OutlineInputBorder(),
-                ),
-                keyboardType: TextInputType.number,
-                onSaved: (value) => _medicationPost.medicalRecordId = int.parse(value!),
-              ),
-              SizedBox(height: 10),
-              TextFormField(
-                decoration: InputDecoration(
-                  labelText: 'Medical Type ID',
-                  border: OutlineInputBorder(),
-                ),
-                keyboardType: TextInputType.number,
-                onSaved: (value) => _medicationPost.medicalTypeId = int.parse(value!),
-              ),
-              SizedBox(height: 10),
-              TextFormField(
-                decoration: InputDecoration(
-                  labelText: 'Prescription ID',
-                  border: OutlineInputBorder(),
-                ),
-                keyboardType: TextInputType.number,
-                onSaved: (value) => _medicationPost.prescriptionId = int.parse(value!),
-              ),
-              SizedBox(height: 10),
-              TextFormField(
-                decoration: InputDecoration(
-                  labelText: 'Name',
-                  border: OutlineInputBorder(),
-                ),
-                onSaved: (value) => _medicationPost.name = value!,
-              ),
-              SizedBox(height: 10),
-              TextFormField(
-                decoration: InputDecoration(
-                  labelText: 'Amount',
-                  border: OutlineInputBorder(),
-                ),
-                keyboardType: TextInputType.number,
-                onSaved: (value) => _medicationPost.amount = int.parse(value!),
-              ),
-              SizedBox(height: 10),
-              TextFormField(
-                decoration: InputDecoration(
-                  labelText: 'Unit Quantity',
-                  border: OutlineInputBorder(),
-                ),
-                onSaved: (value) => _medicationPost.unitQ = value!,
-              ),
-              SizedBox(height: 10),
-              TextFormField(
-                decoration: InputDecoration(
-                  labelText: 'Value',
-                  border: OutlineInputBorder(),
-                ),
-                keyboardType: TextInputType.number,
-                onSaved: (value) => _medicationPost.value = int.parse(value!),
-              ),
-              SizedBox(height: 10),
-              TextFormField(
-                decoration: InputDecoration(
-                  labelText: 'Unit',
-                  border: OutlineInputBorder(),
-                ),
-                onSaved: (value) => _medicationPost.unit = value!,
-              ),
-              SizedBox(height: 10),
-              TextFormField(
-                decoration: InputDecoration(
-                  labelText: 'Times Per Day',
-                  border: OutlineInputBorder(),
-                ),
-                keyboardType: TextInputType.number,
-                onSaved: (value) => _medicationPost.timesPerDay = int.parse(value!),
-              ),
-              SizedBox(height: 10),
-              TextFormField(
-                decoration: InputDecoration(
-                  labelText: 'Time Period',
-                  border: OutlineInputBorder(),
-                ),
-                onSaved: (value) => _medicationPost.timePeriod = value!,
-              ),
-            ],
+  title: Text('Add Diagnosis'),
+  content: Form(
+    key: _formKey,
+    child: SingleChildScrollView(
+      child: Column(
+        children: [
+          FutureBuilder<List<MedicalType>>(
+  future: _medicalTypesFuture(),
+  builder: (context, snapshot) {
+    if (snapshot.connectionState == ConnectionState.waiting) {
+      return CircularProgressIndicator();
+    } else if (snapshot.hasError) {
+      return Text('Error: ${snapshot.error}');
+    } else {
+      final medicalTypes = snapshot.data ?? [];
+      return DropdownButtonFormField<int>(
+        decoration: InputDecoration(
+          labelText: 'Medical Type',
+          border: OutlineInputBorder(),
+        ),
+        items: medicalTypes.asMap().entries.map((entry) {
+          int index = entry.key;
+          MedicalType type = entry.value;
+          return DropdownMenuItem<int>(
+            value: index + 1, // Sumar 1 al índice
+            child: Text(type.typeName),
+          );
+        }).toList(),
+        onChanged: (value) {
+          _medicationPost.medicalTypeId = value!;
+        },
+      );
+    }
+  },
+),
+          SizedBox(height: 10),
+          FutureBuilder<List<Prescription>>(
+            future: _fetchPrescriptions(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return CircularProgressIndicator();
+              } else if (snapshot.hasError) {
+                return Text('Error: ${snapshot.error}');
+              } else {
+                final prescriptions = snapshot.data ?? [];
+                return Container(
+                  width: double.infinity,
+                  child: DropdownButtonFormField<int>(
+                    decoration: InputDecoration(
+                      labelText: 'Prescription',
+                      border: OutlineInputBorder(),
+                    ),
+                    isExpanded: true, // Usar el ancho completo
+                    items: prescriptions.map((prescription) {
+                      final formattedDate = DateFormat('yyyy-MM-dd').format(
+                        DateTime.parse(prescription.prescriptionDate),
+                      );
+                      return DropdownMenuItem<int>(
+                        value: prescription.id,
+                        child: Row(
+                          children: [
+                            // Usar Flexible para el texto de las notas y limitar su overflow
+                            Flexible(
+                              child: Text(
+                                prescription.notes,
+                                overflow: TextOverflow.ellipsis, // Recorta si es muy largo
+                                softWrap: false,
+                              ),
+                            ),
+                            SizedBox(width: 8), // Separación entre texto y fecha
+                            // Mostrar fecha completa sin overflow
+                            Text(
+                              formattedDate,
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+                    onChanged: (value) {
+                      _medicationPost.prescriptionId = value!;
+                    },
+                  ),
+                );
+              }
+            },
           ),
-        ),
+          SizedBox(height: 10),
+          TextFormField(
+            decoration: InputDecoration(
+              labelText: 'Name',
+              border: OutlineInputBorder(),
+            ),
+            onSaved: (value) => _medicationPost.name = value!,
+          ),
+          SizedBox(height: 10),
+          SpinBox(
+            min: 0,
+            value: 0,
+            decoration: InputDecoration(
+              labelText: 'Amount',
+              border: OutlineInputBorder(),
+            ),
+            onChanged: (value) => _medicationPost.amount = value.toInt(),
+          ),
+          SizedBox(height: 10),
+          TextFormField(
+            decoration: InputDecoration(
+              labelText: 'Unit Quantity',
+              border: OutlineInputBorder(),
+            ),
+            onSaved: (value) => _medicationPost.unitQ = value!,
+          ),
+          SizedBox(height: 10),
+          SpinBox(
+            min: 0,
+            value: 0,
+            decoration: InputDecoration(
+              labelText: 'Value',
+              border: OutlineInputBorder(),
+            ),
+            onChanged: (value) => _medicationPost.value = value.toInt(),
+          ),
+          SizedBox(height: 10),
+          TextFormField(
+            decoration: InputDecoration(
+              labelText: 'Unit',
+              border: OutlineInputBorder(),
+            ),
+            onSaved: (value) => _medicationPost.unit = value!,
+          ),
+          SizedBox(height: 10),
+          SpinBox(
+            min: 0,
+            value: 0,
+            decoration: InputDecoration(
+              labelText: 'Times Per Day',
+              border: OutlineInputBorder(),
+            ),
+            onChanged: (value) => _medicationPost.timesPerDay = value.toInt(),
+          ),
+          SizedBox(height: 10),
+          TextFormField(
+            decoration: InputDecoration(
+              labelText: 'Time Period',
+              border: OutlineInputBorder(),
+            ),
+            onSaved: (value) => _medicationPost.timePeriod = value!,
+          ),
+        ],
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: Text('Cancel'),
-        ),
-        ElevatedButton(
-          onPressed: _submitForm,
-          child: Text('Submit'),
-        ),
-      ],
-    );
+    ),
+  ),
+  actions: [
+    TextButton(
+      onPressed: () => Navigator.of(context).pop(),
+      child: Text('Cancel'),
+    ),
+    ElevatedButton(
+      onPressed: () async {
+        if (_formKey.currentState!.validate()) {
+          _formKey.currentState!.save();
+          try {
+            final response = await MedicalRecordService().addMedication(_medicationPost);
+            if (response.statusCode == 200 || response.statusCode == 201) {
+              Navigator.of(context).pop();
+              setState(() {}); // Recargar la sección de medicamentos
+            } else {
+              throw Exception('Error posting medication');
+            }
+          } catch (e) {
+            print(e);
+          }
+        }
+      },
+      child: Text('Submit'),
+    ),
+  ],
+);
+
   }
 
 
-Widget _AddPrescriptionDialog() {
+
+    Widget _AddPrescriptionDialog(int medicalRecordId) {
     final _formKey = GlobalKey<FormState>();
     final _prescriptionPost = PrescriptionPost(
-      doctorId: 0,
-      patientId: 0,
+      medicalRecordId: medicalRecordId,
       prescriptionDate: '',
       notes: '',
     );
