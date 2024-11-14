@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
+import 'package:file_picker/file_picker.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:dio/dio.dart';
 import 'package:intl/intl.dart'; // Importa la librería intl para formatear fechas
 import 'package:flutter_spinbox/flutter_spinbox.dart'; // Importa la librería flutter_spinbox para usar SpinBox
 import 'package:flutter/services.dart'; // Importa la librería services para usar FilteringTextInputFormatter
@@ -10,6 +15,7 @@ import '../../domain/services/medicalrecord_service.dart';
 import '../../domain/models/medicationpost_model.dart';
 import '../../domain/models/prescriptionpost_model.dart';
 import '../../domain/models/medicaltype_model.dart';
+import '../../domain/services/firebase_storage_service.dart';
 
 class MedicalRecordScreen extends StatefulWidget {
   final String patientId;
@@ -913,18 +919,125 @@ Widget _AddTreatmentDialog(int medicalRecordId) {
 
 
 
+  Future<void> _uploadFile() async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles();
+
+    if (result != null) {
+      PlatformFile file = result.files.first;
+      try {
+        await FirebaseStorage.instance
+            .ref('medical_tests/${file.name}')
+            .putFile(File(file.path!));
+        setState(() {}); // Refresh the UI
+      } catch (e) {
+        print('Error uploading file: $e');
+      }
+    }
+  }
+
+  Future<void> _downloadFile(String url, String fileName) async {
+  try {
+    // Especifica directamente la ruta de la carpeta de descargas
+    final Directory? downloadsDir = Directory('/storage/emulated/0/Download');
+
+    // Verifica si el directorio de descargas existe en el sistema
+    if (downloadsDir != null && downloadsDir.existsSync()) {
+      final savePath = '${downloadsDir.path}/$fileName';
+      final dio = Dio();
+      await dio.download(url, savePath);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Archivo descargado a $savePath')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No se pudo acceder a la carpeta de descargas')),
+      );
+    }
+  } catch (e) {
+    print('Error al descargar archivo: $e');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error al descargar archivo: $e')),
+      );
+    }
+  }
+
+  Future<void> _deleteFile(String fileName) async {
+    try {
+      await FirebaseStorage.instance.ref('medical_tests/$fileName').delete();
+      setState(() {}); // Refresh the UI
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('File deleted successfully')),
+      );
+    } catch (e) {
+      print('Error deleting file: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error deleting file: $e')),
+      );
+    }
+  }
+
+  Future<DateTime?> _getFileModificationDate(String fileName) async {
+    try {
+      final ref = FirebaseStorage.instance.ref('medical_tests/$fileName');
+      final metadata = await ref.getMetadata();
+      return metadata.updated;
+    } catch (e) {
+      print('Error getting file modification date: $e');
+      return null;
+    }
+  }
+
   Widget _buildMedicalTestsTab() {
-    return ListView(
-      padding: EdgeInsets.all(16),
+    return Stack(
       children: [
-        _buildTestItem('Fasting Glucose Test', '18/04/24'),
-        _buildTestItem('OGTT', '18/04/24'),
-        _buildTestItem('ACTH test', '18/04/24'),
+        FutureBuilder<List<Map<String, String>>>(
+          future: FirebaseStorageService().getMedicalTests(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              return Center(child: Text('Error: ${snapshot.error}'));
+            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+              return Center(child: Text('No medical tests found'));
+            } else {
+              final tests = snapshot.data!;
+              return ListView.builder(
+                padding: EdgeInsets.all(16),
+                itemCount: tests.length,
+                itemBuilder: (context, index) {
+                  final test = tests[index];
+                  return FutureBuilder<DateTime?>(
+                    future: _getFileModificationDate(test['name']!),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return Center(child: CircularProgressIndicator());
+                      } else if (snapshot.hasError) {
+                        return Center(child: Text('Error: ${snapshot.error}'));
+                      } else {
+                        final modificationDate = snapshot.data;
+                        return _buildTestItem(test['name']!, test['url']!, modificationDate);
+                      }
+                    },
+                  );
+                },
+              );
+            }
+          },
+        ),
+        Positioned(
+          bottom: 16,
+          right: 16,
+          child: FloatingActionButton(
+            onPressed: _uploadFile,
+            child: Icon(Icons.upload),
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildTestItem(String testName, String date) {
+  Widget _buildTestItem(String testName, String url, DateTime? modificationDate) {
     return Container(
       padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
       margin: EdgeInsets.only(bottom: 10),
@@ -935,24 +1048,37 @@ Widget _AddTreatmentDialog(int medicalRecordId) {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            testName,
-            style: TextStyle(fontSize: 16),
+          Expanded(
+            flex: 5,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  testName,
+                  style: TextStyle(fontSize: 16),
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (modificationDate != null)
+                  Text(
+                    DateFormat('yyyy-MM-dd').format(modificationDate),
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+              ],
+            ),
           ),
           Row(
             children: [
-              Text(
-                date,
-                style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+              IconButton(
+                icon: Icon(Icons.download, size: 24, color: Colors.blue),
+                onPressed: () async {
+                  await _downloadFile(url, testName);
+                },
               ),
-              SizedBox(width: 10),
-              Container(
-                padding: EdgeInsets.all(4),
-                decoration: BoxDecoration(
-                  color: Colors.grey[700],
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Icon(Icons.download, size: 24, color: Colors.white),
+              IconButton(
+                icon: Icon(Icons.delete, size: 24, color: Colors.red),
+                onPressed: () async {
+                  await _deleteFile(testName);
+                },
               ),
             ],
           ),
@@ -960,6 +1086,13 @@ Widget _AddTreatmentDialog(int medicalRecordId) {
       ),
     );
   }
+
+
+
+
+
+
+
 
   Widget _buildExternalReportsTab() {
     return ListView(
