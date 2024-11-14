@@ -14,7 +14,7 @@ class SignIn extends StatelessWidget {
         title: ClipRRect(
           borderRadius: BorderRadius.circular(10.0),
           child: Image.asset(
-            '../../../../../../web/icons/Icon-192.png',
+            '../../../../../../web/hormonalcare.png',
             height: 40,
           ),
         ),

@@ -18,7 +18,7 @@ class AuthService {
     );
 
     if (response.statusCode == 201) {
-      return json.decode(response.body); 
+      return json.decode(response.body);
     } else {
       throw Exception('Error in registration');
     }
@@ -28,10 +28,7 @@ class AuthService {
     final response = await http.post(
       Uri.parse('$baseUrl/authentication/sign-in'),
       headers: {'Content-Type': 'application/json'},
-      body: json.encode({
-        'username': username,
-        'password': password
-      }),
+      body: json.encode({'username': username, 'password': password}),
     );
 
     if (response.statusCode == 200) {
