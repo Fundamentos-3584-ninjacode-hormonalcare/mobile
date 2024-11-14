@@ -11,13 +11,13 @@ import '../../domain/models/prescriptionpost_model.dart';
 import '../../domain/models/medicaltype_model.dart';
 
 class MedicalRecordService {
-  final String baseUrl = 'http://localhost:8080/api/v1/medical-record/patient/record';
-  final String profileBaseUrl = 'http://localhost:8080/api/v1/profile/profile';
-  final String medicationsUrl = 'http://localhost:8080/api/v1/medical-record/medications';
-  final String prescriptionsUrl = 'http://localhost:8080/api/v1/medical-record/medications/prescriptions';
-  final String treatmentsUrl = 'http://localhost:8080/api/v1/medical-record/treatments/medicalRecordId'; // URL base para tratamientos
-  final String treatmentspostUrl = 'http://localhost:8080/api/v1/medical-record/treatments'; // URL base para tratamientos
-  final String medicaltypesUrl = 'http://localhost:8080/api/v1/medical-record/medications/medicationTypes';
+  final String baseUrl = 'https://hormonal-care-backend-production.up.railway.app/api/v1/medical-record/patient/record';
+  final String profileBaseUrl = 'https://hormonal-care-backend-production.up.railway.app/api/v1/profile/profile';
+  final String medicationsUrl = 'https://hormonal-care-backend-production.up.railway.app/api/v1/medical-record/medications';
+  final String prescriptionsUrl = 'https://hormonal-care-backend-production.up.railway.app/api/v1/medical-record/medications/prescriptions';
+  final String treatmentsUrl = 'https://hormonal-care-backend-production.up.railway.app/api/v1/medical-record/treatments/medicalRecordId'; // URL base para tratamientos
+  final String treatmentspostUrl = 'https://hormonal-care-backend-production.up.railway.app/api/v1/medical-record/treatments'; // URL base para tratamientos
+  final String medicaltypesUrl = 'https://hormonal-care-backend-production.up.railway.app/api/v1/medical-record/medications/medicationTypes';
 
 
   Future<Patient> getPatientById(String patientId) async {
