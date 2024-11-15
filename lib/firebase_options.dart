@@ -46,6 +46,15 @@ class DefaultFirebaseOptions {
     }
   }
 
+  static const FirebaseOptions firebaseConfig = FirebaseOptions(
+    apiKey: 'AIzaSyAM8BgJMJtQoJLDEdtbP9Ny6FI7dSFi_H0',
+    authDomain: 'hormonalcare-92eee.firebaseapp.com',
+    projectId: 'hormonalcare-92eee',
+    storageBucket: 'hormonalcare-92eee.firebasestorage.app',
+    messagingSenderId: '929582467278',
+    appId: '1:929582467278:web:6f3116bfe4e3e67c58e89f',
+  );
+
   static const FirebaseOptions web = FirebaseOptions(
     apiKey: 'AIzaSyAM8BgJMJtQoJLDEdtbP9Ny6FI7dSFi_H0',
     appId: '1:929582467278:web:6f3116bfe4e3e67c58e89f',

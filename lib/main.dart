@@ -4,14 +4,15 @@ import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:trabajo_moviles_ninjacode/scr/features/iam/presentation/pages/sign_in.dart';
 import 'package:trabajo_moviles_ninjacode/scr/shared/app.dart';
-
-
+import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Initialize Firebase
-  await Firebase.initializeApp();
+  // Initialize Firebase with the correct options for the current platform
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   
   // Activate App Check with a debug provider for Android
   FirebaseAppCheck.instance.activate(
