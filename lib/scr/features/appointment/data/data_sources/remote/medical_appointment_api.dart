@@ -19,7 +19,7 @@ class MedicalAppointmentApi {
     return await JwtStorage.getUserId();
   }
 
-  Future<Map<String, dynamic>?> getProfile(int profileId) async {
+  Future<Map<String, dynamic>?> fetchProfileDetails(int profileId) async {
     final token = await _getToken();
     if (token == null) {
       throw Exception('Token not found');
@@ -287,6 +287,7 @@ class MedicalAppointmentApi {
       throw Exception('Failed to update appointment');
     }
   }
+
   Future<bool> deleteMedicalAppointment(String medicalAppointmentId) async {
     final token = await _getToken();
     if (token == null) {
@@ -308,5 +309,35 @@ class MedicalAppointmentApi {
     } else {
       throw Exception('Failed to delete appointment');
     }
+  }
+
+  Future<Map<String, dynamic>> fetchAppointmentDetails(int appointmentId) async {
+    final token = await _getToken();
+    if (token == null) {
+      throw Exception('Token not found');
+    }
+
+    final response = await http.get(
+      Uri.parse('$_baseUrl/medicalAppointment/$appointmentId'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception('Failed to load appointment details');
+    }
+  }
+
+    Future<Map<String, dynamic>> fetchPatientDetails(int patientId) async {
+    final profileId = await getProfileIdByPatientId(patientId);
+    if (profileId == null) {
+      throw Exception('Profile ID not found');
+    }
+    final profileDetails = await fetchProfileDetails(profileId);
+    if (profileDetails == null) {
+      throw Exception('Failed to load profile details');
+    }
+    return profileDetails;
   }
 }
