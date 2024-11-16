@@ -111,7 +111,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
             ),
             ListTile(
               leading: Icon(Icons.view_agenda),
-              title: Text('Month with Agenda'),
+              title: Text('Month'),
               onTap: () {
                 _onCalendarViewChanged(CalendarView.month);
                 Navigator.pop(context);
