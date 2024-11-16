@@ -6,7 +6,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:dio/dio.dart';
 import 'package:intl/intl.dart'; // Importa la librería intl para formatear fechas
 import 'package:flutter_spinbox/flutter_spinbox.dart'; // Importa la librería flutter_spinbox para usar SpinBox
-import 'package:flutter/services.dart'; // Importa la librería services para usar FilteringTextInputFormatter
 import '../../../medical_prescription/domain/models/patient_model.dart';
 import '../../domain/models/medication_model.dart';
 import '../../domain/models/prescription_model.dart';
@@ -35,7 +34,7 @@ class _MedicalRecordScreenState extends State<MedicalRecordScreen> with SingleTi
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 5, vsync: this); // 5 pestañas en el TabBar
+    _tabController = TabController(length: 4, vsync: this); // 5 pestañas en el TabBar
     _tabController.addListener(_handleTabSelection); // Añadimos un listener para manejar el cambio de pestañas
     _patientFuture = MedicalRecordService().getPatientById(widget.patientId);
     }
@@ -232,8 +231,7 @@ class _MedicalRecordScreenState extends State<MedicalRecordScreen> with SingleTi
           Tab(text: 'Patient History'),
           Tab(text: 'Diagnosis & Treatments'),
           Tab(text: 'Medical Tests'),
-          Tab(text: 'External Reports'),
-          Tab(text: 'Consultation History'),
+          Tab(text: 'External Reports')
         ],
       ),
     );
@@ -247,45 +245,138 @@ class _MedicalRecordScreenState extends State<MedicalRecordScreen> with SingleTi
         _buildPatientHistoryTab(patient),
         _buildDiagnosisAndTreatmentsTab(patient.id), // Usar el medicalRecordId
         _buildMedicalTestsTab(patient.id), // Convertir patientId y medicalRecordId a String
-        _buildExternalReportsTab(),
-        Center(child: Text('Consultation History content')),
+        _buildExternalReportsTab(patient.id)
       ],
     ),
   );
 }
 
-  Widget _buildPatientHistoryTab(Patient patient) {
-    return ListView(
-      padding: EdgeInsets.all(16),
-      children: [
-        Text(
-          'Personal history:',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
+Widget _buildPatientHistoryTab(Patient patient) {
+  return ListView(
+    padding: EdgeInsets.all(16),
+    children: [
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            'Personal history:',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          IconButton(
+            icon: Icon(Icons.edit),
+            onPressed: () => _showEditDialog('Personal history', patient.personalHistory, (newValue) {
+              _updatePersonalHistory(patient.id, newValue);
+            }),
+          ),
+        ],
+      ),
+      SizedBox(height: 10),
+      Text(
+        patient.personalHistory,
+        style: TextStyle(fontSize: 16),
+      ),
+      SizedBox(height: 20),
+      Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            'Family history:',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          IconButton(
+            icon: Icon(Icons.edit),
+            onPressed: () => _showEditDialog('Family history', patient.familyHistory, (newValue) {
+              _updateFamilyHistory(patient.id, newValue);
+            }),
+          ),
+        ],
+      ),
+      SizedBox(height: 10),
+      Text(
+        patient.familyHistory,
+        style: TextStyle(fontSize: 16),
+      ),
+    ],
+  );
+}
+
+void _showEditDialog(String title, String initialValue, Function(String) onSave) {
+  final TextEditingController _controller = TextEditingController(text: initialValue);
+
+  showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text('Edit $title'),
+        content: TextField(
+          controller: _controller,
+          maxLines: 5,
+          decoration: InputDecoration(
+            border: OutlineInputBorder(),
           ),
         ),
-        SizedBox(height: 10),
-        Text(
-          patient.personalHistory,
-          style: TextStyle(fontSize: 16),
-        ),
-        SizedBox(height: 20),
-        Text(
-          'Family history:',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+            child: Text('Cancel'),
           ),
-        ),
-        SizedBox(height: 10),
-        Text(
-          patient.familyHistory,
-          style: TextStyle(fontSize: 16),
-        ),
-      ],
-    );
+          ElevatedButton(
+            onPressed: () {
+              onSave(_controller.text);
+              Navigator.of(context).pop();
+            },
+            child: Text('Save'),
+          ),
+        ],
+      );
+    },
+  );
+}
+
+void _updatePersonalHistory(int patientId, String newPersonalHistory) async {
+  try {
+    final response = await MedicalRecordService().updatePersonalHistory(patientId, newPersonalHistory);
+    if (response.statusCode == 200) {
+      setState(() {
+        _patientFuture = MedicalRecordService().getPatientById(widget.patientId);
+      });
+    } else {
+      print('Error updating personal history: ${response.body}');
+    }
+  } catch (e) {
+    print('Exception updating personal history: $e');
   }
+}
+
+void _updateFamilyHistory(int patientId, String newFamilyHistory) async {
+  try {
+    final response = await MedicalRecordService().updateFamilyHistory(patientId, newFamilyHistory);
+    if (response.statusCode == 200) {
+      setState(() {
+        _patientFuture = MedicalRecordService().getPatientById(widget.patientId);
+      });
+    } else {
+      print('Error updating family history: ${response.body}');
+    }
+  } catch (e) {
+    print('Exception updating family history: $e');
+  }
+}
+
+
+
+
+
+
+
 
 
 Widget _buildDiagnosisAndTreatmentsTab(int medicalRecordId) {
@@ -913,7 +1004,7 @@ Widget _AddTreatmentDialog(int medicalRecordId) {
 
 
 
-//Medical Tests Tab
+
 // Medical Tests Tab
 
 Future<void> _uploadFile(int patientId) async {
@@ -942,11 +1033,11 @@ Future<void> _downloadFile(String url, String fileName) async {
       await dio.download(url, savePath);
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Archivo descargado a $savePath')),
+        SnackBar(content: Text('File downloaded to $savePath')),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No se pudo acceder a la carpeta de descargas')),
+        SnackBar(content: Text('Could not access downloads folder')),
       );
     }
   } catch (e) {
@@ -1021,13 +1112,14 @@ Widget _buildMedicalTestsTab(int patientId) {
         },
       ),
       Positioned(
-        bottom: 16,
-        right: 16,
-        child: FloatingActionButton(
-          onPressed: () => _uploadFile(patientId),
-          child: Icon(Icons.upload),
-        ),
-      ),
+  bottom: 16,
+  right: 16,
+  child: FloatingActionButton(
+    onPressed: () => _uploadExternalReport(patientId),
+    backgroundColor: Colors.grey[300], // Color de fondo gris claro
+    child: Icon(Icons.upload),
+  ),
+),
     ],
   );
 }
@@ -1087,52 +1179,211 @@ Widget _buildTestItem(String testName, String url, DateTime? modificationDate, i
 
 
 
-  Widget _buildExternalReportsTab() {
-    return ListView(
-      padding: EdgeInsets.all(16),
-      children: [
-        _buildReportItem('18/04/24'),
-        _buildReportItem('18/04/24'),
-        _buildReportItem('22/04/24'),
-        _buildReportItem('18/04/24'),
-      ],
-    );
-  }
+// External Reports Tab
 
-  Widget _buildReportItem(String date) {
-    return Container(
-      padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-      margin: EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(
-        color: Colors.grey[200],
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            date,
-            style: TextStyle(fontSize: 16),
-          ),
-          Container(
-            padding: EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              color: Colors.grey[700],
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: Icon(Icons.download, size: 24, color: Colors.white),
-          ),
-        ],
-      ),
+Future<void> _uploadExternalReport(int patientId) async {
+  FilePickerResult? result = await FilePicker.platform.pickFiles();
+
+  if (result != null) {
+    PlatformFile file = result.files.first;
+    try {
+      await FirebaseStorage.instance
+          .ref('external_reports/$patientId/${file.name}')
+          .putFile(File(file.path!));
+      setState(() {}); // Refresh the UI
+    } catch (e) {
+      print('Error uploading file: $e');
+    }
+  }
+}
+
+Future<void> _downloadExternalReport(String url, String fileName) async {
+  try {
+    final Directory? downloadsDir = Directory('/storage/emulated/0/Download');
+
+    if (downloadsDir != null && downloadsDir.existsSync()) {
+      final savePath = '${downloadsDir.path}/$fileName';
+      final dio = Dio();
+      await dio.download(url, savePath);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('File downloaded to $savePath')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not access downloads folder')),
+      );
+    }
+  } catch (e) {
+    print('Error al descargar archivo: $e');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error al descargar archivo: $e')),
     );
   }
+}
+
+Future<void> _deleteExternalReport(int patientId, String fileName) async {
+  try {
+    await FirebaseStorage.instance.ref('external_reports/$patientId/$fileName').delete();
+    setState(() {}); // Refresh the UI
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('File deleted successfully')),
+    );
+  } catch (e) {
+    print('Error deleting file: $e');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error deleting file: $e')),
+    );
+  }
+}
+
+Future<DateTime?> _getExternalReportModificationDate(int patientId, String fileName) async {
+  try {
+    final ref = FirebaseStorage.instance.ref('external_reports/$patientId/$fileName');
+    final metadata = await ref.getMetadata();
+    return metadata.updated;
+  } catch (e) {
+    print('Error getting file modification date: $e');
+    return null;
+  }
+}
+
+Widget _buildExternalReportsTab(int patientId) {
+  return Stack(
+    children: [
+      FutureBuilder<List<Map<String, String>>>(
+        future: FirebaseStorageService().getExternalReports(patientId),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return Center(child: Text('No external reports found'));
+          } else {
+            final reports = snapshot.data!;
+            return ListView.builder(
+              padding: EdgeInsets.all(16),
+              itemCount: reports.length,
+              itemBuilder: (context, index) {
+                final report = reports[index];
+                return FutureBuilder<DateTime?>(
+                  future: _getExternalReportModificationDate(patientId, report['name']!),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return Center(child: CircularProgressIndicator());
+                    } else if (snapshot.hasError) {
+                      return Center(child: Text('Error: ${snapshot.error}'));
+                    } else {
+                      final modificationDate = snapshot.data;
+                      return _buildReportItem(report['name']!, report['url']!, modificationDate, patientId);
+                    }
+                  },
+                );
+              },
+            );
+          }
+        },
+      ),
+      Positioned(
+  bottom: 16,
+  right: 16,
+  child: FloatingActionButton(
+    onPressed: () => _uploadExternalReport(patientId),
+    backgroundColor: Colors.grey[300], // Color de fondo gris claro
+    child: Icon(Icons.upload),
+  ),
+),
+    ],
+  );
+}
+
+Widget _buildReportItem(String reportName, String url, DateTime? modificationDate, int patientId) {
+  return Container(
+    padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+    margin: EdgeInsets.only(bottom: 10),
+    decoration: BoxDecoration(
+      color: Colors.grey[200],
+      borderRadius: BorderRadius.circular(8),
+    ),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Expanded(
+          flex: 5,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                reportName,
+                style: TextStyle(fontSize: 16),
+                overflow: TextOverflow.ellipsis,
+              ),
+              if (modificationDate != null)
+                Text(
+                  DateFormat('yyyy-MM-dd').format(modificationDate),
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+            ],
+          ),
+        ),
+        Row(
+          children: [
+            IconButton(
+              icon: Icon(Icons.download, size: 24, color: Colors.blue),
+              onPressed: () async {
+                await _downloadExternalReport(url, reportName);
+              },
+            ),
+            IconButton(
+              icon: Icon(Icons.delete, size: 24, color: Colors.red),
+              onPressed: () async {
+                await _deleteExternalReport(patientId, reportName);
+              },
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        title: Text('Medical record',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        centerTitle: true,
         backgroundColor: Color(0xFF6A828D),
-        title: Text('Medical record'),
+        iconTheme: IconThemeData(color: Colors.white),
       ),
       body: FutureBuilder<Patient>(
         future: _patientFuture,

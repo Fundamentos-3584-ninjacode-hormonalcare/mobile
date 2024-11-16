@@ -215,8 +215,15 @@ class SignUp extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Sign Up'),
+        title: Text('Sign Up',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        centerTitle: true,
         backgroundColor: Color(0xFF6A828D),
+        iconTheme: IconThemeData(color: Colors.white), 
       ),
       body: Center(
         child: SingleChildScrollView(
