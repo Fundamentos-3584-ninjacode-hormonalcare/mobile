@@ -5,10 +5,8 @@ class MedicalAppointmentRepository {
 
   MedicalAppointmentRepository(this.api);
 
-    Future<bool> createMedicalAppointment(Map<String, dynamic> appointmentData) async {
-    final response = await api.createMedicalAppointment(appointmentData);
-    // Asumiendo que el `response` tiene un campo `success` que indica el éxito
-    return response['success'] == true;
+  Future<bool> createMedicalAppointment(Map<String, dynamic> appointmentData) async {
+    return await api.createMedicalAppointment(appointmentData);
   }
 
   Future<List<Map<String, dynamic>>> fetchAppointmentsForToday() async {
