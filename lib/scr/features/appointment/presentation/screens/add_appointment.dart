@@ -1,6 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:trabajo_moviles_ninjacode/scr/features/appointment/data/data_sources/remote/medical_appointment_api.dart';
+import 'dart:math';
+
+class JitsiMeetingLinkGenerator {
+  static const String _baseUrl = 'https://meet.jit.si/';
+
+  static String generateMeetingLink({String? roomPrefix}) {
+    final String randomString = _generateRandomString(10);
+    final String roomName = roomPrefix != null ? '$roomPrefix-$randomString' : randomString;
+    return '$_baseUrl$roomName';
+  }
+
+  static String _generateRandomString(int length) {
+    const String chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    final Random random = Random();
+    return List.generate(length, (index) => chars[random.nextInt(chars.length)]).join();
+  }
+}
 
 class AddAppointmentScreen extends StatefulWidget {
   final DateTime selectedDate;
@@ -18,7 +35,6 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
   Color _selectedColor = Color(0xFF039BE5); // Default color
 
   final TextEditingController _titleController = TextEditingController();
-  final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _startTimeController = TextEditingController();
   final TextEditingController _endTimeController = TextEditingController();
 
@@ -100,10 +116,6 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
                 decoration: InputDecoration(labelText: 'Title'),
               ),
               TextField(
-                controller: _descriptionController,
-                decoration: InputDecoration(labelText: 'Description'),
-              ),
-              TextField(
                 controller: _startTimeController,
                 decoration: InputDecoration(labelText: 'Start Time (HH:MM)'),
                 keyboardType: TextInputType.number,
@@ -149,7 +161,6 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
               ElevatedButton(
                 onPressed: () async {
                   final String title = _titleController.text;
-                  final String description = _descriptionController.text;
                   final DateTime startTime = DateTime(
                     widget.selectedDate.year,
                     widget.selectedDate.month,
@@ -172,12 +183,14 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
                     return;
                   }
 
+                  final String meetingLink = JitsiMeetingLinkGenerator.generateMeetingLink(roomPrefix: title);
+
                   final appointmentData = {
                     'eventDate': widget.selectedDate.toIso8601String().split('T')[0],
                     'startTime': _startTimeController.text, // Formato HH:MM
                     'endTime': _endTimeController.text, // Formato HH:MM
                     'title': title,
-                    'description': description,
+                    'description': meetingLink, // Save generated meeting link
                     'doctorId': await _appointmentService.getDoctorId(),
                     'patientId': _selectedPatientId,
                     'color': _selectedColor.value.toRadixString(16), // Save color as hex string
