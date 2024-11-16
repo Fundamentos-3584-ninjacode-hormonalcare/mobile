@@ -7,6 +7,7 @@ import 'package:trabajo_moviles_ninjacode/scr/core/utils/usecases/jwt_storage.da
 import 'package:trabajo_moviles_ninjacode/scr/features/appointment/presentation/widgets/info_appointment.dart'; // Importa el widget InfoAppointment
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+import 'package:url_launcher/url_launcher.dart'; // Importa url_launcher
 
 class HomePatientsScreen extends StatefulWidget {
   final int doctorId;
@@ -130,21 +131,13 @@ class _HomePatientsScreenState extends State<HomePatientsScreen> {
                               trailing: Padding(
                                 padding: EdgeInsets.only(right: 16), // Move the container to the left
                                 child: GestureDetector(
-                                  onTap: () {
-                                    showDialog(
-                                      context: context,
-                                      builder: (BuildContext context) {
-                                        return InfoAppointment(
-                                          patientName: patients[index]['name']!,
-                                          appointmentTime: patients[index]['time']!,
-                                          endTime: patients[index]['endTime']!,
-                                          appointmentDate: patients[index]['eventDate']!,
-                                          title: patients[index]['title']!,
-                                          description: patients[index]['description']!,
-                                          color: Color(int.parse(patients[index]['color']!)),
-                                        );
-                                      },
-                                    );
+                                  onTap: () async {
+                                    final url = patients[index]['description']!;
+                                    if (await canLaunch(url)) {
+                                      await launch(url);
+                                    } else {
+                                      throw 'Could not launch $url';
+                                    }
                                   },
                                   child: Container(
                                     padding: EdgeInsets.symmetric(horizontal: 4, vertical: 4), // Adjusted padding
@@ -158,7 +151,7 @@ class _HomePatientsScreenState extends State<HomePatientsScreen> {
                                         Icon(Icons.videocam, color: Colors.white),
                                         SizedBox(width: 4), // Adjusted spacing
                                         Text(
-                                          patients[index]['time']!,
+                                          '${patients[index]['time']} - ${patients[index]['endTime']}',
                                           style: TextStyle(color: Colors.white),
                                         ),
                                       ],
