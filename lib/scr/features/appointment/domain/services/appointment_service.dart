@@ -1,20 +1,19 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'dart:math';
 
-class AppointmentService {
-  final String baseUrl = 'http://localhost:8080/api/v1/medicalAppointment';
+class JitsiMeetingLinkGenerator {
+  static const String _baseUrl = 'https://meet.jit.si/';
 
-  Future<bool> createAppointment(Map<String, dynamic> appointmentData) async {
-    final response = await http.post(
-      Uri.parse(baseUrl),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode(appointmentData),
-    );
+  /// Genera un enlace único para una reunión Jitsi
+  static String generateMeetingLink({String? roomPrefix}) {
+    final String randomString = _generateRandomString(10);
+    final String roomName = roomPrefix != null ? '$roomPrefix-$randomString' : randomString;
+    return '$_baseUrl$roomName';
+  }
 
-    if (response.statusCode == 201) {
-      return true; // Cita creada exitosamente
-    } else {
-      throw Exception('Error creating appointment');
-    }
+  /// Crea una cadena aleatoria para garantizar unicidad
+  static String _generateRandomString(int length) {
+    const String chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    final Random random = Random();
+    return List.generate(length, (index) => chars[random.nextInt(chars.length)]).join();
   }
 }

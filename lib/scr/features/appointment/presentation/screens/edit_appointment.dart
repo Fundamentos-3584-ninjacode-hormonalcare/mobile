@@ -41,8 +41,8 @@ class _EditAppointmentScreenState extends State<EditAppointmentScreen> {
   @override
   void initState() {
     super.initState();
-    _titleController.text = widget.appointmentDetails['title'];
-    _descriptionController.text = widget.appointmentDetails['description'];
+    _titleController.text = widget.appointmentDetails['title'] ?? '';
+    _descriptionController.text = widget.appointmentDetails['description'] ?? '';
     _selectedDate = DateTime.parse(widget.appointmentDetails['eventDate']);
     _startTime = TimeOfDay.fromDateTime(DateTime.parse('${widget.appointmentDetails['eventDate']} ${widget.appointmentDetails['startTime']}'));
     _endTime = TimeOfDay.fromDateTime(DateTime.parse('${widget.appointmentDetails['eventDate']} ${widget.appointmentDetails['endTime']}'));
@@ -190,17 +190,7 @@ class _EditAppointmentScreenState extends State<EditAppointmentScreen> {
                 });
                 Navigator.pop(context);
               },
-              child: Row(
-                children: [
-                  CircleAvatar(
-                    backgroundImage: patient['image'] != null ? NetworkImage(patient['image']) : null,
-                    backgroundColor: Color(0xFF40535B),
-                    radius: 16,
-                  ),
-                  SizedBox(width: 8),
-                  Text(patient['fullName']),
-                ],
-              ),
+              child: Text(patient['fullName']),
             );
           }).toList(),
         );
@@ -213,91 +203,139 @@ class _EditAppointmentScreenState extends State<EditAppointmentScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: Icon(Icons.close),
+          icon: Icon(Icons.arrow_back),
           onPressed: () {
             Navigator.of(context).pop();
           },
         ),
+        backgroundColor: Color(0xFF6A828D),
         actions: [
-          TextButton(
+          IconButton(
+            icon: Icon(Icons.save),
             onPressed: _updateAppointment,
-            child: Text(
-              'Save',
-              style: TextStyle(color: Colors.white),
-            ),
-            style: TextButton.styleFrom(
-              backgroundColor: Colors.blue,
-            ),
           ),
         ],
-        backgroundColor: Colors.transparent,
-        elevation: 0,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              TextField(
-                controller: _titleController,
-                decoration: InputDecoration(
-                  border: InputBorder.none,
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center, // Centrado en el eje X
+              children: [
+                SizedBox(height: 1), // Reducir el espaciado inicial para acercar los elementos al header
+                GestureDetector(
+                  onTap: () => _selectPatient(context),
+                  child: Container(
+                    padding: EdgeInsets.all(8.0),
+                    decoration: BoxDecoration(
+                      color: Color(0xFF40535B),
+                      borderRadius: BorderRadius.circular(8.0),
+                    ),
+                    width: MediaQuery.of(context).size.width * 0.8,
+                    child: Center(
+                      child: Text(
+                        _patients.isNotEmpty
+                            ? _patients.firstWhere((patient) => patient['patientId'] == _selectedPatientId, orElse: () => {'fullName': 'Unknown'})['fullName'] ?? 'Unknown'
+                            : 'Unknown',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
-                style: TextStyle(fontSize: 18),
-              ),
-              Divider(),
-              GestureDetector(
-                onTap: () {
-                  Clipboard.setData(ClipboardData(text: _descriptionController.text));
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Meeting link copied to clipboard')),
-                  );
-                },
-                child: Text(
-                  _descriptionController.text,
-                  style: TextStyle(fontSize: 18, color: Colors.blue),
+                SizedBox(height: 16),
+                Container(
+                  width: MediaQuery.of(context).size.width * 0.8,
+                  child: TextField(
+                    controller: _titleController,
+                    decoration: InputDecoration(
+                      border: InputBorder.none,
+                    ),
+                    style: TextStyle(fontSize: 18),
+                  ),
                 ),
-              ),
-              Divider(),
-              GestureDetector(
-                onTap: () => _selectDate(context),
-                child: Text(
-                  DateFormat('EEE, d \'de\' MMMM \'del\' yyyy', 'es_ES').format(_selectedDate),
-                  style: TextStyle(fontSize: 18),
+                SizedBox(height: 8),
+                Container(
+                  width: MediaQuery.of(context).size.width * 0.8,
+                  child: GestureDetector(
+                    onTap: () => _selectDate(context),
+                    child: Text(
+                      DateFormat('EEE, d \'of\' MMMM \'yyyy').format(_selectedDate),
+                      style: TextStyle(fontSize: 18, color: Colors.grey),
+                    ),
+                  ),
                 ),
-              ),
-              GestureDetector(
-                onTap: () => _selectTime(context, true),
-                child: Text(
-                  _startTime.format(context),
-                  style: TextStyle(fontSize: 18),
+                SizedBox(height: 8),
+                Container(
+                  width: MediaQuery.of(context).size.width * 0.8,
+                  child: GestureDetector(
+                    onTap: () => _selectTime(context, true),
+                    child: Text(
+                      _formatTimeOfDay(_startTime),
+                      style: TextStyle(fontSize: 18, color: Colors.grey),
+                    ),
+                  ),
                 ),
-              ),
-              GestureDetector(
-                onTap: () => _selectTime(context, false),
-                child: Text(
-                  _endTime.format(context),
-                  style: TextStyle(fontSize: 18),
+                SizedBox(height: 8),
+                Container(
+                  width: MediaQuery.of(context).size.width * 0.8,
+                  child: GestureDetector(
+                    onTap: () => _selectTime(context, false),
+                    child: Text(
+                      _formatTimeOfDay(_endTime),
+                      style: TextStyle(fontSize: 18, color: Colors.grey),
+                    ),
+                  ),
                 ),
-              ),
-              Divider(),
-              GestureDetector(
-                onTap: () => _selectPatient(context),
-                child: Text(
-                  _patients.firstWhere((patient) => patient['patientId'] == _selectedPatientId)['fullName'],
-                  style: TextStyle(fontSize: 18),
+                SizedBox(height: 8),
+                Container(
+                  width: MediaQuery.of(context).size.width * 0.8,
+                  child: GestureDetector(
+                    onTap: () => _selectColor(context),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 24,
+                          height: 24,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: _selectedColor,
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        Text(
+                          _colors.isNotEmpty
+                              ? _colors.firstWhere((color) => color['color'] == _selectedColor, orElse: () => {'name': 'Unknown'})['name'] ?? 'Unknown'
+                              : 'Unknown',
+                          style: TextStyle(fontSize: 18, color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ),
-              Divider(),
-              GestureDetector(
-                onTap: () => _selectColor(context),
-                child: Text(
-                  _colors.firstWhere((color) => color['color'] == _selectedColor)['name'],
-                  style: TextStyle(fontSize: 18),
+                SizedBox(height: 8),
+                Container(
+                  width: MediaQuery.of(context).size.width * 0.8,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      // Aquí puedes agregar la lógica para generar un nuevo link
+                    },
+                    icon: Icon(Icons.refresh, color: Colors.blue),
+                    label: Text(
+                      'Generate New Link',
+                      style: TextStyle(color: Colors.blue),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      side: BorderSide(color: Colors.grey),
+                    ),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
