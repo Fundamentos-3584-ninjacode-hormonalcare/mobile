@@ -1,4 +1,3 @@
-//patients list screen 
 import 'package:flutter/material.dart';
 import 'package:trabajo_moviles_ninjacode/scr/features/appointment/presentation/widgets/appointment_form.dart';
 import 'package:trabajo_moviles_ninjacode/scr/features/profile/data/data_sources/remote/patient_service.dart';
@@ -54,14 +53,15 @@ class _HomePatientsScreenState extends State<HomePatientsScreen> {
         final patientDetails = await _patientService.fetchPatientDetails(appointment['patientId']);
         final profileDetails = await _profileService.fetchProfileDetails(patientDetails['profileId']);
         fetchedPatients.add({
-          'name': profileDetails['fullName'],
-          'time': appointment['startTime'],
-          'endTime': appointment['endTime'],
-          'image': profileDetails['image'], // Assuming 'image' is the key for the profile image URL
-          'eventDate': appointment['eventDate'],
+          'name': profileDetails['fullName'] ?? 'No name',
+          'time': appointment['startTime'] ?? 'No start time',
+          'endTime': appointment['endTime'] ?? 'No end time',
+          'image': profileDetails['image'] ?? '', // Assuming 'image' is the key for the profile image URL
+          'eventDate': appointment['eventDate'] ?? 'No date',
           'patientId': appointment['patientId'].toString(),
-          'title': appointment['title'],
-          'description': appointment['description'],
+          'title': appointment['title'] ?? 'No title',
+          'description': appointment['description'] ?? 'No description',
+          'color': appointment['color'] ?? '0xFF039BE5', // Default color if none is provided
         });
       }
 
@@ -141,6 +141,7 @@ class _HomePatientsScreenState extends State<HomePatientsScreen> {
                                           appointmentDate: patients[index]['eventDate']!,
                                           title: patients[index]['title']!,
                                           description: patients[index]['description']!,
+                                          color: Color(int.parse(patients[index]['color']!)),
                                         );
                                       },
                                     );

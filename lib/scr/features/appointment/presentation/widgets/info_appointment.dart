@@ -1,7 +1,5 @@
-//info appointment
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
 
 class InfoAppointment extends StatelessWidget {
   final String patientName;
@@ -10,6 +8,7 @@ class InfoAppointment extends StatelessWidget {
   final String appointmentDate;
   final String title;
   final String description;
+  final Color color;
 
   InfoAppointment({
     required this.patientName,
@@ -18,6 +17,7 @@ class InfoAppointment extends StatelessWidget {
     required this.appointmentDate,
     required this.title,
     required this.description,
+    required this.color,
   });
 
   @override
@@ -84,7 +84,7 @@ class InfoAppointment extends StatelessWidget {
 
   Widget _buildInfoCard(IconData icon, String label, String value, double screenWidth) {
     return Card(
-      color: Color(0xFFE0F7FA),
+      color: color,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
       ),
@@ -126,7 +126,7 @@ class InfoAppointment extends StatelessWidget {
 
   Widget _buildDescriptionCard(BuildContext context, double screenWidth) {
     return Card(
-      color: Color(0xFFE0F7FA),
+      color: color,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(10),
       ),
@@ -169,17 +169,6 @@ class InfoAppointment extends StatelessWidget {
                 );
               },
             ),
-            // IconButton(
-            //   icon: Icon(Icons.open_in_new, color: Color(0xFF00796B)),
-            //   onPressed: () async {
-            //     final Uri url = Uri.parse(description);
-            //     if (await canLaunchUrl(url)) {
-            //       await launchUrl(url);
-            //     } else {
-            //       throw 'Could not launch $description';
-            //     }
-            //   },
-            // ),
           ],
         ),
       ),
