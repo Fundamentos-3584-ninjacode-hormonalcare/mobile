@@ -74,30 +74,20 @@ class _AppointmentDetailState extends State<AppointmentDetail> {
       return Scaffold(
         appBar: AppBar(
           backgroundColor: Color(0xFF6A828D),
-          actions: [
-            IconButton(
-              icon: Icon(Icons.edit),
-              onPressed: () async {
-                final result = await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => EditAppointmentScreen(
-                      appointmentDetails: _appointmentDetails!,
-                      patientDetails: _patientDetails!,
-                    ),
-                  ),
-                );
-
-                if (result == true) {
-                  Navigator.of(context).pop(true); // Return true to indicate success
-                }
-              },
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back, color: Colors.white),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
+          title: Text(
+            'Appointment Detail',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
             ),
-            IconButton(
-              icon: Icon(Icons.delete),
-              onPressed: _deleteAppointment,
-            ),
-          ],
+          ),
+          centerTitle: true,
         ),
         body: Center(
           child: CircularProgressIndicator(),
@@ -108,30 +98,20 @@ class _AppointmentDetailState extends State<AppointmentDetail> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Color(0xFF6A828D),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.edit),
-            onPressed: () async {
-              final result = await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => EditAppointmentScreen(
-                    appointmentDetails: _appointmentDetails!,
-                    patientDetails: _patientDetails!,
-                  ),
-                ),
-              );
-
-              if (result == true) {
-                Navigator.of(context).pop(true); // Return true to indicate success
-              }
-            },
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () {
+            Navigator.of(context).pop();
+          },
+        ),
+        title: Text(
+          'Appointment Detail',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
           ),
-          IconButton(
-            icon: Icon(Icons.delete),
-            onPressed: _deleteAppointment,
-          ),
-        ],
+        ),
+        centerTitle: true,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -217,6 +197,50 @@ class _AppointmentDetailState extends State<AppointmentDetail> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.white,
                   side: BorderSide(color: Colors.grey),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            ElevatedButton.icon(
+              onPressed: _deleteAppointment,
+              icon: Icon(Icons.delete, color: Colors.white),
+              label: Text('Delete', style: TextStyle(color: Colors.white)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8.0),
+                ),
+              ),
+            ),
+            ElevatedButton.icon(
+              onPressed: () async {
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => EditAppointmentScreen(
+                      appointmentDetails: _appointmentDetails!,
+                      patientDetails: _patientDetails!,
+                    ),
+                  ),
+                );
+
+                if (result == true) {
+                  Navigator.of(context).pop(true); // Return true to indicate success
+                }
+              },
+              icon: Icon(Icons.edit, color: Colors.white),
+              label: Text('Edit', style: TextStyle(color: Colors.white)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color(0xFF40535B),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8.0),
                 ),
               ),
             ),

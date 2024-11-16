@@ -1,7 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // Importar el paquete services
+import 'package:flutter/services.dart';
 import 'package:trabajo_moviles_ninjacode/scr/features/appointment/data/data_sources/remote/medical_appointment_api.dart';
 import 'package:intl/intl.dart';
+import 'dart:math';
+
+class JitsiMeetingLinkGenerator {
+  static const String _baseUrl = 'https://meet.jit.si/';
+
+  static String generateMeetingLink({String? roomPrefix}) {
+    final String randomString = _generateRandomString(10);
+    final String roomName = roomPrefix != null ? '$roomPrefix-$randomString' : randomString;
+    return '$_baseUrl$roomName';
+  }
+
+  static String _generateRandomString(int length) {
+    const String chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    final Random random = Random();
+    return List.generate(length, (index) => chars[random.nextInt(chars.length)]).join();
+  }
+}
 
 class EditAppointmentScreen extends StatefulWidget {
   final Map<String, dynamic> appointmentDetails;
@@ -73,12 +90,14 @@ class _EditAppointmentScreenState extends State<EditAppointmentScreen> {
 
   Future<void> _updateAppointment() async {
     try {
+      final String meetingLink = JitsiMeetingLinkGenerator.generateMeetingLink(roomPrefix: _titleController.text);
+
       final updatedAppointmentData = {
         'eventDate': DateFormat('yyyy-MM-dd').format(_selectedDate),
         'startTime': _formatTimeOfDay(_startTime),
         'endTime': _formatTimeOfDay(_endTime),
         'title': _titleController.text,
-        'description': _descriptionController.text,
+        'description': meetingLink,
         'doctorId': widget.appointmentDetails['doctorId'],
         'patientId': _selectedPatientId,
         'color': _selectedColor.value.toRadixString(16),
@@ -203,100 +222,120 @@ class _EditAppointmentScreenState extends State<EditAppointmentScreen> {
     return Scaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: Icon(Icons.arrow_back),
+          icon: Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
             Navigator.of(context).pop();
           },
         ),
         backgroundColor: Color(0xFF6A828D),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.save),
-            onPressed: _updateAppointment,
+        title: Text(
+          'Edit Appointment',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
           ),
-        ],
+        ),
+        centerTitle: true,
       ),
       body: Center(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
           child: SingleChildScrollView(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center, // Centrado en el eje X
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                SizedBox(height: 1), // Reducir el espaciado inicial para acercar los elementos al header
-                GestureDetector(
-                  onTap: () => _selectPatient(context),
-                  child: Container(
-                    padding: EdgeInsets.all(8.0),
-                    decoration: BoxDecoration(
-                      color: Color(0xFF40535B),
-                      borderRadius: BorderRadius.circular(8.0),
-                    ),
-                    width: MediaQuery.of(context).size.width * 0.8,
-                    child: Center(
-                      child: Text(
-                        _patients.isNotEmpty
-                            ? _patients.firstWhere((patient) => patient['patientId'] == _selectedPatientId, orElse: () => {'fullName': 'Unknown'})['fullName'] ?? 'Unknown'
-                            : 'Unknown',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
+                _buildContainer(
+                  child: GestureDetector(
+                    onTap: () => _selectPatient(context),
+                    child: Row(
+                      children: [
+                        Icon(Icons.person, color: Colors.grey),
+                        SizedBox(width: 10),
+                        Text(
+                          _patients.isNotEmpty
+                              ? _patients.firstWhere((patient) => patient['patientId'] == _selectedPatientId, orElse: () => {'fullName': 'Unknown'})['fullName'] ?? 'Unknown'
+                              : 'Unknown',
+                          style: TextStyle(fontSize: 18),
                         ),
-                      ),
+                      ],
                     ),
                   ),
                 ),
                 SizedBox(height: 16),
-                Container(
-                  width: MediaQuery.of(context).size.width * 0.8,
-                  child: TextField(
-                    controller: _titleController,
-                    decoration: InputDecoration(
-                      border: InputBorder.none,
-                    ),
-                    style: TextStyle(fontSize: 18),
+                _buildContainer(
+                  child: Row(
+                    children: [
+                      Icon(Icons.title, color: Colors.grey),
+                      SizedBox(width: 10),
+                      Expanded(
+                        child: TextField(
+                          controller: _titleController,
+                          decoration: InputDecoration(
+                            labelText: 'Title',
+                            border: InputBorder.none,
+                          ),
+                          style: TextStyle(fontSize: 18),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                SizedBox(height: 8),
-                Container(
-                  width: MediaQuery.of(context).size.width * 0.8,
+                SizedBox(height: 16),
+                _buildContainer(
                   child: GestureDetector(
                     onTap: () => _selectDate(context),
-                    child: Text(
-                      DateFormat('EEE, d \'of\' MMMM \'yyyy').format(_selectedDate),
-                      style: TextStyle(fontSize: 18, color: Colors.grey),
+                    child: Row(
+                      children: [
+                        Icon(Icons.calendar_today, color: Colors.grey),
+                        SizedBox(width: 10),
+                        Text(
+                          DateFormat('EEE, d \'of\' MMMM \'yyyy').format(_selectedDate),
+                          style: TextStyle(fontSize: 18),
+                        ),
+                      ],
                     ),
                   ),
                 ),
-                SizedBox(height: 8),
-                Container(
-                  width: MediaQuery.of(context).size.width * 0.8,
+                SizedBox(height: 16),
+                _buildContainer(
                   child: GestureDetector(
                     onTap: () => _selectTime(context, true),
-                    child: Text(
-                      _formatTimeOfDay(_startTime),
-                      style: TextStyle(fontSize: 18, color: Colors.grey),
+                    child: Row(
+                      children: [
+                        Icon(Icons.access_time, color: Colors.grey),
+                        SizedBox(width: 10),
+                        Text(
+                          _formatTimeOfDay(_startTime),
+                          style: TextStyle(fontSize: 18),
+                        ),
+                      ],
                     ),
                   ),
                 ),
-                SizedBox(height: 8),
-                Container(
-                  width: MediaQuery.of(context).size.width * 0.8,
+                SizedBox(height: 16),
+                _buildContainer(
                   child: GestureDetector(
                     onTap: () => _selectTime(context, false),
-                    child: Text(
-                      _formatTimeOfDay(_endTime),
-                      style: TextStyle(fontSize: 18, color: Colors.grey),
+                    child: Row(
+                      children: [
+                        Icon(Icons.access_time, color: Colors.grey),
+                        SizedBox(width: 10),
+                        Text(
+                          _formatTimeOfDay(_endTime),
+                          style: TextStyle(fontSize: 18),
+                        ),
+                      ],
                     ),
                   ),
                 ),
-                SizedBox(height: 8),
-                Container(
-                  width: MediaQuery.of(context).size.width * 0.8,
+                SizedBox(height: 16),
+                _buildContainer(
                   child: GestureDetector(
                     onTap: () => _selectColor(context),
                     child: Row(
                       children: [
+                        Icon(Icons.color_lens, color: Colors.grey),
+                        SizedBox(width: 10),
                         Container(
                           width: 24,
                           height: 24,
@@ -305,32 +344,14 @@ class _EditAppointmentScreenState extends State<EditAppointmentScreen> {
                             color: _selectedColor,
                           ),
                         ),
-                        SizedBox(width: 8),
+                        SizedBox(width: 10),
                         Text(
                           _colors.isNotEmpty
                               ? _colors.firstWhere((color) => color['color'] == _selectedColor, orElse: () => {'name': 'Unknown'})['name'] ?? 'Unknown'
                               : 'Unknown',
-                          style: TextStyle(fontSize: 18, color: Colors.grey),
+                          style: TextStyle(fontSize: 18),
                         ),
                       ],
-                    ),
-                  ),
-                ),
-                SizedBox(height: 8),
-                Container(
-                  width: MediaQuery.of(context).size.width * 0.8,
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      // Aquí puedes agregar la lógica para generar un nuevo link
-                    },
-                    icon: Icon(Icons.refresh, color: Colors.blue),
-                    label: Text(
-                      'Generate New Link',
-                      style: TextStyle(color: Colors.blue),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      side: BorderSide(color: Colors.grey),
                     ),
                   ),
                 ),
@@ -339,6 +360,31 @@ class _EditAppointmentScreenState extends State<EditAppointmentScreen> {
           ),
         ),
       ),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: ElevatedButton(
+          onPressed: _updateAppointment,
+          child: Text('Save', style: TextStyle(color: Colors.white)),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Color(0xFF40535B),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8.0),
+            ),
+            padding: EdgeInsets.symmetric(vertical: 16.0),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildContainer({required Widget child}) {
+    return Container(
+      padding: EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey),
+      ),
+      child: child,
     );
   }
 }
