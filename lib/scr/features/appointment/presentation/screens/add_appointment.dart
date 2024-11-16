@@ -57,7 +57,7 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
     super.initState();
     _loadPatients();
     _startTimeController.text = '${widget.selectedDate.hour.toString().padLeft(2, '0')}:${widget.selectedDate.minute.toString().padLeft(2, '0')}';
-    _endTimeController.text = '${widget.selectedDate.add(Duration(hours: 1)).hour.toString().padLeft(2, '0')}:${widget.selectedDate.add(Duration(minutes: 1)).minute.toString().padLeft(2, '0')}';
+    _endTimeController.text = '${widget.selectedDate.add(Duration(hours: 1)).hour.toString().padLeft(2, '0')}:${widget.selectedDate.add(Duration(minutes: 0)).minute.toString().padLeft(2, '0')}';
   }
 
   Future<void> _loadPatients() async {
@@ -115,27 +115,33 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
         ),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
         child: SingleChildScrollView(
           child: Column(
             children: [
-              TextField(
+              _buildTextField(
                 controller: _titleController,
-                decoration: InputDecoration(labelText: 'Title'),
+                labelText: 'Title',
+                icon: Icons.title,
               ),
-              TextField(
+              SizedBox(height: 16),
+              _buildTextField(
                 controller: _startTimeController,
-                decoration: InputDecoration(labelText: 'Start Time (HH:MM)'),
+                labelText: 'Start Time (HH:MM)',
+                icon: Icons.access_time,
                 keyboardType: TextInputType.number,
                 inputFormatters: [TimeTextInputFormatter()],
               ),
-              TextField(
+              SizedBox(height: 16),
+              _buildTextField(
                 controller: _endTimeController,
-                decoration: InputDecoration(labelText: 'End Time (HH:MM)'),
+                labelText: 'End Time (HH:MM)',
+                icon: Icons.access_time,
                 keyboardType: TextInputType.number,
                 inputFormatters: [TimeTextInputFormatter()],
               ),
-              DropdownButtonFormField<int>(
+              SizedBox(height: 16),
+              _buildDropdown<int>(
                 value: _selectedPatientId,
                 items: _patients.map((patient) {
                   return DropdownMenuItem<int>(
@@ -148,9 +154,11 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
                     _selectedPatientId = value;
                   });
                 },
-                decoration: InputDecoration(labelText: 'Choose a Patient'),
+                labelText: 'Choose a Patient',
+                icon: Icons.person,
               ),
-              DropdownButtonFormField<Color>(
+              SizedBox(height: 16),
+              _buildDropdown<Color>(
                 value: _selectedColor,
                 items: _colors.map((color) {
                   return DropdownMenuItem<Color>(
@@ -169,7 +177,8 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
                     _selectedColor = value!;
                   });
                 },
-                decoration: InputDecoration(labelText: 'Choose a Color'),
+                labelText: 'Choose a Color',
+                icon: Icons.color_lens,
               ),
               SizedBox(height: 20),
               ElevatedButton(
@@ -222,6 +231,72 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String labelText,
+    required IconData icon,
+    TextInputType keyboardType = TextInputType.text,
+    List<TextInputFormatter>? inputFormatters,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey),
+      ),
+      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Row(
+        children: [
+          Icon(icon, color: Colors.grey),
+          SizedBox(width: 10),
+          Expanded(
+            child: TextField(
+              controller: controller,
+              decoration: InputDecoration(
+                labelText: labelText,
+                border: InputBorder.none,
+              ),
+              keyboardType: keyboardType,
+              inputFormatters: inputFormatters,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDropdown<T>({
+    required T? value,
+    required List<DropdownMenuItem<T>> items,
+    required ValueChanged<T?> onChanged,
+    required String labelText,
+    required IconData icon,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey),
+      ),
+      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Row(
+        children: [
+          Icon(icon, color: Colors.grey),
+          SizedBox(width: 10),
+          Expanded(
+            child: DropdownButtonFormField<T>(
+              value: value,
+              items: items,
+              onChanged: onChanged,
+              decoration: InputDecoration(
+                labelText: labelText,
+                border: InputBorder.none,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
