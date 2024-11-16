@@ -57,7 +57,7 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
     super.initState();
     _loadPatients();
     _startTimeController.text = '${widget.selectedDate.hour.toString().padLeft(2, '0')}:${widget.selectedDate.minute.toString().padLeft(2, '0')}';
-    _endTimeController.text = '${widget.selectedDate.add(Duration(hours: 1)).hour.toString().padLeft(2, '0')}:${widget.selectedDate.add(Duration(hours: 1)).minute.toString().padLeft(2, '0')}';
+    _endTimeController.text = '${widget.selectedDate.add(Duration(hours: 1)).hour.toString().padLeft(2, '0')}:${widget.selectedDate.add(Duration(minutes: 1)).minute.toString().padLeft(2, '0')}';
   }
 
   Future<void> _loadPatients() async {
@@ -98,9 +98,17 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Add Appointment'),
+        title: Text(
+          'Add Appointment',
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        centerTitle: true,
+        backgroundColor: Color(0xFF6A828D),
         leading: IconButton(
-          icon: Icon(Icons.arrow_back),
+          icon: Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
             Navigator.of(context).pop();
           },
@@ -147,7 +155,13 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
                 items: _colors.map((color) {
                   return DropdownMenuItem<Color>(
                     value: color['color'],
-                    child: Text(color['name']),
+                    child: Row(
+                      children: [
+                        CircleAvatar(backgroundColor: color['color'], radius: 10),
+                        SizedBox(width: 10),
+                        Text(color['name']),
+                      ],
+                    ),
                   );
                 }).toList(),
                 onChanged: (value) {
@@ -198,7 +212,12 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
 
                   await _createAppointment(appointmentData);
                 },
-                child: Text('Add Appointment'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFF40535B), // Background color
+                  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12), // Padding
+                  textStyle: TextStyle(fontSize: 18), // Text size
+                ),
+                child: Text('Add Appointment', style: TextStyle(color: Colors.white)),
               ),
             ],
           ),
