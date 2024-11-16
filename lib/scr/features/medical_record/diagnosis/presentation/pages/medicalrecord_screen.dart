@@ -239,20 +239,20 @@ class _MedicalRecordScreenState extends State<MedicalRecordScreen> with SingleTi
     );
   }
 
-  Widget _buildTabBarView(Patient patient) {
-    return Expanded(
-      child: TabBarView(
-        controller: _tabController,
-        children: [
-          _buildPatientHistoryTab(patient),
-          _buildDiagnosisAndTreatmentsTab(patient.id), // Usar el medicalRecordId
-          _buildMedicalTestsTab(),
-          _buildExternalReportsTab(),
-          Center(child: Text('Consultation History content')),
-        ],
-      ),
-    );
-  }
+ Widget _buildTabBarView(Patient patient) {
+  return Expanded(
+    child: TabBarView(
+      controller: _tabController,
+      children: [
+        _buildPatientHistoryTab(patient),
+        _buildDiagnosisAndTreatmentsTab(patient.id), // Usar el medicalRecordId
+        _buildMedicalTestsTab(patient.id), // Convertir patientId y medicalRecordId a String
+        _buildExternalReportsTab(),
+        Center(child: Text('Consultation History content')),
+      ],
+    ),
+  );
+}
 
   Widget _buildPatientHistoryTab(Patient patient) {
     return ListView(
@@ -913,34 +913,29 @@ Widget _AddTreatmentDialog(int medicalRecordId) {
 
 
 
+//Medical Tests Tab
+// Medical Tests Tab
 
+Future<void> _uploadFile(int patientId) async {
+  FilePickerResult? result = await FilePicker.platform.pickFiles();
 
-
-
-
-
-  Future<void> _uploadFile() async {
-    FilePickerResult? result = await FilePicker.platform.pickFiles();
-
-    if (result != null) {
-      PlatformFile file = result.files.first;
-      try {
-        await FirebaseStorage.instance
-            .ref('medical_tests/${file.name}')
-            .putFile(File(file.path!));
-        setState(() {}); // Refresh the UI
-      } catch (e) {
-        print('Error uploading file: $e');
-      }
+  if (result != null) {
+    PlatformFile file = result.files.first;
+    try {
+      await FirebaseStorage.instance
+          .ref('medical_tests/$patientId/${file.name}')
+          .putFile(File(file.path!));
+      setState(() {}); // Refresh the UI
+    } catch (e) {
+      print('Error uploading file: $e');
     }
   }
+}
 
-  Future<void> _downloadFile(String url, String fileName) async {
+Future<void> _downloadFile(String url, String fileName) async {
   try {
-    // Especifica directamente la ruta de la carpeta de descargas
     final Directory? downloadsDir = Directory('/storage/emulated/0/Download');
 
-    // Verifica si el directorio de descargas existe en el sistema
     if (downloadsDir != null && downloadsDir.existsSync()) {
       final savePath = '${downloadsDir.path}/$fileName';
       final dio = Dio();
@@ -958,136 +953,134 @@ Widget _AddTreatmentDialog(int medicalRecordId) {
     print('Error al descargar archivo: $e');
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Error al descargar archivo: $e')),
-      );
-    }
-  }
-
-  Future<void> _deleteFile(String fileName) async {
-    try {
-      await FirebaseStorage.instance.ref('medical_tests/$fileName').delete();
-      setState(() {}); // Refresh the UI
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('File deleted successfully')),
-      );
-    } catch (e) {
-      print('Error deleting file: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error deleting file: $e')),
-      );
-    }
-  }
-
-  Future<DateTime?> _getFileModificationDate(String fileName) async {
-    try {
-      final ref = FirebaseStorage.instance.ref('medical_tests/$fileName');
-      final metadata = await ref.getMetadata();
-      return metadata.updated;
-    } catch (e) {
-      print('Error getting file modification date: $e');
-      return null;
-    }
-  }
-
-  Widget _buildMedicalTestsTab() {
-    return Stack(
-      children: [
-        FutureBuilder<List<Map<String, String>>>(
-          future: FirebaseStorageService().getMedicalTests(),
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return Center(child: CircularProgressIndicator());
-            } else if (snapshot.hasError) {
-              return Center(child: Text('Error: ${snapshot.error}'));
-            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-              return Center(child: Text('No medical tests found'));
-            } else {
-              final tests = snapshot.data!;
-              return ListView.builder(
-                padding: EdgeInsets.all(16),
-                itemCount: tests.length,
-                itemBuilder: (context, index) {
-                  final test = tests[index];
-                  return FutureBuilder<DateTime?>(
-                    future: _getFileModificationDate(test['name']!),
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return Center(child: CircularProgressIndicator());
-                      } else if (snapshot.hasError) {
-                        return Center(child: Text('Error: ${snapshot.error}'));
-                      } else {
-                        final modificationDate = snapshot.data;
-                        return _buildTestItem(test['name']!, test['url']!, modificationDate);
-                      }
-                    },
-                  );
-                },
-              );
-            }
-          },
-        ),
-        Positioned(
-          bottom: 16,
-          right: 16,
-          child: FloatingActionButton(
-            onPressed: _uploadFile,
-            child: Icon(Icons.upload),
-          ),
-        ),
-      ],
     );
   }
+}
 
-  Widget _buildTestItem(String testName, String url, DateTime? modificationDate) {
-    return Container(
-      padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-      margin: EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(
-        color: Colors.grey[200],
-        borderRadius: BorderRadius.circular(8),
+Future<void> _deleteFile(int patientId, String fileName) async {
+  try {
+    await FirebaseStorage.instance.ref('medical_tests/$patientId/$fileName').delete();
+    setState(() {}); // Refresh the UI
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('File deleted successfully')),
+    );
+  } catch (e) {
+    print('Error deleting file: $e');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Error deleting file: $e')),
+    );
+  }
+}
+
+Future<DateTime?> _getFileModificationDate(int patientId, String fileName) async {
+  try {
+    final ref = FirebaseStorage.instance.ref('medical_tests/$patientId/$fileName');
+    final metadata = await ref.getMetadata();
+    return metadata.updated;
+  } catch (e) {
+    print('Error getting file modification date: $e');
+    return null;
+  }
+}
+
+Widget _buildMedicalTestsTab(int patientId) {
+  return Stack(
+    children: [
+      FutureBuilder<List<Map<String, String>>>(
+        future: FirebaseStorageService().getMedicalTests(patientId),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return Center(child: Text('No medical tests found'));
+          } else {
+            final tests = snapshot.data!;
+            return ListView.builder(
+              padding: EdgeInsets.all(16),
+              itemCount: tests.length,
+              itemBuilder: (context, index) {
+                final test = tests[index];
+                return FutureBuilder<DateTime?>(
+                  future: _getFileModificationDate(patientId, test['name']!),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return Center(child: CircularProgressIndicator());
+                    } else if (snapshot.hasError) {
+                      return Center(child: Text('Error: ${snapshot.error}'));
+                    } else {
+                      final modificationDate = snapshot.data;
+                      return _buildTestItem(test['name']!, test['url']!, modificationDate, patientId);
+                    }
+                  },
+                );
+              },
+            );
+          }
+        },
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            flex: 5,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  testName,
-                  style: TextStyle(fontSize: 16),
-                  overflow: TextOverflow.ellipsis,
-                ),
-                if (modificationDate != null)
-                  Text(
-                    DateFormat('yyyy-MM-dd').format(modificationDate),
-                    style: TextStyle(fontSize: 12, color: Colors.grey),
-                  ),
-              ],
-            ),
-          ),
-          Row(
+      Positioned(
+        bottom: 16,
+        right: 16,
+        child: FloatingActionButton(
+          onPressed: () => _uploadFile(patientId),
+          child: Icon(Icons.upload),
+        ),
+      ),
+    ],
+  );
+}
+
+Widget _buildTestItem(String testName, String url, DateTime? modificationDate, int patientId) {
+  return Container(
+    padding: EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+    margin: EdgeInsets.only(bottom: 10),
+    decoration: BoxDecoration(
+      color: Colors.grey[200],
+      borderRadius: BorderRadius.circular(8),
+    ),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Expanded(
+          flex: 5,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              IconButton(
-                icon: Icon(Icons.download, size: 24, color: Colors.blue),
-                onPressed: () async {
-                  await _downloadFile(url, testName);
-                },
+              Text(
+                testName,
+                style: TextStyle(fontSize: 16),
+                overflow: TextOverflow.ellipsis,
               ),
-              IconButton(
-                icon: Icon(Icons.delete, size: 24, color: Colors.red),
-                onPressed: () async {
-                  await _deleteFile(testName);
-                },
-              ),
+              if (modificationDate != null)
+                Text(
+                  DateFormat('yyyy-MM-dd').format(modificationDate),
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                ),
             ],
           ),
-        ],
-      ),
-    );
-  }
-
-
+        ),
+        Row(
+          children: [
+            IconButton(
+              icon: Icon(Icons.download, size: 24, color: Colors.blue),
+              onPressed: () async {
+                await _downloadFile(url, testName);
+              },
+            ),
+            IconButton(
+              icon: Icon(Icons.delete, size: 24, color: Colors.red),
+              onPressed: () async {
+                await _deleteFile(patientId, testName);
+              },
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
+}
 
 
 
