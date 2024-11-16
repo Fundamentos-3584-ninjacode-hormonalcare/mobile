@@ -76,6 +76,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
         ),
         centerTitle: true,
         backgroundColor: Color(0xFF6A828D),
+        iconTheme: IconThemeData(color: Colors.white), 
       ),
       drawer: Drawer(
         child: ListView(

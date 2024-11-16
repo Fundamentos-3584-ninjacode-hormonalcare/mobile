@@ -221,12 +221,17 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
 
                   await _createAppointment(appointmentData);
                 },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFF40535B), // Background color
-                  padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12), // Padding
-                  textStyle: TextStyle(fontSize: 18), // Text size
+                child: Text(
+                  'Add Appointment',
+                  style: TextStyle(color: Colors.white, fontSize: 18), // Aumenta el tamaño del texto
                 ),
-                child: Text('Add Appointment', style: TextStyle(color: Colors.white)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFF40535B), // Color de fondo
+                  padding: EdgeInsets.symmetric(horizontal: 32, vertical: 16), // Aumenta el padding
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.0), // Bordes redondeados
+                  ),
+                ),
               ),
             ],
           ),
