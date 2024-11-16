@@ -1,4 +1,3 @@
-//patients list screen 
 import 'package:flutter/material.dart';
 import 'package:trabajo_moviles_ninjacode/scr/features/appointment/presentation/widgets/appointment_form.dart';
 import 'package:trabajo_moviles_ninjacode/scr/features/profile/data/data_sources/remote/patient_service.dart';
@@ -8,6 +7,7 @@ import 'package:trabajo_moviles_ninjacode/scr/core/utils/usecases/jwt_storage.da
 import 'package:trabajo_moviles_ninjacode/scr/features/appointment/presentation/widgets/info_appointment.dart'; // Importa el widget InfoAppointment
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
+import 'package:url_launcher/url_launcher.dart'; // Importa url_launcher
 
 class HomePatientsScreen extends StatefulWidget {
   final int doctorId;
@@ -54,14 +54,15 @@ class _HomePatientsScreenState extends State<HomePatientsScreen> {
         final patientDetails = await _patientService.fetchPatientDetails(appointment['patientId']);
         final profileDetails = await _profileService.fetchProfileDetails(patientDetails['profileId']);
         fetchedPatients.add({
-          'name': profileDetails['fullName'],
-          'time': appointment['startTime'],
-          'endTime': appointment['endTime'],
-          'image': profileDetails['image'], // Assuming 'image' is the key for the profile image URL
-          'eventDate': appointment['eventDate'],
+          'name': profileDetails['fullName'] ?? 'No name',
+          'time': appointment['startTime'] ?? 'No start time',
+          'endTime': appointment['endTime'] ?? 'No end time',
+          'image': profileDetails['image'] ?? '', // Assuming 'image' is the key for the profile image URL
+          'eventDate': appointment['eventDate'] ?? 'No date',
           'patientId': appointment['patientId'].toString(),
-          'title': appointment['title'],
-          'description': appointment['description'],
+          'title': appointment['title'] ?? 'No title',
+          'description': appointment['description'] ?? 'No description',
+          'color': appointment['color'] ?? '0xFF039BE5', // Default color if none is provided
         });
       }
 
@@ -130,20 +131,13 @@ class _HomePatientsScreenState extends State<HomePatientsScreen> {
                               trailing: Padding(
                                 padding: EdgeInsets.only(right: 16), // Move the container to the left
                                 child: GestureDetector(
-                                  onTap: () {
-                                    showDialog(
-                                      context: context,
-                                      builder: (BuildContext context) {
-                                        return InfoAppointment(
-                                          patientName: patients[index]['name']!,
-                                          appointmentTime: patients[index]['time']!,
-                                          endTime: patients[index]['endTime']!,
-                                          appointmentDate: patients[index]['eventDate']!,
-                                          title: patients[index]['title']!,
-                                          description: patients[index]['description']!,
-                                        );
-                                      },
-                                    );
+                                  onTap: () async {
+                                    final url = patients[index]['description']!;
+                                    if (await canLaunch(url)) {
+                                      await launch(url);
+                                    } else {
+                                      throw 'Could not launch $url';
+                                    }
                                   },
                                   child: Container(
                                     padding: EdgeInsets.symmetric(horizontal: 4, vertical: 4), // Adjusted padding
@@ -157,7 +151,7 @@ class _HomePatientsScreenState extends State<HomePatientsScreen> {
                                         Icon(Icons.videocam, color: Colors.white),
                                         SizedBox(width: 4), // Adjusted spacing
                                         Text(
-                                          patients[index]['time']!,
+                                          '${patients[index]['time']} - ${patients[index]['endTime']}',
                                           style: TextStyle(color: Colors.white),
                                         ),
                                       ],

@@ -1,3 +1,4 @@
+import 'dart:math'; // Importa Random para JitsiMeetingLinkGenerator
 import 'package:flutter/material.dart';
 import 'package:trabajo_moviles_ninjacode/scr/features/appointment/data/data_sources/remote/medical_appointment_api.dart';
 import 'package:trabajo_moviles_ninjacode/scr/features/appointment/data/repositories/medical_appointment_repository.dart';
@@ -6,6 +7,22 @@ import 'package:confetti/confetti.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:trabajo_moviles_ninjacode/scr/core/utils/usecases/jwt_storage.dart';
+
+class JitsiMeetingLinkGenerator {
+  static const String _baseUrl = 'https://meet.jit.si/';
+
+  static String generateMeetingLink({String? roomPrefix}) {
+    final String randomString = _generateRandomString(10);
+    final String roomName = roomPrefix != null ? '$roomPrefix-$randomString' : randomString;
+    return '$_baseUrl$roomName';
+  }
+
+  static String _generateRandomString(int length) {
+    const String chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+    final Random random = Random();
+    return List.generate(length, (index) => chars[random.nextInt(chars.length)]).join();
+  }
+}
 
 class AppointmentForm extends StatefulWidget {
   final int patientId;
@@ -21,7 +38,6 @@ class _AppointmentFormState extends State<AppointmentForm> {
   final TextEditingController _dateController = TextEditingController();
   final TextEditingController _fromTimeController = TextEditingController();
   final TextEditingController _toTimeController = TextEditingController();
-  final TextEditingController _linkController = TextEditingController();
   final TextEditingController _titleController = TextEditingController();
   final ConfettiController _confettiController = ConfettiController();
 
@@ -39,7 +55,6 @@ class _AppointmentFormState extends State<AppointmentForm> {
     _dateController.clear();
     _fromTimeController.clear();
     _toTimeController.clear();
-    _linkController.clear();
     _titleController.clear();
     _selectedDate = null;
   }
@@ -85,9 +100,10 @@ class _AppointmentFormState extends State<AppointmentForm> {
         'startTime': startTime,
         'endTime': endTime,
         'title': _titleController.text,
-        'description': _linkController.text,
+        'description': JitsiMeetingLinkGenerator.generateMeetingLink(roomPrefix: _titleController.text),
         'doctorId': userId,
         'patientId': widget.patientId,
+        'color': '0xFF039BE5', // Default color
       };
 
       final success = await repository.createMedicalAppointment(appointmentData);
@@ -253,30 +269,6 @@ class _AppointmentFormState extends State<AppointmentForm> {
                       ),
                     ),
                   ],
-                ),
-                SizedBox(height: 12),
-
-                // Field: Meeting Link
-                TextFormField(
-                  controller: _linkController,
-                  decoration: InputDecoration(
-                    labelText: 'Meeting Link',
-                    hintText: 'Link',
-                    prefixIcon: Icon(Icons.link),
-                    filled: true,
-                    fillColor: Color(0xFFF5F5F5),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(8.0),
-                    ),
-                  ),
-                  style: TextStyle(fontSize: 14),
-                  keyboardType: TextInputType.url,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter the meeting link';
-                    }
-                    return null;
-                  },
                 ),
                 SizedBox(height: 16),
 
