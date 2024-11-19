@@ -9,6 +9,14 @@ import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:url_launcher/url_launcher.dart';
 
+void _launchURL(String url) async {
+  if (await canLaunch(url)) {
+    await launch(url);
+  } else {
+    throw 'Could not launch $url';
+  }
+}
+
 class HomePatientsScreen extends StatefulWidget {
   final int doctorId;
 
@@ -129,19 +137,15 @@ class _HomePatientsScreenState extends State<HomePatientsScreen> {
                                 patients[index]['name']!,
                                 style: TextStyle(color: Color.fromARGB(255, 0, 0, 0)),
                               ),
-                              trailing: Padding(
-                                padding: EdgeInsets.only(right: 16), // Move the container to the left
+                                                            trailing: Padding(
+                                padding: EdgeInsets.only(right: 16),
                                 child: GestureDetector(
                                   onTap: () async {
                                     final url = patients[index]['description']!;
-                                    if (await canLaunch(url)) {
-                                      await launch(url);
-                                    } else {
-                                      throw 'Could not launch $url';
-                                    }
+                                    _launchURL(url);
                                   },
                                   child: Container(
-                                    padding: EdgeInsets.symmetric(horizontal: 4, vertical: 4), // Adjusted padding
+                                    padding: EdgeInsets.symmetric(horizontal: 4, vertical: 4),
                                     decoration: BoxDecoration(
                                       color: Color(0xFF40535B),
                                       borderRadius: BorderRadius.circular(8),
@@ -150,7 +154,7 @@ class _HomePatientsScreenState extends State<HomePatientsScreen> {
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         Icon(Icons.videocam, color: Colors.white),
-                                        SizedBox(width: 4), // Adjusted spacing
+                                        SizedBox(width: 4),
                                         Text(
                                           '${patients[index]['time']} - ${patients[index]['endTime']}',
                                           style: TextStyle(color: Colors.white),
