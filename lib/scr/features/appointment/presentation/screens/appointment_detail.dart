@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:trabajo_moviles_ninjacode/scr/features/appointment/data/data_sources/remote/medical_appointment_api.dart';
 import 'package:trabajo_moviles_ninjacode/scr/features/appointment/presentation/screens/edit_appointment.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class AppointmentDetail extends StatefulWidget {
   final int appointmentId;
@@ -182,72 +183,106 @@ class _AppointmentDetailState extends State<AppointmentDetail> {
             SizedBox(height: 8),
             Container(
               width: MediaQuery.of(context).size.width * 0.8,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  Clipboard.setData(ClipboardData(text: _appointmentDetails!['description']));
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Meeting link copied to clipboard')),
-                  );
-                },
-                icon: Icon(Icons.copy, color: Colors.blue),
-                label: Text(
-                  'Copy Meeting Link',
-                  style: TextStyle(color: Colors.blue),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
-                  side: BorderSide(color: Colors.grey),
-                ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Clipboard.setData(ClipboardData(text: _appointmentDetails!['description']));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Meeting link copied to clipboard')),
+                        );
+                      },
+                      icon: Icon(Icons.copy, color: Colors.blue),
+                      label: Text(
+                        'Copy Link',
+                        style: TextStyle(color: Colors.blue),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        side: BorderSide(color: Colors.grey),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 16),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () async {
+                        final url = _appointmentDetails!['description'];
+                        if (await canLaunch(url)) {
+                          await launch(url);
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Could not launch $url')),
+                          );
+                        }
+                      },
+                      icon: Icon(Icons.link, color: Colors.blue),
+                      label: Text(
+                        'Join Meeting',
+                        style: TextStyle(color: Colors.blue),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        side: BorderSide(color: Colors.grey),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-            SizedBox(height: 16), // Espacio debajo de "Copy Meeting Link"
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: _deleteAppointment,
-                    icon: Icon(Icons.delete, color: Colors.white),
-                    label: Text('Delete', style: TextStyle(color: Colors.white, fontSize: 18)), // Aumenta el tamaño del texto
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      padding: EdgeInsets.symmetric(vertical: 16), // Aumenta el padding vertical
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8.0),
-                      ),
-                    ),
-                  ),
-                ),
-                SizedBox(width: 16), // Espacio entre los botones
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () async {
-                      final result = await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => EditAppointmentScreen(
-                            appointmentDetails: _appointmentDetails!,
-                            patientDetails: _patientDetails!,
-                          ),
+            Spacer(), // Pushes the buttons to the bottom
+                        Container(
+              width: MediaQuery.of(context).size.width * 0.8,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: _deleteAppointment,
+                      icon: Icon(Icons.delete, color: Colors.white),
+                      label: Text('Delete', style: TextStyle(color: Colors.white, fontSize: 18)), // Aumenta el tamaño del texto
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red,
+                        padding: EdgeInsets.symmetric(vertical: 16), // Aumenta el padding vertical
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8.0),
                         ),
-                      );
-
-                      if (result == true) {
-                        Navigator.of(context).pop(true); // Return true to indicate success
-                      }
-                    },
-                    icon: Icon(Icons.edit, color: Colors.white),
-                    label: Text('Edit', style: TextStyle(color: Colors.white, fontSize: 18)), // Aumenta el tamaño del texto
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF40535B),
-                      padding: EdgeInsets.symmetric(vertical: 16), // Aumenta el padding vertical
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8.0),
                       ),
                     ),
                   ),
-                ),
-              ],
+                  SizedBox(width: 16), // Espacio entre los botones
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () async {
+                        final result = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => EditAppointmentScreen(
+                              appointmentDetails: _appointmentDetails!,
+                              patientDetails: _patientDetails!,
+                            ),
+                          ),
+                        );
+            
+                        if (result == true) {
+                          Navigator.of(context).pop(true); // Return true to indicate success
+                        }
+                      },
+                      icon: Icon(Icons.edit, color: Colors.white),
+                      label: Text('Edit', style: TextStyle(color: Colors.white, fontSize: 18)), // Aumenta el tamaño del texto
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Color(0xFF40535B),
+                        padding: EdgeInsets.symmetric(vertical: 16), // Aumenta el padding vertical
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8.0),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
