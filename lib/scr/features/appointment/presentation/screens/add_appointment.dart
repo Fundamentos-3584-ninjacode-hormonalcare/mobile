@@ -35,6 +35,7 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
   Color _selectedColor = Color(0xFF039BE5); // Default color
 
   final TextEditingController _titleController = TextEditingController();
+  final TextEditingController _dateController = TextEditingController();
   final TextEditingController _startTimeController = TextEditingController();
   final TextEditingController _endTimeController = TextEditingController();
 
@@ -56,6 +57,7 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
   void initState() {
     super.initState();
     _loadPatients();
+    _dateController.text = '${widget.selectedDate.year}-${widget.selectedDate.month.toString().padLeft(2, '0')}-${widget.selectedDate.day.toString().padLeft(2, '0')}';
     _startTimeController.text = '${widget.selectedDate.hour.toString().padLeft(2, '0')}:${widget.selectedDate.minute.toString().padLeft(2, '0')}';
     _endTimeController.text = '${widget.selectedDate.add(Duration(hours: 1)).hour.toString().padLeft(2, '0')}:${widget.selectedDate.add(Duration(minutes: 0)).minute.toString().padLeft(2, '0')}';
   }
@@ -94,6 +96,20 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
     }
   }
 
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: widget.selectedDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2101),
+    );
+    if (picked != null && picked != widget.selectedDate) {
+      setState(() {
+        _dateController.text = '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -123,6 +139,13 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
                 controller: _titleController,
                 labelText: 'Title',
                 icon: Icons.title,
+              ),
+              SizedBox(height: 16),
+              _buildDateField(
+                controller: _dateController,
+                labelText: 'Date',
+                icon: Icons.calendar_today,
+                onTap: () => _selectDate(context),
               ),
               SizedBox(height: 16),
               _buildTextField(
@@ -184,17 +207,18 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
               ElevatedButton(
                 onPressed: () async {
                   final String title = _titleController.text;
+                  final DateTime selectedDate = DateTime.parse(_dateController.text);
                   final DateTime startTime = DateTime(
-                    widget.selectedDate.year,
-                    widget.selectedDate.month,
-                    widget.selectedDate.day,
+                    selectedDate.year,
+                    selectedDate.month,
+                    selectedDate.day,
                     int.parse(_startTimeController.text.split(':')[0]),
                     int.parse(_startTimeController.text.split(':')[1]),
                   );
                   final DateTime endTime = DateTime(
-                    widget.selectedDate.year,
-                    widget.selectedDate.month,
-                    widget.selectedDate.day,
+                    selectedDate.year,
+                    selectedDate.month,
+                    selectedDate.day,
                     int.parse(_endTimeController.text.split(':')[0]),
                     int.parse(_endTimeController.text.split(':')[1]),
                   );
@@ -209,7 +233,7 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
                   final String meetingLink = JitsiMeetingLinkGenerator.generateMeetingLink(roomPrefix: title);
 
                   final appointmentData = {
-                    'eventDate': widget.selectedDate.toIso8601String().split('T')[0],
+                    'eventDate': selectedDate.toIso8601String().split('T')[0],
                     'startTime': _startTimeController.text, // Formato HH:MM
                     'endTime': _endTimeController.text, // Formato HH:MM
                     'title': title,
@@ -266,6 +290,38 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
               ),
               keyboardType: keyboardType,
               inputFormatters: inputFormatters,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDateField({
+    required TextEditingController controller,
+    required String labelText,
+    required IconData icon,
+    required VoidCallback onTap,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey),
+      ),
+      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      child: Row(
+        children: [
+          Icon(icon, color: Colors.grey),
+          SizedBox(width: 10),
+          Expanded(
+            child: TextField(
+              controller: controller,
+              decoration: InputDecoration(
+                labelText: labelText,
+                border: InputBorder.none,
+              ),
+              readOnly: true,
+              onTap: onTap,
             ),
           ),
         ],
