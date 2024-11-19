@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_app_check/firebase_app_check.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:trabajo_moviles_ninjacode/scr/features/iam/presentation/pages/sign_in.dart';
+import 'package:intl/date_symbol_data_local.dart'; // Importa el paquete para la localización
 import 'package:trabajo_moviles_ninjacode/scr/shared/app.dart';
 import 'firebase_options.dart';
 
@@ -29,5 +30,6 @@ void main() async {
   }
 
   // Run the app after Firebase setup and user sign-in
+  await initializeDateFormatting('es_ES', null); // Inicializa la configuración de la localización
   runApp(MyApp());
 }

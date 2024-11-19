@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:trabajo_moviles_ninjacode/scr/features/appointment/presentation/widgets/appointment_form.dart';
+import 'package:trabajo_moviles_ninjacode/scr/features/appointment/presentation/screens/add_appointment.dart';
+import 'package:trabajo_moviles_ninjacode/scr/features/appointment/presentation/screens/appointment_detail.dart';
 import 'package:trabajo_moviles_ninjacode/scr/features/profile/data/data_sources/remote/patient_service.dart';
 import 'package:trabajo_moviles_ninjacode/scr/features/profile/data/data_sources/remote/profile_service.dart';
 import 'package:trabajo_moviles_ninjacode/scr/features/appointment/data/data_sources/remote/medical_appointment_api.dart';
 import 'package:trabajo_moviles_ninjacode/scr/core/utils/usecases/jwt_storage.dart';
-import 'package:trabajo_moviles_ninjacode/scr/features/appointment/presentation/widgets/info_appointment.dart'; // Importa el widget InfoAppointment
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
-import 'package:url_launcher/url_launcher.dart'; // Importa url_launcher
+import 'package:url_launcher/url_launcher.dart';
 
 class HomePatientsScreen extends StatefulWidget {
   final int doctorId;
@@ -63,6 +63,7 @@ class _HomePatientsScreenState extends State<HomePatientsScreen> {
           'title': appointment['title'] ?? 'No title',
           'description': appointment['description'] ?? 'No description',
           'color': appointment['color'] ?? '0xFF039BE5', // Default color if none is provided
+          'appointmentId': appointment['id'].toString(), // Add appointment ID
         });
       }
 
@@ -172,43 +173,15 @@ class _HomePatientsScreenState extends State<HomePatientsScreen> {
                                   child: Center(
                                     child: IconButton(
                                       padding: EdgeInsets.zero,
-                                      icon: Icon(Icons.add, color: Colors.white, size: 16),
+                                      icon: Icon(Icons.info, color: Colors.white, size: 16),
                                       onPressed: () {
-                                        showDialog(
-                                          context: context,
-                                          builder: (BuildContext context) {
-                                            return Dialog(
-                                              shape: RoundedRectangleBorder(
-                                                borderRadius: BorderRadius.circular(10),
-                                              ),
-                                              child: Container(
-                                                width: MediaQuery.of(context).size.width * 0.8, // Ajusta el valor según sea necesario
-                                                constraints: BoxConstraints(
-                                                  maxHeight: MediaQuery.of(context).size.height * 0.6, // Ajusta el valor según sea necesario
-                                                ),
-                                                child: SingleChildScrollView(
-                                                  child: Padding(
-                                                    padding: const EdgeInsets.all(16.0),
-                                                    child: Column(
-                                                      mainAxisSize: MainAxisSize.min,
-                                                      children: [
-                                                        Text(
-                                                          'Add Medical Appointment',
-                                                          style: TextStyle(
-                                                            color: Color(0xFF40535B),
-                                                            fontWeight: FontWeight.bold,
-                                                            fontSize: 20,
-                                                          ),
-                                                        ),
-                                                        SizedBox(height: 16),
-                                                        AppointmentForm(patientId: int.parse(patients[index]['patientId']!)),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                ),
-                                              ),
-                                            );
-                                          },
+                                        Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) => AppointmentDetail(
+                                              appointmentId: int.parse(patients[index]['appointmentId']!),
+                                            ),
+                                          ),
                                         );
                                       },
                                     ),
@@ -221,6 +194,25 @@ class _HomePatientsScreenState extends State<HomePatientsScreen> {
                       );
                     },
                   ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          final now = DateTime.now();
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => AddAppointmentScreen(
+                selectedDate: now,
+              ),
+            ),
+          );
+
+          if (result == true) {
+            _fetchPatients(); // Refresca la pantalla si se ha creado una cita
+          }
+        },
+        child: Icon(Icons.add),
+        backgroundColor: Color(0xFF6A828D),
       ),
     );
   }
