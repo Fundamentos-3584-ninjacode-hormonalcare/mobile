@@ -14,6 +14,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
   final MedicalAppointmentApi _appointmentService = MedicalAppointmentApi();
   late MeetingDataSource calendarDataSource;
   CalendarView _calendarView = CalendarView.week;
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -23,36 +24,39 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
   }
 
   Future<void> _loadAppointments() async {
-  try {
-    final appointments = await _appointmentService.fetchAllAppointments();
-    final List<Meeting> loadedMeetings = appointments.map<Meeting>((appointment) {
-      final startTime = DateTime.parse('${appointment['eventDate']}T${appointment['startTime']}:00');
-      final endTime = DateTime.parse('${appointment['eventDate']}T${appointment['endTime']}:00');
-      final colorValue = appointment['color'] ?? '0xFF039BE5';
-      final color = Color(int.parse(colorValue.startsWith('0x') ? colorValue : '0x$colorValue'));
+    try {
+      final appointments = await _appointmentService.fetchAllAppointments();
+      final List<Meeting> loadedMeetings = appointments.map<Meeting>((appointment) {
+        final startTime = DateTime.parse('${appointment['eventDate']}T${appointment['startTime']}:00');
+        final endTime = DateTime.parse('${appointment['eventDate']}T${appointment['endTime']}:00');
+        final colorValue = appointment['color'] ?? '0xFF039BE5';
+        final color = Color(int.parse(colorValue.startsWith('0x') ? colorValue : '0x$colorValue'));
 
-      return Meeting(
-        appointment['title'],
-        startTime,
-        endTime,
-        color,
-        false,
-        appointment['description'],
-        appointment['id'].toString(),
+        return Meeting(
+          appointment['title'],
+          startTime,
+          endTime,
+          color,
+          false,
+          appointment['description'],
+          appointment['id'].toString(),
+        );
+      }).toList();
+
+      setState(() {
+        calendarDataSource.updateMeetings(loadedMeetings); // Usa el método de actualización
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Error loading appointments: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load appointments: $e')),
       );
-    }).toList();
-
-    setState(() {
-      calendarDataSource.updateMeetings(loadedMeetings); // Usa el método de actualización
-    });
-  } catch (e) {
-    print('Error loading appointments: $e');
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Failed to load appointments: $e')),
-    );
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
-}
-
 
   void _onCalendarViewChanged(CalendarView newView) {
     if (_calendarView != newView) {
@@ -76,7 +80,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
         ),
         centerTitle: true,
         backgroundColor: Color(0xFF6A828D),
-        iconTheme: IconThemeData(color: Colors.white), 
+        iconTheme: IconThemeData(color: Colors.white),
       ),
       drawer: Drawer(
         child: ListView(
@@ -112,7 +116,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
             ),
             ListTile(
               leading: Icon(Icons.view_agenda),
-              title: Text('Month'),
+              title: Text('Month Agenda View'),
               onTap: () {
                 _onCalendarViewChanged(CalendarView.month);
                 Navigator.pop(context);
@@ -121,16 +125,19 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
           ],
         ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: SfCalendar(
-          key: ValueKey(_calendarView), // Clave única para forzar reconstrucción
-          view: _calendarView,
-          dataSource: calendarDataSource,
-          initialDisplayDate: DateTime.now(),
-          onTap: _calendarView == CalendarView.month ? null : _calendarTapped,
-        ),
-      ),
+      body: _isLoading
+          ? Center(child: CircularProgressIndicator())
+          : Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: SfCalendar(
+                key: ValueKey(_calendarView), // Clave única para forzar reconstrucción
+                view: _calendarView,
+                dataSource: calendarDataSource,
+                initialDisplayDate: DateTime.now(),
+                monthViewSettings: MonthViewSettings(showAgenda: true),
+                onTap: _calendarView == CalendarView.month ? null : _calendarTapped,
+              ),
+            ),
     );
   }
 
@@ -209,7 +216,6 @@ class MeetingDataSource extends CalendarDataSource {
     return appointments![index].description;
   }
 }
-
 
 class Meeting {
   Meeting(this.eventName, this.from, this.to, this.background, this.isAllDay, this.description, this.id);
