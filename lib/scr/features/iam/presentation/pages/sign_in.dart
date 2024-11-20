@@ -1,81 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:trabajo_moviles_ninjacode/scr/features/iam/domain/services/auth_service.dart';
 import 'package:trabajo_moviles_ninjacode/scr/shared/presentation/pages/home_screen.dart';
+import 'package:trabajo_moviles_ninjacode/scr/features/iam/presentation/pages/select_user_type.dart';
 
-class SignIn extends StatelessWidget {
-  final _authService = AuthService();
-
+class SignIn extends StatefulWidget {
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Color(0xFF6A828D),
-        title: ClipRRect(
-          borderRadius: BorderRadius.circular(10.0),
-          child: Image.asset(
-            '../../../../../../web/hormonalcare.png',
-            height: 40,
-          ),
-        ),
-      ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: <Widget>[
-              Text(
-                'Welcome to HormonalCare',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              SizedBox(height: 40),
-              AuthForm(isSignUp: false),
-              SizedBox(height: 40),
-              Text(
-                "Don't have an account?",
-                style: TextStyle(color: Colors.black87),
-              ),
-              SizedBox(height: 10),
-              TextButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => SignUp()),
-                  );
-                },
-                child: Text(
-                  'Sign up',
-                  style: TextStyle(
-                    color: Colors.blueGrey[700],
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+  _SignInState createState() => _SignInState();
 }
 
-class AuthForm extends StatefulWidget {
-  final bool isSignUp;
-
-  const AuthForm({required this.isSignUp});
-
-  @override
-  _AuthFormState createState() => _AuthFormState();
-}
-
-class _AuthFormState extends State<AuthForm> {
+class _SignInState extends State<SignIn> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
@@ -85,24 +18,16 @@ class _AuthFormState extends State<AuthForm> {
   void _submit() async {
     if (_formKey.currentState!.validate()) {
       try {
-        if (widget.isSignUp) {
-          await _authService.signUp(_emailController.text, _passwordController.text);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('User registered successfully')),
+        final token = await _authService.signIn(_emailController.text, _passwordController.text);
+        if (token != null) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => HomeScreen()),
           );
-          Navigator.pop(context);
         } else {
-          final token = await _authService.signIn(_emailController.text, _passwordController.text);
-          if (token != null) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => HomeScreen()),
-            );
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Invalid credentials')),
-            );
-          }
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Invalid credentials')),
+          );
         }
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -114,122 +39,129 @@ class _AuthFormState extends State<AuthForm> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(24.0),
-      decoration: BoxDecoration(
-        color: Colors.blueGrey[100],
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Text(
-              widget.isSignUp ? 'Sign Up' : 'Sign In',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
-              ),
-            ),
-            SizedBox(height: 20),
-            TextFormField(
-              controller: _emailController,
-              decoration: InputDecoration(
-                labelText: 'Username',
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter your username';
-                }
-                return null;
-              },
-            ),
-            SizedBox(height: 20),
-            TextFormField(
-              controller: _passwordController,
-              obscureText: _obscureText,
-              decoration: InputDecoration(
-                labelText: 'Password',
-                filled: true,
-                fillColor: Colors.white,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    _obscureText ? Icons.visibility_off : Icons.visibility,
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      _obscureText = !_obscureText;
-                    });
-                  },
-                ),
-              ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please enter your password';
-                }
-                return null;
-              },
-            ),
-            SizedBox(height: 20),
-            MouseRegion(
-              cursor: SystemMouseCursors.click,
-              child: ElevatedButton(
-                onPressed: _submit,
-                style: ElevatedButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 80,
-                    vertical: 15,
-                  ),
-                  backgroundColor: Colors.blueGrey[700],
-                ),
-                child: Text(
-                  widget.isSignUp ? 'Register' : 'Enter',
-                  style: TextStyle(
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class SignUp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Sign Up'),
-        backgroundColor: Color(0xFF6A828D),
-      ),
       body: Center(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                SizedBox(height: MediaQuery.of(context).size.height * 0.1),
-                AuthForm(isSignUp: true),
-                SizedBox(height: MediaQuery.of(context).size.height * 0.1),
-              ],
-            ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Welcome to HormonalCare',
+                style: TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 24,
+                ),
+              ),
+              SizedBox(height: 40), // Separación adicional del título
+              Container(
+                padding: EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Color.fromRGBO(209, 216, 220, 1), // Color de la tarjeta
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Sign in',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20,
+                      ),
+                    ),
+                    SizedBox(height: 20),
+                    Form(
+                      key: _formKey,
+                      child: Column(
+                        children: [
+                          TextFormField(
+                            controller: _emailController,
+                            decoration: InputDecoration(
+                              labelText: 'Username',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: BorderSide(
+                                  color: Color.fromRGBO(74, 90, 99, 1),
+                                ),
+                              ),
+                              filled: true,
+                              fillColor: Colors.white,
+                            ),
+                          ),
+                          SizedBox(height: 20),
+                          TextFormField(
+                            controller: _passwordController,
+                            obscureText: _obscureText,
+                            decoration: InputDecoration(
+                              labelText: 'Password',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: BorderSide(
+                                  color: Color.fromRGBO(74, 90, 99, 1),
+                                ),
+                              ),
+                              filled: true,
+                              fillColor: Colors.white,
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  _obscureText ? Icons.visibility_off : Icons.visibility,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _obscureText = !_obscureText;
+                                  });
+                                },
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: 20),
+                          ElevatedButton(
+                            onPressed: _submit,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Color.fromRGBO(74, 90, 99, 1),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(5),
+                              ),
+                            ),
+                            child: Text(
+                              'Enter',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 20),
+              Text(
+                "Don't have an account?",
+                style: TextStyle(color: Colors.black87),
+              ),
+              SizedBox(height: 10),
+              TextButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => SelectUserType()),
+                  );
+                },
+                child: Text(
+                  'Sign up',
+                  style: TextStyle(
+                    color: Colors.blueGrey[700],
+                    fontWeight: FontWeight.bold, // Negrita para 'Sign up'
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
