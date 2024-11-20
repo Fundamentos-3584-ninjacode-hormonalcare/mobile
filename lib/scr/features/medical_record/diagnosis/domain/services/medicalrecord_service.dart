@@ -8,6 +8,7 @@ import '../../domain/models/prescription_model.dart';
 import '../../domain/models/treatment_model.dart'; // Importa el modelo de tratamiento
 import '../../domain/models/medicationpost_model.dart'; // Importa el modelo de MedicationPost
 import '../../domain/models/prescriptionpost_model.dart';
+import '../../domain/models/medicaltype_model.dart';
 
 class MedicalRecordService {
   final String baseUrl = 'http://localhost:8080/api/v1/medical-record/patient/record';
@@ -16,6 +17,8 @@ class MedicalRecordService {
   final String prescriptionsUrl = 'http://localhost:8080/api/v1/medical-record/medications/prescriptions';
   final String treatmentsUrl = 'http://localhost:8080/api/v1/medical-record/treatments/medicalRecordId'; // URL base para tratamientos
   final String treatmentspostUrl = 'http://localhost:8080/api/v1/medical-record/treatments'; // URL base para tratamientos
+  final String medicaltypesUrl = 'http://localhost:8080/api/v1/medical-record/medications/medicationTypes';
+
 
   Future<Patient> getPatientById(String patientId) async {
     final token = await JwtStorage.getToken();
@@ -64,7 +67,7 @@ class MedicalRecordService {
     }
   }
 
-  Future<List<Prescription>> getPrescriptions() async {
+  Future<List<Prescription>> getPrescriptionsByRecordId(int medicalRecordId) async {
     final token = await JwtStorage.getToken();
     final headers = {
       'Content-Type': 'application/json',
@@ -74,7 +77,10 @@ class MedicalRecordService {
     final response = await http.get(Uri.parse(prescriptionsUrl), headers: headers);
     if (response.statusCode == 200) {
       final List<dynamic> prescriptionsJson = json.decode(response.body);
-      return prescriptionsJson.map((json) => Prescription.fromJson(json)).toList();
+      return prescriptionsJson
+          .map((json) => Prescription.fromJson(json))
+          .where((prescription) => prescription.medicalRecordId == medicalRecordId)
+          .toList();
     } else {
       print('Error fetching prescriptions: ${response.body}');
       throw Exception('Error fetching prescriptions');
@@ -146,6 +152,23 @@ Future<http.Response> addPrescription(PrescriptionPost prescriptionPost) async {
     );
 
     return response;
+  }
+
+Future<List<MedicalType>> fetchMedicalTypes() async {
+    final token = await JwtStorage.getToken();
+    final headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $token',
+    };
+
+    final response = await http.get(Uri.parse(medicaltypesUrl), headers: headers);
+
+    if (response.statusCode == 200) {
+      List<dynamic> body = jsonDecode(response.body);
+      return body.map((dynamic item) => MedicalType.fromJson(item)).toList();
+    } else {
+      throw Exception('Failed to load medical types');
+    }
   }
 }
 

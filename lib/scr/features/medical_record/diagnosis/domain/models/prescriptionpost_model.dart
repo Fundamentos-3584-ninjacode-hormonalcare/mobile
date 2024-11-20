@@ -1,20 +1,17 @@
 class PrescriptionPost {
-  int doctorId;
-  int patientId;
+  int medicalRecordId;
   String prescriptionDate;
   String notes;
 
   PrescriptionPost({
-    this.doctorId = 0,
-    this.patientId = 0,
+    required this.medicalRecordId,
     required this.prescriptionDate,
     required this.notes,
   });
 
   factory PrescriptionPost.fromJson(Map<String, dynamic> json) {
     return PrescriptionPost(
-      doctorId: json['doctorId'] ?? 0,
-      patientId: json['patientId'] ?? 0,
+      medicalRecordId: json['medicalRecordId'],
       prescriptionDate: json['prescriptionDate'],
       notes: json['notes'],
     );
@@ -22,8 +19,7 @@ class PrescriptionPost {
 
   Map<String, dynamic> toJson() {
     return {
-      'doctorId': doctorId,
-      'patientId': patientId,
+      'medicalRecordId': medicalRecordId,
       'prescriptionDate': prescriptionDate,
       'notes': notes,
     };

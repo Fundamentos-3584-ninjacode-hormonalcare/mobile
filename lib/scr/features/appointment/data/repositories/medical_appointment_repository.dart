@@ -9,8 +9,7 @@ class MedicalAppointmentRepository {
     return await api.createMedicalAppointment(appointmentData);
   }
 
-    Future<List<Map<String, dynamic>>> fetchAppointmentsForToday(int doctorId ) async {
-    return await api.fetchAppointmentsForToday(doctorId);
-
+  Future<List<Map<String, dynamic>>> fetchAppointmentsForToday() async {
+    return await api.fetchAppointmentsForToday();
   }
 }

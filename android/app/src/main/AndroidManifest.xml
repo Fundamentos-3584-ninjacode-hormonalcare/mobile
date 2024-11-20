@@ -1,8 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-        android:label="trabajo_moviles_ninjacode"
+        android:label="Hormonal Care"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/hormonalcare"
+        android:roundIcon="@mipmap/hormonalcare">
         <activity
             android:name=".MainActivity"
             android:exported="true"
