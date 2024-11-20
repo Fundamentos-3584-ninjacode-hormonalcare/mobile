@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:trabajo_moviles_ninjacode/scr/features/iam/domain/services/auth_service.dart';
 import 'package:trabajo_moviles_ninjacode/scr/features/profile/data/data_sources/remote/profile_service.dart';
 import 'package:trabajo_moviles_ninjacode/scr/core/utils/usecases/jwt_storage.dart';
-import 'package:trabajo_moviles_ninjacode/scr/features/iam/domain/services/auth_service.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 import '../widgets/profile_picture_widget.dart';
 import '../widgets/profile_field_widget.dart';
 import '../widgets/logout_button_widget.dart';
@@ -54,56 +52,6 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
     );
   }
 
-  void _showLogoutDialog() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('Confirm Logout'),
-          content: Text('Are you sure you want to log out?'),
-          actions: <Widget>[
-            TextButton(
-              child: Text('Cancel'),
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-            ),
-            TextButton(
-              child: Text('Yes'),
-              onPressed: () {
-                Navigator.of(context).pop();
-                _logout();
-              },
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  Future<void> _saveProfileDetails(Map<String, dynamic> updatedProfile) async {
-    final profileId = await JwtStorage.getProfileId();
-    if (profileId != null) {
-      final response = await http.put(
-        Uri.parse('http://localhost:8080/api/v1/profile/profile/$profileId/full-update'),
-        headers: {'Authorization': 'Bearer your_token', 'Content-Type': 'application/json'},
-        body: json.encode(updatedProfile),
-      );
-
-      if (response.statusCode == 200) {
-        // Actualización exitosa
-        print('Profile updated successfully');
-        toggleEditMode();
-        _loadProfileDetails();
-      } else {
-        // Manejar error
-        print('Error updating profile: ${response.body}');
-      }
-    } else {
-      print('Profile ID not found');
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -131,11 +79,30 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                   onPressed: toggleEditMode,
                 ),
                 SizedBox(width: 8.0), // Reduce the space between the edit button and the profile picture
-                ProfilePictureWidget(isEditing: isEditing, toggleEditMode: toggleEditMode),
+                FutureBuilder<Map<String, dynamic>>(
+                  future: _profileDetails,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return CircularProgressIndicator();
+                    } else if (snapshot.hasError) {
+                      return Icon(Icons.error);
+                    } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return Icon(Icons.person);
+                    } else {
+                      final profile = snapshot.data!;
+                      final imageUrl = profile['image'] as String?;
+                      return ProfilePictureWidget(
+                        isEditing: isEditing,
+                        toggleEditMode: toggleEditMode,
+                        imageUrl: imageUrl,
+                      );
+                    }
+                  },
+                ),
                 SizedBox(width: 8.0), // Reduce the space between the profile picture and the logout button
                 IconButton(
                   icon: Icon(Icons.logout, color: const Color.fromARGB(255, 0, 0, 0)),
-                  onPressed: _showLogoutDialog,
+                  onPressed: _logout,
                 ),
               ],
             ),
@@ -188,7 +155,9 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                       profile: snapshot.data!,
                       onCancel: toggleEditMode,
                       onSave: (updatedProfile) {
-                        _saveProfileDetails(updatedProfile);
+                        _profileService.updateProfile(updatedProfile['id'], updatedProfile);
+                        _loadProfileDetails();
+                        toggleEditMode();
                       },
                     );
                   }
