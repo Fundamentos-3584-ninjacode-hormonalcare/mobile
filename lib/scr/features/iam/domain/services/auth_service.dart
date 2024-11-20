@@ -23,7 +23,7 @@ class AuthService {
     }
   }
 
-  Future<String?> signIn(String username, String password) async {
+   Future<String?> signIn(String username, String password) async {
     final response = await http.post(
       Uri.parse('$baseUrl/authentication/sign-in'),
       headers: {'Content-Type': 'application/json'},
@@ -44,7 +44,11 @@ class AuthService {
         await JwtStorage.saveUserId(userId);
         await JwtStorage.saveRole(role);
 
-        await fetchAndSaveProfileId(userId, token);
+        final profileId = await fetchAndSaveProfileId(userId, token);
+
+        if (role == 'ROLE_DOCTOR' && profileId != null) {
+          await fetchAndSaveDoctorId(profileId, token);
+        }
 
         return token;
       } else {
@@ -55,7 +59,7 @@ class AuthService {
     }
   }
 
-  Future<void> fetchAndSaveProfileId(int userId, String token) async {
+  Future<int?> fetchAndSaveProfileId(int userId, String token) async {
     final profileResponse = await http.get(
       Uri.parse('$baseUrl/profile/profile/userId/$userId'),
       headers: {'Authorization': 'Bearer $token'},
@@ -67,11 +71,32 @@ class AuthService {
 
       if (profileId != null) {
         await JwtStorage.saveProfileId(profileId);
+        return profileId;
       } else {
         throw Exception('Profile ID is null');
       }
     } else {
       throw Exception('Error fetching profile ID');
+    }
+  }
+
+  Future<void> fetchAndSaveDoctorId(int profileId, String token) async {
+    final doctorResponse = await http.get(
+      Uri.parse('$baseUrl/doctor/doctor/profile/$profileId'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    if (doctorResponse.statusCode == 200) {
+      final doctorData = json.decode(doctorResponse.body);
+      final doctorId = doctorData['id'];
+
+      if (doctorId != null) {
+        await JwtStorage.saveDoctorId(doctorId);
+      } else {
+        throw Exception('Doctor ID is null');
+      }
+    } else {
+      throw Exception('Error fetching doctor ID: ${doctorResponse.statusCode}');
     }
   }
 

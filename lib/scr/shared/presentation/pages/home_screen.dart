@@ -9,6 +9,8 @@ import 'package:trabajo_moviles_ninjacode/scr/features/profile/presentation/page
 import 'package:trabajo_moviles_ninjacode/scr/core/utils/usecases/jwt_storage.dart';
 
 class HomeScreen extends StatefulWidget {
+  const HomeScreen({super.key});
+
   @override
   _HomeScreenState createState() => _HomeScreenState();
 }
@@ -16,26 +18,31 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   String? role;
+  int? doctorId;
 
-  static List<Widget> _widgetOptions = <Widget>[
-    HomePatientsScreen(doctorId: 1,),
-    PatientsListScreen(),
-    AppointmentScreen(),
-    NotificationsScreen(),
-    DoctorProfileScreen(), // Placeholder, will be replaced dynamically
-  ];
+  List<Widget> _widgetOptions = [];
 
   @override
   void initState() {
     super.initState();
-    _loadRole();
+    _loadRoleAndDoctorId();
   }
 
-  Future<void> _loadRole() async {
+  Future<void> _loadRoleAndDoctorId() async {
     final storedRole = await JwtStorage.getRole();
+    final storedDoctorId = await JwtStorage.getDoctorId();
+
     setState(() {
       role = storedRole;
-      _widgetOptions[4] = role == 'ROLE_DOCTOR' ? DoctorProfileScreen() : PatientProfileScreen();
+      doctorId = storedDoctorId;
+
+      _widgetOptions = [
+        HomePatientsScreen(doctorId: doctorId ?? 0),
+        PatientsListScreen(),
+        AppointmentScreen(),
+        NotificationScreen(doctorId: doctorId ?? 0),
+        role == 'ROLE_DOCTOR' ? DoctorProfileScreen() : PatientProfileScreen(),
+      ];
     });
   }
 
@@ -48,7 +55,9 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _widgetOptions.elementAt(_selectedIndex),
+      body: _widgetOptions.isNotEmpty
+          ? _widgetOptions[_selectedIndex]
+          : Center(child: CircularProgressIndicator()),
       bottomNavigationBar: BottomNavigationBar(
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
@@ -56,7 +65,7 @@ class _HomeScreenState extends State<HomeScreen> {
             label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.groups_2),
+            icon: Icon(Icons.list),
             label: 'Patients',
           ),
           BottomNavigationBarItem(
@@ -73,9 +82,10 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
         currentIndex: _selectedIndex,
-        selectedItemColor: Color(0xFF6A828D),
-        unselectedItemColor: Color(0xFF40535B),
+        selectedItemColor: const Color(0xFF6A828D),
+        unselectedItemColor: const Color(0xFF40535B),
         onTap: _onItemTapped,
+
       ),
     );
   }

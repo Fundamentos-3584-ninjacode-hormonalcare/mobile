@@ -4,6 +4,8 @@ import 'package:trabajo_moviles_ninjacode/scr/shared/presentation/pages/home_scr
 import 'package:trabajo_moviles_ninjacode/scr/features/iam/presentation/pages/select_user_type.dart';
 
 class SignIn extends StatefulWidget {
+  const SignIn({super.key});
+
   @override
   _SignInState createState() => _SignInState();
 }
@@ -26,7 +28,7 @@ class _SignInState extends State<SignIn> {
           );
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Invalid credentials')),
+            const SnackBar(content: Text('Invalid credentials')),
           );
         }
       } catch (e) {
@@ -46,7 +48,7 @@ class _SignInState extends State<SignIn> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text(
+              const Text(
                 'Welcome to HormonalCare',
                 style: TextStyle(
                   color: Colors.black,
@@ -54,17 +56,17 @@ class _SignInState extends State<SignIn> {
                   fontSize: 24,
                 ),
               ),
-              SizedBox(height: 40), // Separación adicional del título
+              const SizedBox(height: 40), // Separación adicional del título
               Container(
-                padding: EdgeInsets.all(20),
+                padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: Color.fromRGBO(209, 216, 220, 1), // Color de la tarjeta
+                  color: const Color.fromRGBO(209, 216, 220, 1), // Color de la tarjeta
                   borderRadius: BorderRadius.circular(15),
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
+                    const Text(
                       'Sign in',
                       style: TextStyle(
                         color: Colors.black,
@@ -72,7 +74,7 @@ class _SignInState extends State<SignIn> {
                         fontSize: 20,
                       ),
                     ),
-                    SizedBox(height: 20),
+                    const SizedBox(height: 20),
                     Form(
                       key: _formKey,
                       child: Column(
@@ -83,7 +85,7 @@ class _SignInState extends State<SignIn> {
                               labelText: 'Username',
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
-                                borderSide: BorderSide(
+                                borderSide: const BorderSide(
                                   color: Color.fromRGBO(74, 90, 99, 1),
                                 ),
                               ),
@@ -91,7 +93,7 @@ class _SignInState extends State<SignIn> {
                               fillColor: Colors.white,
                             ),
                           ),
-                          SizedBox(height: 20),
+                          const SizedBox(height: 20),
                           TextFormField(
                             controller: _passwordController,
                             obscureText: _obscureText,
@@ -99,7 +101,7 @@ class _SignInState extends State<SignIn> {
                               labelText: 'Password',
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
-                                borderSide: BorderSide(
+                                borderSide: const BorderSide(
                                   color: Color.fromRGBO(74, 90, 99, 1),
                                 ),
                               ),
@@ -117,16 +119,16 @@ class _SignInState extends State<SignIn> {
                               ),
                             ),
                           ),
-                          SizedBox(height: 20),
+                          const SizedBox(height: 20),
                           ElevatedButton(
                             onPressed: _submit,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Color.fromRGBO(74, 90, 99, 1),
+                              backgroundColor: const Color.fromRGBO(74, 90, 99, 1),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(5),
                               ),
                             ),
-                            child: Text(
+                            child: const Text(
                               'Enter',
                               style: TextStyle(
                                 color: Colors.white,
@@ -140,12 +142,12 @@ class _SignInState extends State<SignIn> {
                   ],
                 ),
               ),
-              SizedBox(height: 20),
-              Text(
+              const SizedBox(height: 20),
+              const Text(
                 "Don't have an account?",
                 style: TextStyle(color: Colors.black87),
               ),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
               TextButton(
                 onPressed: () {
                   Navigator.push(
