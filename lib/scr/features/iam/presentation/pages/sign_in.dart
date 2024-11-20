@@ -40,42 +40,107 @@ class _SignInState extends State<SignIn> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      appBar: AppBar(
-        backgroundColor: Color(0xFF6A828D),
-        title: ClipRRect(
-          borderRadius: BorderRadius.circular(10.0),
-          child: Image.asset(
-            '../../../../../../web/icons/Icon-192.png',
-            height: 40,
-          ),
-        ),
-      ),
       body: Center(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32.0),
+          padding: const EdgeInsets.symmetric(horizontal: 20.0),
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: <Widget>[
+            mainAxisSize: MainAxisSize.min,
+            children: [
               Text(
                 'Welcome to HormonalCare',
                 style: TextStyle(
-                  fontSize: 24,
+                  color: Colors.black,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+                  fontSize: 24,
                 ),
-                textAlign: TextAlign.center,
               ),
-              SizedBox(height: 40),
-              AuthForm(
-                isSignUp: false,
-                onSubmit: _submit,
-                formKey: _formKey,
-                emailController: _emailController,
-                passwordController: _passwordController,
+              SizedBox(height: 40), // Separación adicional del título
+              Container(
+                padding: EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Color.fromRGBO(209, 216, 220, 1), // Color de la tarjeta
+                  borderRadius: BorderRadius.circular(15),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Sign in',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20,
+                      ),
+                    ),
+                    SizedBox(height: 20),
+                    Form(
+                      key: _formKey,
+                      child: Column(
+                        children: [
+                          TextFormField(
+                            controller: _emailController,
+                            decoration: InputDecoration(
+                              labelText: 'Username',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: BorderSide(
+                                  color: Color.fromRGBO(74, 90, 99, 1),
+                                ),
+                              ),
+                              filled: true,
+                              fillColor: Colors.white,
+                            ),
+                          ),
+                          SizedBox(height: 20),
+                          TextFormField(
+                            controller: _passwordController,
+                            obscureText: _obscureText,
+                            decoration: InputDecoration(
+                              labelText: 'Password',
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide: BorderSide(
+                                  color: Color.fromRGBO(74, 90, 99, 1),
+                                ),
+                              ),
+                              filled: true,
+                              fillColor: Colors.white,
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  _obscureText ? Icons.visibility_off : Icons.visibility,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _obscureText = !_obscureText;
+                                  });
+                                },
+                              ),
+                            ),
+                          ),
+                          SizedBox(height: 20),
+                          ElevatedButton(
+                            onPressed: _submit,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Color.fromRGBO(74, 90, 99, 1),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(5),
+                              ),
+                            ),
+                            child: Text(
+                              'Enter',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              SizedBox(height: 40),
+              SizedBox(height: 20),
               Text(
                 "Don't have an account?",
                 style: TextStyle(color: Colors.black87),
@@ -92,80 +157,13 @@ class _SignInState extends State<SignIn> {
                   'Sign up',
                   style: TextStyle(
                     color: Colors.blueGrey[700],
+                    fontWeight: FontWeight.bold, // Negrita para 'Sign up'
                   ),
                 ),
               ),
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class AuthForm extends StatelessWidget {
-  final bool isSignUp;
-  final VoidCallback onSubmit;
-  final GlobalKey<FormState> formKey;
-  final TextEditingController emailController;
-  final TextEditingController passwordController;
-
-  const AuthForm({
-    Key? key,
-    required this.isSignUp,
-    required this.onSubmit,
-    required this.formKey,
-    required this.emailController,
-    required this.passwordController,
-  }) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Form(
-      key: formKey,
-      child: Column(
-        children: [
-          TextFormField(
-            controller: emailController,
-            decoration: InputDecoration(labelText: 'Email'),
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter your email';
-              }
-              return null;
-            },
-          ),
-          TextFormField(
-            controller: passwordController,
-            decoration: InputDecoration(labelText: 'Password'),
-            obscureText: true,
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please enter your password';
-              }
-              return null;
-            },
-          ),
-          if (isSignUp)
-            TextFormField(
-              decoration: InputDecoration(labelText: 'Confirm Password'),
-              obscureText: true,
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please confirm your password';
-                }
-                if (value != passwordController.text) {
-                  return 'Passwords do not match';
-                }
-                return null;
-              },
-            ),
-          SizedBox(height: 20),
-          ElevatedButton(
-            onPressed: onSubmit,
-            child: Text(isSignUp ? 'Sign Up' : 'Sign In'),
-          ),
-        ],
       ),
     );
   }
