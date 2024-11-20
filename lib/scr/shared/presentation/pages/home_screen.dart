@@ -21,8 +21,8 @@ class _HomeScreenState extends State<HomeScreen> {
     HomePatientsScreen(doctorId: 1,),
     PatientsListScreen(),
     AppointmentScreen(),
-    NotificationsScreen(),
-    DoctorProfileScreen(), // Placeholder, will be replaced dynamically
+    //NotificationsScreen(),
+    DoctorProfileScreen(), 
   ];
 
   @override

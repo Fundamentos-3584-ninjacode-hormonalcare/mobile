@@ -41,6 +41,16 @@ class JwtStorage {
     await prefs.setInt(_profileIdKey, profileId);
   }
 
+  static Future<void> saveDoctorId(int doctorId) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt('doctorId', doctorId);
+  }
+
+  static Future<int?> getDoctorId() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt('doctorId');
+  }
+
   static Future<int?> getProfileId() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getInt(_profileIdKey);
