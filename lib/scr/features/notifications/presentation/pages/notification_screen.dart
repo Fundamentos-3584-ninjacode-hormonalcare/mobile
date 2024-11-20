@@ -27,6 +27,13 @@ class _NotificationScreenState extends State<NotificationScreen> {
       DateTime now = DateTime.now();
       DateTime nowPlus30 = now.add(Duration(minutes: 30));
 
+      for (var appointment in appointments) {
+        final patientId = appointment['patientId'];
+        final patientProfile = await _notificationService.fetchPatientProfile(patientId);
+        final patientName = patientProfile['fullName'];
+        appointment['patientName'] = patientName;
+      }
+
       setState(() {
         _appointments = appointments.where((appointment) {
           DateTime eventDate = DateFormat('yyyy-MM-dd').parse(appointment['eventDate']);
@@ -43,32 +50,52 @@ class _NotificationScreenState extends State<NotificationScreen> {
     }
   }
 
-  Future<void> _deleteAppointment(int appointmentId) async {
-    try {
-      await _notificationService.deleteAppointment(appointmentId);
-      _fetchAppointments();
-    } catch (e) {
-      // Manejo de errores
-    }
+  void _removeAppointment(int appointmentId) {
+    setState(() {
+      _appointments.removeWhere((appointment) => appointment['id'] == appointmentId);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Notifications'),
+        title: Text(
+          'Notifications',
+          style: TextStyle(color: Colors.white),
+        ),
+        backgroundColor: const Color(0xFF40535B),
       ),
       body: ListView.builder(
         itemCount: _appointments.length,
         itemBuilder: (context, index) {
           final appointment = _appointments[index];
-          return Card(
-            child: ListTile(
-              title: Text(appointment['title']),
-              subtitle: Text('${appointment['eventDate']} ${appointment['startTime']} - ${appointment['endTime']}'),
-              trailing: IconButton(
-                icon: Icon(Icons.delete),
-                onPressed: () => _deleteAppointment(appointment['id']),
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+            child: Card(
+              color: const Color(0xFF6A828D),
+              child: ListTile(
+                title: Text(
+                  'Next Appointment: ${appointment['title']}',
+                  style: TextStyle(color: Colors.white),
+                ),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      appointment['patientName'],
+                      style: TextStyle(color: Colors.white),
+                    ),
+                    Text(
+                      '${appointment['startTime']} - ${appointment['endTime']}',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ],
+                ),
+                trailing: IconButton(
+                  icon: Icon(Icons.delete, color: Colors.white),
+                  onPressed: () => _removeAppointment(appointment['id']),
+                ),
               ),
             ),
           );
