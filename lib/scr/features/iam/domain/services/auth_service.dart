@@ -1,19 +1,18 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trabajo_moviles_ninjacode/scr/core/utils/usecases/jwt_storage.dart';
 
 class AuthService {
   final String baseUrl = 'https://hormonal-care-backend-production.up.railway.app/api/v1';
 
-  Future<Map<String, dynamic>> signUp(String username, String password) async {
+  Future<Map<String, dynamic>> signUp(String username, String password, String role) async {
     final response = await http.post(
       Uri.parse('$baseUrl/authentication/sign-up'),
       headers: {'Content-Type': 'application/json'},
       body: json.encode({
         'username': username,
         'password': password,
-        'roles': ['ROLE_USER']
+        'roles': [role]
       }),
     );
 
@@ -24,7 +23,7 @@ class AuthService {
     }
   }
 
-  Future<String?> signIn(String username, String password) async {
+   Future<String?> signIn(String username, String password) async {
     final response = await http.post(
       Uri.parse('$baseUrl/authentication/sign-in'),
       headers: {'Content-Type': 'application/json'},
@@ -34,22 +33,19 @@ class AuthService {
     if (response.statusCode == 200) {
       final responseData = json.decode(response.body);
       final token = responseData['token'];
-      final userId = responseData['id']; // Ensure userId is a string
+      final userId = responseData['id'];
       final role = responseData['role'];
-
-      // Add logging to diagnose the issue
-      print('Response Data: $responseData');
-      print('Token: $token');
-      print('User ID: $userId');
-      print('Role: $role');
 
       if (token != null && userId != null && role != null) {
         await JwtStorage.saveToken(token);
         await JwtStorage.saveUserId(userId);
         await JwtStorage.saveRole(role);
 
-        // Fetch and save the profile ID
-        await fetchAndSaveProfileId(userId, token);
+        final profileId = await fetchAndSaveProfileId(userId, token);
+
+        if (role == 'ROLE_DOCTOR' && profileId != null) {
+          await fetchAndSaveDoctorId(profileId, token);
+        }
 
         return token;
       } else {
@@ -60,7 +56,7 @@ class AuthService {
     }
   }
 
-  Future<void> fetchAndSaveProfileId(int userId, String token) async {
+  Future<int?> fetchAndSaveProfileId(int userId, String token) async {
     final profileResponse = await http.get(
       Uri.parse('$baseUrl/profile/profile/userId/$userId'),
       headers: {'Authorization': 'Bearer $token'},
@@ -70,17 +66,34 @@ class AuthService {
       final profileData = json.decode(profileResponse.body);
       final profileId = profileData['id'];
 
-      // Add logging to diagnose the issue
-      print('Profile Data: $profileData');
-      print('Profile ID: $profileId');
-
       if (profileId != null) {
         await JwtStorage.saveProfileId(profileId);
+        return profileId;
       } else {
         throw Exception('Profile ID is null');
       }
     } else {
       throw Exception('Error fetching profile ID');
+    }
+  }
+
+  Future<void> fetchAndSaveDoctorId(int profileId, String token) async {
+    final doctorResponse = await http.get(
+      Uri.parse('$baseUrl/doctor/doctor/profile/$profileId'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    if (doctorResponse.statusCode == 200) {
+      final doctorData = json.decode(doctorResponse.body);
+      final doctorId = doctorData['id'];
+
+      if (doctorId != null) {
+        await JwtStorage.saveDoctorId(doctorId);
+      } else {
+        throw Exception('Doctor ID is null');
+      }
+    } else {
+      throw Exception('Error fetching doctor ID: ${doctorResponse.statusCode}');
     }
   }
 

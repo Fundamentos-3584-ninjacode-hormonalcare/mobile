@@ -6,6 +6,18 @@ class JwtStorage {
   static const String _roleKey = 'user_role';
   static const String _profileIdKey = 'profile_id';
 
+  static const String _doctorIdKey = 'doctor_id';
+
+  static Future<void> saveDoctorId(int doctorId) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_doctorIdKey, doctorId);
+  }
+
+  static Future<int?> getDoctorId() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt(_doctorIdKey);
+  }
+
     static Future<void> saveToken(String token) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_tokenKey, token);

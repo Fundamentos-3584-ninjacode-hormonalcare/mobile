@@ -4,6 +4,8 @@ import '../widgets/patient_card.dart';
 import '../../domain/models/services/patients_list_service.dart';
 
 class PatientsListScreen extends StatefulWidget {
+  const PatientsListScreen({super.key});
+
   @override
   _PatientsListScreenState createState() => _PatientsListScreenState();
 }
@@ -22,10 +24,10 @@ class _PatientsListScreenState extends State<PatientsListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color(0xFF6A828D),
-        title: Text('Patients'),
+        backgroundColor: const Color(0xFF6A828D),
+        title: const Text('Patients'),
         centerTitle: true,
-        titleTextStyle: TextStyle(
+        titleTextStyle: const TextStyle(
           color: Colors.white,
           fontSize: 20.0,
           fontWeight: FontWeight.bold,
@@ -37,15 +39,15 @@ class _PatientsListScreenState extends State<PatientsListScreen> {
           future: _patientsFuture,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return Center(child: CircularProgressIndicator());
+              return const Center(child: CircularProgressIndicator());
             } else if (snapshot.hasError) {
               return Center(child: Text('Error: ${snapshot.error}'));
             } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-              return Center(child: Text('No patients found'));
+              return const Center(child: Text('No patients found'));
             } else {
               final patients = snapshot.data!;
               return GridView.builder(
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
                   mainAxisSpacing: 10.0,
                   crossAxisSpacing: 10.0,
