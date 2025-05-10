@@ -26,7 +26,7 @@ class MedicalAppointmentApi {
     }
 
     final response = await http.get(
-      Uri.parse('$_baseUrl/profile/profile/$profileId'),
+      Uri.parse('$_baseUrl/profile/$profileId'),
       headers: {'Authorization': 'Bearer $token'},
     );
 
@@ -177,7 +177,7 @@ class MedicalAppointmentApi {
 
       for (var patient in patients) {
         final profileResponse = await http.get(
-          Uri.parse('$_baseUrl/profile/profile/${patient['profileId']}'),
+          Uri.parse('$_baseUrl/profile/${patient['profileId']}'),
           headers: {'Authorization': 'Bearer $token'},
         );
 
