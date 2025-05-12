@@ -1,0 +1,2 @@
+E:/UPC/Repositorios/hormonal-care/mobile/android/app/.cxx/Debug/2q1s5iva/x86_64/CMakeFiles/edit_cache.dir
+E:/UPC/Repositorios/hormonal-care/mobile/android/app/.cxx/Debug/2q1s5iva/x86_64/CMakeFiles/rebuild_cache.dir
