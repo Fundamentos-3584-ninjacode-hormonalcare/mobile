@@ -7,7 +7,7 @@ import '../profile_model.dart';
 
 class PatientsListService {
   final String baseUrl = 'http://localhost:8080/api/v1/medical-record/patient';
-  final String profileBaseUrl = 'http://localhost:8080/api/v1/profile/profile';
+  final String profileBaseUrl = 'http://localhost:8080/api/v1/profile';
   final String doctorBaseUrl = 'http://localhost:8080/api/v1/doctor/doctor';
 
   Future<List<Patient>> getPatients() async {
