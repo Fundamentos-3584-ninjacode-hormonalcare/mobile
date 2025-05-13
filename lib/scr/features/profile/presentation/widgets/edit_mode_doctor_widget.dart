@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class EditModeDoctorWidget extends StatefulWidget {
   final Map<String, dynamic> doctorProfile;
@@ -23,10 +24,16 @@ class _EditModeDoctorWidgetState extends State<EditModeDoctorWidget> {
   @override
   void initState() {
     super.initState();
-    firstNameController = TextEditingController(text: widget.doctorProfile['firstName'] ?? '');
-    lastNameController = TextEditingController(text: widget.doctorProfile['lastName'] ?? '');
+    final fullName = widget.doctorProfile['fullName'] ?? '';
+    final nameParts = fullName.split(' ');
+    final firstName = nameParts.isNotEmpty ? nameParts.first : '';
+    final lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
+    firstNameController = TextEditingController(text: firstName);
+    lastNameController = TextEditingController(text: lastName);
     genderController = TextEditingController(text: widget.doctorProfile['gender'] ?? '');
-    birthdayController = TextEditingController(text: widget.doctorProfile['birthday'] ?? '');
+    birthdayController = TextEditingController(text: widget.doctorProfile['birthday'] != null
+        ? DateFormat('yyyy-MM-dd').format(DateTime.parse(widget.doctorProfile['birthday']))
+        : '');
     phoneNumberController = TextEditingController(text: widget.doctorProfile['phoneNumber'] ?? '');
     professionalIdentificationNumberController = TextEditingController(text: widget.doctorProfile['professionalIdentificationNumber']?.toString() ?? '');
     subSpecialtyController = TextEditingController(text: widget.doctorProfile['subSpecialty'] ?? '');

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class EditModeWidget extends StatefulWidget {
   final Map<String, dynamic> profile;
@@ -21,10 +22,17 @@ class _EditModeWidgetState extends State<EditModeWidget> {
   @override
   void initState() {
     super.initState();
-    firstNameController = TextEditingController(text: widget.profile['firstName'] ?? '');
-    lastNameController = TextEditingController(text: widget.profile['lastName'] ?? '');
+    final fullName = widget.profile['fullName'] ?? '';
+    final nameParts = fullName.split(' ');
+    final firstName = nameParts.isNotEmpty ? nameParts.first : '';
+    final lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
+    firstNameController = TextEditingController(text: firstName);
+    lastNameController = TextEditingController(text: lastName);
+
     genderController = TextEditingController(text: widget.profile['gender'] ?? '');
-    birthdayController = TextEditingController(text: widget.profile['birthday'] ?? '');
+    birthdayController = TextEditingController(text: widget.profile['birthday'] != null
+        ? DateFormat('yyyy-MM-dd').format(DateTime.parse(widget.profile['birthday']))
+        : '');
     phoneNumberController = TextEditingController(text: widget.profile['phoneNumber'] ?? '');
   }
 

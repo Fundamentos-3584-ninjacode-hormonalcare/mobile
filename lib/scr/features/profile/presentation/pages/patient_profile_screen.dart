@@ -4,6 +4,7 @@ import 'package:trabajo_moviles_ninjacode/scr/core/utils/usecases/jwt_storage.da
 import 'package:trabajo_moviles_ninjacode/scr/features/iam/domain/services/auth_service.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:intl/intl.dart';
 import '../widgets/profile_picture_widget.dart';
 import '../widgets/profile_field_widget.dart';
 import '../widgets/logout_button_widget.dart';
@@ -182,9 +183,13 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                         ProfileFieldWidget(
                             label: "Phone Number",
                             value: profile['phoneNumber'] ?? ''),
+
                         ProfileFieldWidget(
                             label: "Birthday",
-                            value: profile['birthday'] ?? ''),
+                            value: profile['birthday'] != null
+                                ? DateFormat('yyyy-MM-dd').format(
+                                DateTime.parse(profile['birthday']))
+                                : ''),
                         // Add more fields as needed
                       ],
                     );
