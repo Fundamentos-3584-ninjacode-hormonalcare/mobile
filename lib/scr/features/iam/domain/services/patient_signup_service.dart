@@ -4,7 +4,7 @@ import 'package:trabajo_moviles_ninjacode/scr/core/utils/usecases/jwt_storage.da
 import 'package:trabajo_moviles_ninjacode/scr/features/iam/domain/services/auth_service.dart';
 
 class PatientSignUpService {
-  static final String baseUrl = 'http://localhost:8080/api/v1';
+  static final String baseUrl = 'http://10.0.2.2:8080/api/v1';
 
   static Future<void> signUpPatient(
     String username,
@@ -21,12 +21,13 @@ class PatientSignUpService {
     final authService = AuthService();
 
     // Sign up user
-    final userResponse = await authService.signUp(username, password, 'ROLE_PATIENT');
+    final userResponse =
+        await authService.signUp(username, password, 'ROLE_PATIENT');
     final userId = userResponse['id'];
 
     // Create profile
     final profileResponse = await http.post(
-      Uri.parse('$baseUrl/profile/profile'),
+      Uri.parse('$baseUrl/profile'),
       headers: {'Content-Type': 'application/json'},
       body: json.encode({
         'firstName': firstName,

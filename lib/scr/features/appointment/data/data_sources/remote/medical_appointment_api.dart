@@ -5,7 +5,7 @@ import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
 class MedicalAppointmentApi {
-  static const String _baseUrl = 'http://localhost:8080/api/v1';
+  static const String _baseUrl = 'http://10.0.2.2:8080/api/v1';
 
   MedicalAppointmentApi() {
     tz.initializeTimeZones();
@@ -91,17 +91,22 @@ class MedicalAppointmentApi {
     }
 
     final response = await http.get(
-      Uri.parse('$_baseUrl/medicalAppointment/medicalAppointments/doctor/$doctorId'),
+      Uri.parse(
+          '$_baseUrl/medicalAppointment/medicalAppointments/doctor/$doctorId'),
       headers: {'Authorization': 'Bearer $token'},
     );
 
     if (response.statusCode == 200) {
-      final List<Map<String, dynamic>> appointments = List<Map<String, dynamic>>.from(json.decode(response.body));
+      final List<Map<String, dynamic>> appointments =
+          List<Map<String, dynamic>>.from(json.decode(response.body));
       final limaTimeZone = tz.getLocation('America/Lima');
       final today = tz.TZDateTime.now(limaTimeZone);
       final todayAppointments = appointments.where((appointment) {
-        final eventDate = tz.TZDateTime.from(DateTime.parse(appointment['eventDate']), limaTimeZone);
-        return eventDate.year == today.year && eventDate.month == today.month && eventDate.day == today.day;
+        final eventDate = tz.TZDateTime.from(
+            DateTime.parse(appointment['eventDate']), limaTimeZone);
+        return eventDate.year == today.year &&
+            eventDate.month == today.month &&
+            eventDate.day == today.day;
       }).toList();
       return todayAppointments;
     } else if (response.statusCode == 401) {
@@ -111,7 +116,8 @@ class MedicalAppointmentApi {
     }
   }
 
-   Future<List<Map<String, dynamic>>> fetchAppointmentsForTodayPatientListScreen(int doctorId) async {
+  Future<List<Map<String, dynamic>>> fetchAppointmentsForTodayPatientListScreen(
+      int doctorId) async {
     final token = await _getToken();
     if (token == null) {
       throw Exception('Token not found');
@@ -123,12 +129,16 @@ class MedicalAppointmentApi {
     );
 
     if (response.statusCode == 200) {
-      final List<Map<String, dynamic>> appointments = List<Map<String, dynamic>>.from(json.decode(response.body));
+      final List<Map<String, dynamic>> appointments =
+          List<Map<String, dynamic>>.from(json.decode(response.body));
       final limaTimeZone = tz.getLocation('America/Lima');
       final today = tz.TZDateTime.now(limaTimeZone);
       final todayAppointments = appointments.where((appointment) {
-        final eventDate = tz.TZDateTime.from(DateTime.parse(appointment['eventDate']), limaTimeZone);
-        return eventDate.year == today.year && eventDate.month == today.month && eventDate.day == today.day;
+        final eventDate = tz.TZDateTime.from(
+            DateTime.parse(appointment['eventDate']), limaTimeZone);
+        return eventDate.year == today.year &&
+            eventDate.month == today.month &&
+            eventDate.day == today.day;
       }).toList();
       return todayAppointments;
     } else if (response.statusCode == 401) {
@@ -146,7 +156,8 @@ class MedicalAppointmentApi {
     }
 
     final response = await http.get(
-      Uri.parse('$_baseUrl/medicalAppointment/medicalAppointments/doctor/$doctorId'),
+      Uri.parse(
+          '$_baseUrl/medicalAppointment/medicalAppointments/doctor/$doctorId'),
       headers: {'Authorization': 'Bearer $token'},
     );
 
@@ -172,7 +183,8 @@ class MedicalAppointmentApi {
     );
 
     if (response.statusCode == 200) {
-      final List<Map<String, dynamic>> patients = List<Map<String, dynamic>>.from(json.decode(response.body));
+      final List<Map<String, dynamic>> patients =
+          List<Map<String, dynamic>>.from(json.decode(response.body));
       final List<Map<String, dynamic>> patientProfiles = [];
 
       for (var patient in patients) {
@@ -198,15 +210,16 @@ class MedicalAppointmentApi {
     }
   }
 
-  Future<bool> createMedicalAppointment(Map<String, dynamic> appointmentData) async {
+  Future<bool> createMedicalAppointment(
+      Map<String, dynamic> appointmentData) async {
     final token = await _getToken();
     final userId = await _getUserId();
     if (token == null || userId == null) {
       throw Exception('Token or user ID not found');
     }
-  
+
     appointmentData['userId'] = userId; // Add userId to the appointment data
-  
+
     final response = await http.post(
       Uri.parse('$_baseUrl/medicalAppointment'),
       headers: {
@@ -215,7 +228,7 @@ class MedicalAppointmentApi {
       },
       body: jsonEncode(appointmentData),
     );
-  
+
     if (response.statusCode == 201) {
       return true;
     } else if (response.statusCode == 401) {
@@ -256,7 +269,8 @@ class MedicalAppointmentApi {
       throw Exception('Failed to fetch existing appointment data');
     }
 
-    final existingAppointmentData = jsonDecode(existingAppointmentResponse.body);
+    final existingAppointmentData =
+        jsonDecode(existingAppointmentResponse.body);
 
     // Construir el cuerpo de la solicitud PUT con los datos proporcionados y los datos existentes
     final updatedAppointmentData = {
@@ -311,7 +325,8 @@ class MedicalAppointmentApi {
     }
   }
 
-  Future<Map<String, dynamic>> fetchAppointmentDetails(int appointmentId) async {
+  Future<Map<String, dynamic>> fetchAppointmentDetails(
+      int appointmentId) async {
     final token = await _getToken();
     if (token == null) {
       throw Exception('Token not found');
@@ -329,7 +344,7 @@ class MedicalAppointmentApi {
     }
   }
 
-    Future<Map<String, dynamic>> fetchPatientDetails(int patientId) async {
+  Future<Map<String, dynamic>> fetchPatientDetails(int patientId) async {
     final profileId = await getProfileIdByPatientId(patientId);
     if (profileId == null) {
       throw Exception('Profile ID not found');

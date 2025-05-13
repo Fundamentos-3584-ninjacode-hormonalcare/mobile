@@ -3,9 +3,10 @@ import 'package:http/http.dart' as http;
 import 'package:trabajo_moviles_ninjacode/scr/core/utils/usecases/jwt_storage.dart';
 
 class AuthService {
-  final String baseUrl = 'http://localhost:8080/api/v1';
+  final String baseUrl = 'http://10.0.2.2:8080/api/v1';
 
-  Future<Map<String, dynamic>> signUp(String username, String password, String role) async {
+  Future<Map<String, dynamic>> signUp(
+      String username, String password, String role) async {
     final response = await http.post(
       Uri.parse('$baseUrl/authentication/sign-up'),
       headers: {'Content-Type': 'application/json'},
@@ -16,43 +17,37 @@ class AuthService {
       }),
     );
 
-    if (response.statusCode == 201) {
+    if (response.statusCode == 200 || response.statusCode == 201) {
       return json.decode(response.body);
     } else {
-      throw Exception('Error in registration');
+      throw Exception('Failed to sign up: ${response.body}');
     }
   }
 
-   Future<String?> signIn(String username, String password) async {
+  Future<String?> signIn(String username, String password) async {
     final response = await http.post(
       Uri.parse('$baseUrl/authentication/sign-in'),
       headers: {'Content-Type': 'application/json'},
-      body: json.encode({'username': username, 'password': password}),
+      body: json.encode({
+        'username': username,
+        'password': password,
+      }),
     );
 
     if (response.statusCode == 200) {
-      final responseData = json.decode(response.body);
-      final token = responseData['token'];
-      final userId = responseData['id'];
-      final role = responseData['role'];
+      final data = json.decode(response.body);
+      final token = data['token'];
+      final userId = data['id'];
+      final role = data['role'];
 
-      if (token != null && userId != null && role != null) {
-        await JwtStorage.saveToken(token);
-        await JwtStorage.saveUserId(userId);
-        await JwtStorage.saveRole(role);
+      // Store the token, user ID and role
+      await JwtStorage.saveToken(token);
+      await JwtStorage.saveUserId(userId);
+      await JwtStorage.saveRole(role);
 
-        final profileId = await fetchAndSaveProfileId(userId, token);
-
-        if (role == 'ROLE_DOCTOR' && profileId != null) {
-          await fetchAndSaveDoctorId(profileId, token);
-        }
-
-        return token;
-      } else {
-        throw Exception('Token, User ID, or Role is null');
-      }
+      return token;
     } else {
-      throw Exception('Error in sign-in');
+      return null;
     }
   }
 

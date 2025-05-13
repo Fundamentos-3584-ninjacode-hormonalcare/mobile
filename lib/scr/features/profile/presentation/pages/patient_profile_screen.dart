@@ -85,8 +85,11 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
     final profileId = await JwtStorage.getProfileId();
     if (profileId != null) {
       final response = await http.put(
-        Uri.parse('http://localhost:8080/api/v1/profile/$profileId/full-update'),
-        headers: {'Authorization': 'Bearer your_token', 'Content-Type': 'application/json'},
+        Uri.parse('http://10.0.2.2:8080/api/v1/profile/$profileId/full-update'),
+        headers: {
+          'Authorization': 'Bearer your_token',
+          'Content-Type': 'application/json'
+        },
         body: json.encode(updatedProfile),
       );
 
@@ -127,14 +130,21 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 IconButton(
-                  icon: Icon(Icons.edit, color: const Color.fromARGB(255, 0, 0, 0)),
+                  icon: Icon(Icons.edit,
+                      color: const Color.fromARGB(255, 0, 0, 0)),
                   onPressed: toggleEditMode,
                 ),
-                SizedBox(width: 8.0), // Reduce the space between the edit button and the profile picture
-                ProfilePictureWidget(isEditing: isEditing, toggleEditMode: toggleEditMode),
-                SizedBox(width: 8.0), // Reduce the space between the profile picture and the logout button
+                SizedBox(
+                    width:
+                        8.0), // Reduce the space between the edit button and the profile picture
+                ProfilePictureWidget(
+                    isEditing: isEditing, toggleEditMode: toggleEditMode),
+                SizedBox(
+                    width:
+                        8.0), // Reduce the space between the profile picture and the logout button
                 IconButton(
-                  icon: Icon(Icons.logout, color: const Color.fromARGB(255, 0, 0, 0)),
+                  icon: Icon(Icons.logout,
+                      color: const Color.fromARGB(255, 0, 0, 0)),
                   onPressed: _showLogoutDialog,
                 ),
               ],
@@ -158,15 +168,23 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                     final fullName = profile['fullName'] ?? '';
                     final nameParts = fullName.split(' ');
                     final firstName = nameParts.isNotEmpty ? nameParts[0] : '';
-                    final lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
+                    final lastName = nameParts.length > 1
+                        ? nameParts.sublist(1).join(' ')
+                        : '';
 
                     return Column(
                       children: [
-                        ProfileFieldWidget(label: "First Name", value: firstName),
+                        ProfileFieldWidget(
+                            label: "First Name", value: firstName),
                         ProfileFieldWidget(label: "Last Name", value: lastName),
-                        ProfileFieldWidget(label: "Gender", value: profile['gender'] ?? ''),
-                        ProfileFieldWidget(label: "Phone Number", value: profile['phoneNumber'] ?? ''),
-                        ProfileFieldWidget(label: "Birthday", value: profile['birthday'] ?? ''),
+                        ProfileFieldWidget(
+                            label: "Gender", value: profile['gender'] ?? ''),
+                        ProfileFieldWidget(
+                            label: "Phone Number",
+                            value: profile['phoneNumber'] ?? ''),
+                        ProfileFieldWidget(
+                            label: "Birthday",
+                            value: profile['birthday'] ?? ''),
                         // Add more fields as needed
                       ],
                     );

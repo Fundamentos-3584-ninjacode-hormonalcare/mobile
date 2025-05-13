@@ -3,12 +3,14 @@ import 'package:http/http.dart' as http;
 import 'package:trabajo_moviles_ninjacode/scr/core/utils/usecases/jwt_storage.dart';
 
 class NotificationService {
-  final String baseUrl = 'http://localhost:8080/api/v1';
+  final String baseUrl = 'http://10.0.2.2:8080/api/v1';
 
-  Future<List<Map<String, dynamic>>> fetchDoctorAppointments(int doctorId) async {
+  Future<List<Map<String, dynamic>>> fetchDoctorAppointments(
+      int doctorId) async {
     final token = await JwtStorage.getToken();
     final response = await http.get(
-      Uri.parse('$baseUrl/medicalAppointment/medicalAppointments/doctor/$doctorId'),
+      Uri.parse(
+          '$baseUrl/medicalAppointment/medicalAppointments/doctor/$doctorId'),
       headers: {'Authorization': 'Bearer $token'},
     );
 
@@ -32,7 +34,7 @@ class NotificationService {
       final profileId = patientData['profileId'];
 
       final profileResponse = await http.get(
-        Uri.parse('$baseUrl/profile/profile/$profileId'),
+        Uri.parse('$baseUrl/profile/$profileId'),
         headers: {'Authorization': 'Bearer $token'},
       );
 

@@ -3,12 +3,12 @@ import 'package:http/http.dart' as http;
 import 'package:trabajo_moviles_ninjacode/scr/core/utils/usecases/jwt_storage.dart';
 
 class ProfileService {
-  final String baseUrl = 'http://localhost:8080/api/v1';
+  final String baseUrl = 'http://10.0.2.2:8080/api/v1';
 
   Future<Map<String, dynamic>> fetchProfileDetails(int userId) async {
     final token = await JwtStorage.getToken();
     final response = await http.get(
-      Uri.parse('$baseUrl/profile/userId/$userId'),
+      Uri.parse('$baseUrl/profile/$userId'),
       headers: {'Authorization': 'Bearer $token'},
     );
 
@@ -19,7 +19,8 @@ class ProfileService {
     }
   }
 
-  Future<void> updateProfile(int profileId, Map<String, dynamic> updatedProfile) async {
+  Future<void> updateProfile(
+      int profileId, Map<String, dynamic> updatedProfile) async {
     final token = await JwtStorage.getToken();
     final response = await http.put(
       Uri.parse('$baseUrl/profile/$profileId/full-update'),
@@ -35,7 +36,8 @@ class ProfileService {
     }
   }
 
-  Future<Map<String, dynamic>> fetchDoctorProfessionalDetails(int profileId) async {
+  Future<Map<String, dynamic>> fetchDoctorProfessionalDetails(
+      int profileId) async {
     final token = await JwtStorage.getToken();
     final response = await http.get(
       Uri.parse('$baseUrl/doctor/doctor/profile/$profileId'),
@@ -49,7 +51,8 @@ class ProfileService {
     }
   }
 
-  Future<void> updateDoctorProfile(int doctorId, Map<String, dynamic> updatedDoctorProfile) async {
+  Future<void> updateDoctorProfile(
+      int doctorId, Map<String, dynamic> updatedDoctorProfile) async {
     final token = await JwtStorage.getToken();
     final response = await http.put(
       Uri.parse('$baseUrl/doctor/doctor/$doctorId'),

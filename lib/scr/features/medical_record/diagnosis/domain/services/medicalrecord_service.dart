@@ -11,14 +11,19 @@ import '../../domain/models/prescriptionpost_model.dart';
 import '../../domain/models/medicaltype_model.dart';
 
 class MedicalRecordService {
-  final String baseUrl = 'http://localhost:8080/api/v1/medical-record/patient/record';
-  final String profileBaseUrl = 'http://localhost:8080/api/v1/profile';
-  final String medicationsUrl = 'http://localhost:8080/api/v1/medical-record/medications';
-  final String prescriptionsUrl = 'http://localhost:8080/api/v1/medical-record/medications/prescriptions';
-  final String treatmentsUrl = 'http://localhost:8080/api/v1/medical-record/treatments/medicalRecordId'; // URL base para tratamientos
-  final String treatmentspostUrl = 'http://localhost:8080/api/v1/medical-record/treatments'; // URL base para tratamientos
-  final String medicaltypesUrl = 'http://localhost:8080/api/v1/medical-record/medications/medicationTypes';
-
+  final String baseUrl =
+      'http://10.0.2.2:8080/api/v1/medical-record/patient/record';
+  final String profileBaseUrl = 'http://10.0.2.2:8080/api/v1/profile';
+  final String medicationsUrl =
+      'http://10.0.2.2:8080/api/v1/medical-record/medications';
+  final String prescriptionsUrl =
+      'http://10.0.2.2:8080/api/v1/medical-record/medications/prescriptions';
+  final String treatmentsUrl =
+      'http://10.0.2.2:8080/api/v1/medical-record/treatments/medicalRecordId'; // URL base para tratamientos
+  final String treatmentspostUrl =
+      'http://10.0.2.2:8080/api/v1/medical-record/treatments'; // URL base para tratamientos
+  final String medicaltypesUrl =
+      'http://10.0.2.2:8080/api/v1/medical-record/medications/medicationTypes';
 
   Future<Patient> getPatientById(String patientId) async {
     final token = await JwtStorage.getToken();
@@ -27,12 +32,14 @@ class MedicalRecordService {
       'Authorization': 'Bearer $token',
     };
 
-    final response = await http.get(Uri.parse('$baseUrl/$patientId'), headers: headers);
+    final response =
+        await http.get(Uri.parse('$baseUrl/$patientId'), headers: headers);
     if (response.statusCode == 200) {
       final patientData = json.decode(response.body);
       final profileId = patientData['profileId'];
 
-      final profileResponse = await http.get(Uri.parse('$profileBaseUrl/$profileId'), headers: headers);
+      final profileResponse = await http
+          .get(Uri.parse('$profileBaseUrl/$profileId'), headers: headers);
       if (profileResponse.statusCode == 200) {
         final profileData = json.decode(profileResponse.body);
         final patient = Patient.fromJson(patientData);
@@ -54,7 +61,8 @@ class MedicalRecordService {
       'Authorization': 'Bearer $token',
     };
 
-    final response = await http.get(Uri.parse(medicationsUrl), headers: headers);
+    final response =
+        await http.get(Uri.parse(medicationsUrl), headers: headers);
     if (response.statusCode == 200) {
       final List<dynamic> medicationsJson = json.decode(response.body);
       return medicationsJson
@@ -67,19 +75,22 @@ class MedicalRecordService {
     }
   }
 
-  Future<List<Prescription>> getPrescriptionsByRecordId(int medicalRecordId) async {
+  Future<List<Prescription>> getPrescriptionsByRecordId(
+      int medicalRecordId) async {
     final token = await JwtStorage.getToken();
     final headers = {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer $token',
     };
 
-    final response = await http.get(Uri.parse(prescriptionsUrl), headers: headers);
+    final response =
+        await http.get(Uri.parse(prescriptionsUrl), headers: headers);
     if (response.statusCode == 200) {
       final List<dynamic> prescriptionsJson = json.decode(response.body);
       return prescriptionsJson
           .map((json) => Prescription.fromJson(json))
-          .where((prescription) => prescription.medicalRecordId == medicalRecordId)
+          .where(
+              (prescription) => prescription.medicalRecordId == medicalRecordId)
           .toList();
     } else {
       print('Error fetching prescriptions: ${response.body}');
@@ -94,7 +105,8 @@ class MedicalRecordService {
       'Authorization': 'Bearer $token',
     };
 
-    final response = await http.get(Uri.parse('$treatmentsUrl/$medicalRecordId'), headers: headers);
+    final response = await http
+        .get(Uri.parse('$treatmentsUrl/$medicalRecordId'), headers: headers);
     if (response.statusCode == 200) {
       final List<dynamic> treatmentsJson = json.decode(response.body);
       return treatmentsJson.map((json) => Treatment.fromJson(json)).toList();
@@ -102,26 +114,26 @@ class MedicalRecordService {
       print('Error fetching treatments: ${response.body}');
       throw Exception('Error fetching treatments');
     }
-    
   }
 
-    Future<http.Response> addMedication(MedicationPost medicationPost) async {
-  final token = await JwtStorage.getToken();
-  final headers = {
-    'Content-Type': 'application/json',
-    'Authorization': 'Bearer $token',
-  };
+  Future<http.Response> addMedication(MedicationPost medicationPost) async {
+    final token = await JwtStorage.getToken();
+    final headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $token',
+    };
 
-  final response = await http.post(
-    Uri.parse(medicationsUrl),
-    headers: headers,
-    body: json.encode(medicationPost.toJson()),
-  );
+    final response = await http.post(
+      Uri.parse(medicationsUrl),
+      headers: headers,
+      body: json.encode(medicationPost.toJson()),
+    );
 
-  return response;
-}
+    return response;
+  }
 
-Future<http.Response> addPrescription(PrescriptionPost prescriptionPost) async {
+  Future<http.Response> addPrescription(
+      PrescriptionPost prescriptionPost) async {
     final token = await JwtStorage.getToken();
     final headers = {
       'Content-Type': 'application/json',
@@ -136,9 +148,10 @@ Future<http.Response> addPrescription(PrescriptionPost prescriptionPost) async {
 
     return response;
   }
+
   Future<http.Response> addTreatment(Treatment treatment) async {
     final token = await JwtStorage.getToken();
-      print('Tokenzzz: $token'); // Agrega este log para verificar el token
+    print('Tokenzzz: $token'); // Agrega este log para verificar el token
 
     final headers = {
       'Content-Type': 'application/json',
@@ -154,14 +167,15 @@ Future<http.Response> addPrescription(PrescriptionPost prescriptionPost) async {
     return response;
   }
 
-Future<List<MedicalType>> fetchMedicalTypes() async {
+  Future<List<MedicalType>> fetchMedicalTypes() async {
     final token = await JwtStorage.getToken();
     final headers = {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer $token',
     };
 
-    final response = await http.get(Uri.parse(medicaltypesUrl), headers: headers);
+    final response =
+        await http.get(Uri.parse(medicaltypesUrl), headers: headers);
 
     if (response.statusCode == 200) {
       List<dynamic> body = jsonDecode(response.body);
@@ -171,4 +185,3 @@ Future<List<MedicalType>> fetchMedicalTypes() async {
     }
   }
 }
-
