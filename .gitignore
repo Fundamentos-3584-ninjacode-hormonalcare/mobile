@@ -42,4 +42,4 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 # NDK / CMake build outputs
-android/app/.cxx/
+/android/app/.cxx/
