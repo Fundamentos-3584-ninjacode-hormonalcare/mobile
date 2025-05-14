@@ -1,3 +1,14 @@
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        // Esta línea es esencial para usar una versión compatible del plugin de Android
+        classpath 'com.android.tools.build:gradle:8.2.1'
+    }
+}
+
 allprojects {
     repositories {
         google()
