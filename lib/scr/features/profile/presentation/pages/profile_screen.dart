@@ -1,9 +1,16 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:http/http.dart' as http;
+import 'package:mime/mime.dart';
+import 'package:http_parser/http_parser.dart';
+import '../../../../core/utils/usecases/jwt_storage.dart';
 import '../widgets/profile_picture_widget.dart';
 import '../widgets/profile_field_widget.dart';
 import '../widgets/logout_button_widget.dart';
 import '../widgets/save_cancel_buttons_widget.dart';
 import '../widgets/edit_mode_widget.dart';
+
 
 class ProfileScreen extends StatefulWidget {
   @override
@@ -22,7 +29,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _loadProfileData() async {
     try {
-      // Usa el userId real obtenido de tu sesión o storage
       int userId = await JwtStorage.getUserId();
       final data = await ProfileService().fetchProfileByUserId(userId);
       setState(() {
@@ -30,6 +36,62 @@ class _ProfileScreenState extends State<ProfileScreen> {
       });
     } catch (e) {
       print('Error loading profile: $e');
+    }
+  }
+  Future<void> _pickAndUploadImageFromFile(File file) async {
+    if (profileData == null) return;
+
+    final profileId = profileData!['id'];
+    final uri = Uri.parse('http://10.0.2.2/api/v1/profile/$profileId/image');
+
+    final request = http.MultipartRequest('PUT', uri)
+      ..headers['Authorization'] = 'Bearer ${await JwtStorage.getToken()}'
+      ..files.add(
+        await http.MultipartFile.fromPath(
+          'file',
+          file.path,
+          contentType: MediaType.parse(lookupMimeType(file.path) ?? 'image/jpeg')!,
+        ),
+      );
+
+    final response = await request.send();
+    if (response.statusCode == 200) {
+      final body = await response.stream.bytesToString();
+      print('Imagen subida exitosamente: $body');
+      await _loadProfileData(); // Refrescar con nueva imagen
+    } else {
+      print('Fallo al subir imagen: ${response.statusCode}');
+    }
+  }
+
+
+  Future<void> _pickAndUploadImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null && profileData != null) {
+      final file = File(pickedFile.path);
+      final profileId = profileData!['id'];
+
+      final uri = Uri.parse('http://10.0.2.2:8080/api/v1/profile/$profileId/image');
+      final request = http.MultipartRequest('PUT', uri)
+        ..headers['Authorization'] = 'Bearer ${await JwtStorage.getToken()}'
+        ..files.add(
+          await http.MultipartFile.fromPath(
+            'file',
+            file.path,
+            contentType: MediaType.parse(lookupMimeType(file.path) ?? 'image/jpeg')!,
+          ),
+        );
+
+      final response = await request.send();
+      if (response.statusCode == 200) {
+        final body = await response.stream.bytesToString();
+        print('Imagen subida exitosamente: $body');
+        await _loadProfileData(); // Refrescar con nueva imagen
+      } else {
+        print('Fallo al subir imagen: ${response.statusCode}');
+      }
     }
   }
 
@@ -61,24 +123,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Profile picture, edit button, and logout button
+            // Profile picture + edit + logout
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 IconButton(
-                  icon: Icon(Icons.edit, color: const Color.fromARGB(255, 0, 0, 0)),
+                  icon: Icon(Icons.edit, color: Colors.black),
                   onPressed: toggleEditMode,
                 ),
-                SizedBox(width: 8.0), // Reduce the space between the edit button and the profile picture
-                ProfilePictureWidget(isEditing: isEditing, toggleEditMode: toggleEditMode),
-                SizedBox(width: 8.0), // Reduce the space between the profile picture and the logout button
+                SizedBox(width: 8.0),
+                ProfilePictureWidget(
+                  isEditing: isEditing,
+                  toggleEditMode: toggleEditMode,
+                  imageUrl: profileData!['image'],
+                  onImageSelected: (file) => _pickAndUploadImageFromFile(file),
+                ),
+                SizedBox(width: 8.0),
                 LogoutButtonWidget(),
               ],
             ),
 
             SizedBox(height: 20.0),
-            
-            // Display fields or editable fields based on edit mode
+
             if (!isEditing) ...[
               ProfileFieldWidget(label: "First name", value: profileData!['firstName'] ?? ''),
               ProfileFieldWidget(label: "Last name", value: profileData!['lastName'] ?? ''),
@@ -93,7 +159,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 profile: profileData!,
                 onCancel: toggleEditMode,
                 onSave: (updatedProfile) {
-                  // Aquí podrías hacer un PUT al backend, por ahora simplemente guarda localmente:
                   setState(() {
                     profileData = {...profileData!, ...updatedProfile};
                     isEditing = false;
@@ -104,11 +169,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             SizedBox(height: 20.0),
 
-            // Save and Cancel buttons in edit mode
-            if (isEditing) SaveCancelButtonsWidget(onCancel: toggleEditMode, onSave: () {
-              // Save functionality
-              toggleEditMode();
-            }),
+            if (isEditing)
+              SaveCancelButtonsWidget(
+                onCancel: toggleEditMode,
+                onSave: () {
+                  toggleEditMode();
+                },
+              ),
           ],
         ),
       ),
