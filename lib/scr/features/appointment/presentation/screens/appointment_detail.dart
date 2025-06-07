@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'package:trabajo_moviles_ninjacode/scr/features/appointment/data/data_sources/remote/medical_appointment_api.dart';
 import 'package:trabajo_moviles_ninjacode/scr/features/appointment/presentation/screens/edit_appointment.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:trabajo_moviles_ninjacode/scr/features/appointment/presentation/pages/video_call_page.dart';
 
 class AppointmentDetail extends StatefulWidget {
   final int appointmentId;
@@ -208,19 +209,23 @@ class _AppointmentDetailState extends State<AppointmentDetail> {
                   SizedBox(width: 16),
                   Expanded(
                     child: ElevatedButton.icon(
-                      onPressed: () async {
-                        final url = _appointmentDetails!['description'];
-                        if (await canLaunch(url)) {
-                          await launch(url);
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Could not launch $url')),
-                          );
-                        }
+                      onPressed: () {
+                        final roomId = "cita_${_appointmentDetails!['id']}"; // o cualquier ID único
+                        final displayName = _patientDetails!['fullName'];
+
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => VideoCallPage(
+                              roomName: roomId,
+                              displayName: displayName,
+                            ),
+                          ),
+                        );
                       },
-                      icon: Icon(Icons.link, color: Colors.blue),
+                      icon: Icon(Icons.video_call, color: Colors.blue),
                       label: Text(
-                        'Join Meeting',
+                        'Iniciar Videollamada',
                         style: TextStyle(color: Colors.blue),
                       ),
                       style: ElevatedButton.styleFrom(
