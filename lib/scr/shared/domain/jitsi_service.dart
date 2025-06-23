@@ -27,6 +27,6 @@ class JitsiService {
   }
 
   void hangUp() {
-    _jitsiMeet.leave();
+    _jitsiMeet.hangUp();
   }
 }
