@@ -8,21 +8,24 @@ class JitsiMeetingLinkGenerator {
 
   static String generateMeetingLink({String? roomPrefix}) {
     final String randomString = _generateRandomString(10);
-    final String roomName = roomPrefix != null ? '$roomPrefix-$randomString' : randomString;
+    final String roomName =
+        roomPrefix != null ? '$roomPrefix-$randomString' : randomString;
     return '$_baseUrl$roomName';
   }
 
   static String _generateRandomString(int length) {
     const String chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
     final Random random = Random();
-    return List.generate(length, (index) => chars[random.nextInt(chars.length)]).join();
+    return List.generate(length, (index) => chars[random.nextInt(chars.length)])
+        .join();
   }
 }
 
 class AddAppointmentScreen extends StatefulWidget {
   final DateTime selectedDate;
 
-  const AddAppointmentScreen({Key? key, required this.selectedDate}) : super(key: key);
+  const AddAppointmentScreen({Key? key, required this.selectedDate})
+      : super(key: key);
 
   @override
   _AddAppointmentScreenState createState() => _AddAppointmentScreenState();
@@ -32,7 +35,7 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
   final MedicalAppointmentApi _appointmentService = MedicalAppointmentApi();
   List<Map<String, dynamic>> _patients = [];
   int? _selectedPatientId;
-  Color _selectedColor = Color(0xFF039BE5); // Default color
+  Color _selectedColor = const Color(0xFF039BE5); // Default color
 
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _dateController = TextEditingController();
@@ -40,26 +43,29 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
   final TextEditingController _endTimeController = TextEditingController();
 
   final List<Map<String, dynamic>> _colors = [
-    {'name': 'Rojo Tomate', 'color': Color(0xFFD50000)},
-    {'name': 'Rosa Chicle', 'color': Color(0xFFE67C73)},
-    {'name': 'Mandarina', 'color': Color(0xFFF4511E)},
-    {'name': 'Amarillo Huevo', 'color': Color(0xFFF6BF26)},
-    {'name': 'Verde Esmeralda', 'color': Color(0xFF33B679)},
-    {'name': 'Verde Musgo', 'color': Color(0xFF0B8043)},
-    {'name': 'Azul Turquesa', 'color': Color(0xFF039BE5)},
-    {'name': 'Azul Arándano', 'color': Color(0xFF3F51B5)},
-    {'name': 'Lavanda', 'color': Color(0xFF7986CB)},
-    {'name': 'Morado Intenso', 'color': Color(0xFF8E24AA)},
-    {'name': 'Grafito', 'color': Color(0xFF616161)},
+    {'name': 'Rojo Tomate', 'color': const Color(0xFFD50000)},
+    {'name': 'Rosa Chicle', 'color': const Color(0xFFE67C73)},
+    {'name': 'Mandarina', 'color': const Color(0xFFF4511E)},
+    {'name': 'Amarillo Huevo', 'color': const Color(0xFFF6BF26)},
+    {'name': 'Verde Esmeralda', 'color': const Color(0xFF33B679)},
+    {'name': 'Verde Musgo', 'color': const Color(0xFF0B8043)},
+    {'name': 'Azul Turquesa', 'color': const Color(0xFF039BE5)},
+    {'name': 'Azul Arándano', 'color': const Color(0xFF3F51B5)},
+    {'name': 'Lavanda', 'color': const Color(0xFF7986CB)},
+    {'name': 'Morado Intenso', 'color': const Color(0xFF8E24AA)},
+    {'name': 'Grafito', 'color': const Color(0xFF616161)},
   ];
 
   @override
   void initState() {
     super.initState();
     _loadPatients();
-    _dateController.text = '${widget.selectedDate.year}-${widget.selectedDate.month.toString().padLeft(2, '0')}-${widget.selectedDate.day.toString().padLeft(2, '0')}';
-    _startTimeController.text = '${widget.selectedDate.hour.toString().padLeft(2, '0')}:${widget.selectedDate.minute.toString().padLeft(2, '0')}';
-    _endTimeController.text = '${widget.selectedDate.add(Duration(hours: 1)).hour.toString().padLeft(2, '0')}:${widget.selectedDate.add(Duration(minutes: 0)).minute.toString().padLeft(2, '0')}';
+    _dateController.text =
+        '${widget.selectedDate.year}-${widget.selectedDate.month.toString().padLeft(2, '0')}-${widget.selectedDate.day.toString().padLeft(2, '0')}';
+    _startTimeController.text =
+        '${widget.selectedDate.hour.toString().padLeft(2, '0')}:${widget.selectedDate.minute.toString().padLeft(2, '0')}';
+    _endTimeController.text =
+        '${widget.selectedDate.add(const Duration(hours: 1)).hour.toString().padLeft(2, '0')}:${widget.selectedDate.add(Duration(minutes: 0)).minute.toString().padLeft(2, '0')}';
   }
 
   Future<void> _loadPatients() async {
@@ -77,15 +83,16 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
 
   Future<void> _createAppointment(Map<String, dynamic> appointmentData) async {
     try {
-      final success = await _appointmentService.createMedicalAppointment(appointmentData);
+      final success =
+          await _appointmentService.createMedicalAppointment(appointmentData);
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Appointment created successfully!')),
+          const SnackBar(content: Text('Appointment created successfully!')),
         );
         Navigator.of(context).pop(true); // Return true to indicate success
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to create appointment')),
+          const SnackBar(content: Text('Failed to create appointment')),
         );
       }
     } catch (e) {
@@ -105,7 +112,8 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
     );
     if (picked != null && picked != widget.selectedDate) {
       setState(() {
-        _dateController.text = '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
+        _dateController.text =
+            '${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}';
       });
     }
   }
@@ -114,7 +122,7 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
+        title: const Text(
           'Add Appointment',
           style: TextStyle(
             color: Colors.white,
@@ -122,9 +130,9 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
           ),
         ),
         centerTitle: true,
-        backgroundColor: Color(0xFF6A828D),
+        backgroundColor: const Color(0xFF6A828D),
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
             Navigator.of(context).pop();
           },
@@ -140,14 +148,14 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
                 labelText: 'Title',
                 icon: Icons.title,
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               _buildDateField(
                 controller: _dateController,
                 labelText: 'Date',
                 icon: Icons.calendar_today,
                 onTap: () => _selectDate(context),
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               _buildTextField(
                 controller: _startTimeController,
                 labelText: 'Start Time (HH:MM)',
@@ -155,7 +163,7 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
                 keyboardType: TextInputType.number,
                 inputFormatters: [TimeTextInputFormatter()],
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               _buildTextField(
                 controller: _endTimeController,
                 labelText: 'End Time (HH:MM)',
@@ -163,7 +171,7 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
                 keyboardType: TextInputType.number,
                 inputFormatters: [TimeTextInputFormatter()],
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               _buildDropdown<int>(
                 value: _selectedPatientId,
                 items: _patients.map((patient) {
@@ -180,7 +188,7 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
                 labelText: 'Choose a Patient',
                 icon: Icons.person,
               ),
-              SizedBox(height: 16),
+              const SizedBox(height: 16),
               _buildDropdown<Color>(
                 value: _selectedColor,
                 items: _colors.map((color) {
@@ -188,8 +196,9 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
                     value: color['color'],
                     child: Row(
                       children: [
-                        CircleAvatar(backgroundColor: color['color'], radius: 10),
-                        SizedBox(width: 10),
+                        CircleAvatar(
+                            backgroundColor: color['color'], radius: 10),
+                        const SizedBox(width: 10),
                         Text(color['name']),
                       ],
                     ),
@@ -203,11 +212,12 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
                 labelText: 'Choose a Color',
                 icon: Icons.color_lens,
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () async {
                   final String title = _titleController.text;
-                  final DateTime selectedDate = DateTime.parse(_dateController.text);
+                  final DateTime selectedDate =
+                      DateTime.parse(_dateController.text);
                   final DateTime startTime = DateTime(
                     selectedDate.year,
                     selectedDate.month,
@@ -225,12 +235,14 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
 
                   if (_selectedPatientId == null) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Please choose a patient')),
+                      const SnackBar(content: Text('Please choose a patient')),
                     );
                     return;
                   }
 
-                  final String meetingLink = JitsiMeetingLinkGenerator.generateMeetingLink(roomPrefix: title);
+                  final String meetingLink =
+                      JitsiMeetingLinkGenerator.generateMeetingLink(
+                          roomPrefix: title);
 
                   final appointmentData = {
                     'eventDate': selectedDate.toIso8601String().split('T')[0],
@@ -240,21 +252,26 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
                     'description': meetingLink, // Save generated meeting link
                     'doctorId': await _appointmentService.getDoctorId(),
                     'patientId': _selectedPatientId,
-                    'color': _selectedColor.value.toRadixString(16), // Save color as hex string
+                    'color': _selectedColor.value
+                        .toRadixString(16), // Save color as hex string
                   };
 
                   await _createAppointment(appointmentData);
                 },
-                child: Text(
-                  'Add Appointment',
-                  style: TextStyle(color: Colors.white, fontSize: 18), // Aumenta el tamaño del texto
-                ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFF40535B), // Color de fondo
-                  padding: EdgeInsets.symmetric(horizontal: 32, vertical: 16), // Aumenta el padding
+                  backgroundColor: const Color(0xFF40535B), // Color de fondo
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 32, vertical: 16), // Aumenta el padding
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8.0), // Bordes redondeados
+                    borderRadius:
+                        BorderRadius.circular(8.0), // Bordes redondeados
                   ),
+                ),
+                child: const Text(
+                  'Add Appointment',
+                  style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18), // Aumenta el tamaño del texto
                 ),
               ),
             ],
@@ -276,11 +293,11 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey),
       ),
-      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: Row(
         children: [
           Icon(icon, color: Colors.grey),
-          SizedBox(width: 10),
+          const SizedBox(width: 10),
           Expanded(
             child: TextField(
               controller: controller,
@@ -308,11 +325,11 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey),
       ),
-      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: Row(
         children: [
           Icon(icon, color: Colors.grey),
-          SizedBox(width: 10),
+          const SizedBox(width: 10),
           Expanded(
             child: TextField(
               controller: controller,
@@ -341,11 +358,11 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Colors.grey),
       ),
-      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       child: Row(
         children: [
           Icon(icon, color: Colors.grey),
-          SizedBox(width: 10),
+          const SizedBox(width: 10),
           Expanded(
             child: DropdownButtonFormField<T>(
               value: value,
@@ -365,7 +382,8 @@ class _AddAppointmentScreenState extends State<AddAppointmentScreen> {
 
 class TimeTextInputFormatter extends TextInputFormatter {
   @override
-  TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
+  TextEditingValue formatEditUpdate(
+      TextEditingValue oldValue, TextEditingValue newValue) {
     final text = newValue.text;
     if (text.length == 4 && !text.contains(':')) {
       final formattedText = '${text.substring(0, 2)}:${text.substring(2)}';
