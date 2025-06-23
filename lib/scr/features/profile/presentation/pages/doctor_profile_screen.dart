@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:mime/mime.dart';
@@ -37,8 +36,10 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
     final profileId = await JwtStorage.getProfileId();
 
     if (profileId != null) {
-      final profileDetails = await _profileService.fetchProfileDetails(profileId);
-      final doctorProfessionalDetails = await _profileService.fetchDoctorProfessionalDetails(profileId);
+      final profileDetails =
+          await _profileService.fetchProfileDetails(profileId);
+      final doctorProfessionalDetails =
+          await _profileService.fetchDoctorProfessionalDetails(profileId);
 
       final combinedDetails = {
         ...profileDetails,
@@ -64,7 +65,7 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
     await _authService.logout();
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (context) => SignIn()),
+      MaterialPageRoute(builder: (context) => const SignIn()),
     );
   }
 
@@ -73,35 +74,42 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Confirm Logout'),
-          content: Text('Are you sure you want to log out?'),
+          title: const Text('Confirm Logout'),
+          content: const Text('Are you sure you want to log out?'),
           actions: <Widget>[
-            TextButton(child: Text('Cancel'), onPressed: () => Navigator.of(context).pop()),
-            TextButton(child: Text('Yes'), onPressed: () {
-              Navigator.of(context).pop();
-              _logout();
-            }),
+            TextButton(
+                child: const Text('Cancel'),
+                onPressed: () => Navigator.of(context).pop()),
+            TextButton(
+                child: const Text('Yes'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  _logout();
+                }),
           ],
         );
       },
     );
   }
 
-  Future<void> _saveDoctorProfileDetails(Map<String, dynamic> updatedDoctorProfile) async {
+  Future<void> _saveDoctorProfileDetails(
+      Map<String, dynamic> updatedDoctorProfile) async {
     if (_doctorId != null) {
       try {
         final profileId = await JwtStorage.getProfileId();
 
         // 1. Verificar si hay una imagen nueva
         if (_selectedImageFile != null) {
-          final uri = Uri.parse('http://10.0.2.2:8080/api/v1/profile/$profileId/image');
+          final uri =
+              Uri.parse('http://10.0.2.2:8080/api/v1/profile/$profileId/image');
 
           final request = http.MultipartRequest('PUT', uri)
             ..headers['Authorization'] = 'Bearer ${await JwtStorage.getToken()}'
             ..files.add(await http.MultipartFile.fromPath(
               'file',
               _selectedImageFile!.path,
-              contentType: MediaType.parse(lookupMimeType(_selectedImageFile!.path) ?? 'image/jpeg')!,
+              contentType: MediaType.parse(
+                  lookupMimeType(_selectedImageFile!.path) ?? 'image/jpeg'),
             ));
 
           final response = await request.send();
@@ -123,7 +131,8 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
         }
 
         // 3. Actualizar el perfil
-        await _profileService.updateDoctorProfile(_doctorId!, updatedDoctorProfile);
+        await _profileService.updateDoctorProfile(
+            _doctorId!, updatedDoctorProfile);
         print('Doctor profile updated successfully');
 
         toggleEditMode();
@@ -144,27 +153,35 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Color(0xFF6A828D),
-        title: Text('Doctor Profile'),
+        backgroundColor: const Color(0xFF6A828D),
+        title: const Text('Doctor Profile'),
         centerTitle: true,
-        titleTextStyle: TextStyle(color: Colors.white, fontSize: 20.0, fontWeight: FontWeight.bold),
+        titleTextStyle: const TextStyle(
+            color: Colors.white, fontSize: 20.0, fontWeight: FontWeight.bold),
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                IconButton(icon: Icon(Icons.edit, color: Colors.black), onPressed: toggleEditMode),
-                SizedBox(width: 8.0),
+                IconButton(
+                    icon: const Icon(Icons.edit, color: Colors.black),
+                    onPressed: toggleEditMode),
+                const SizedBox(width: 8.0),
                 FutureBuilder<Map<String, dynamic>>(
                   future: _doctorProfileDetails,
                   builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) return CircularProgressIndicator();
-                    if (snapshot.hasError) return Icon(Icons.error);
-                    if (!snapshot.hasData || snapshot.data!.isEmpty) return Icon(Icons.person);
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const CircularProgressIndicator();
+                    }
+
+                    if (snapshot.hasError) return const Icon(Icons.error);
+                    if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return const Icon(Icons.person);
+                    }
                     String? rawImage = snapshot.data!['image'] as String?;
                     String? imageUrl;
 
@@ -181,41 +198,64 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
                       isEditing: isEditing,
                       toggleEditMode: toggleEditMode,
                       imageUrl: imageUrl,
-                      onImageSelected: (file) => setState(() => _selectedImageFile = file),
+                      onImageSelected: (file) =>
+                          setState(() => _selectedImageFile = file),
                     );
                   },
                 ),
-                SizedBox(width: 8.0),
-                IconButton(icon: Icon(Icons.logout, color: Colors.black), onPressed: _showLogoutDialog),
+                const SizedBox(width: 8.0),
+                IconButton(
+                    icon: const Icon(Icons.logout, color: Colors.black),
+                    onPressed: _showLogoutDialog),
               ],
             ),
-            SizedBox(height: 20.0),
+            const SizedBox(height: 20.0),
             if (!isEditing)
               FutureBuilder<Map<String, dynamic>>(
                 future: _doctorProfileDetails,
                 builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) return Center(child: CircularProgressIndicator());
-                  if (snapshot.hasError) return Center(child: Text('Error: ${snapshot.error}'));
-                  if (!snapshot.hasData || snapshot.data!.isEmpty) return Center(child: Text('No data found'));
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  }
+                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return const Center(child: Text('No data found'));
+                  }
                   final doctorProfile = snapshot.data!;
                   final fullName = doctorProfile['fullName'] ?? '';
                   final nameParts = fullName.split(' ');
                   final firstName = nameParts.isNotEmpty ? nameParts[0] : '';
-                  final lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
+                  final lastName = nameParts.length > 1
+                      ? nameParts.sublist(1).join(' ')
+                      : '';
                   return Column(
                     children: [
                       ProfileFieldWidget(label: "First Name", value: firstName),
                       ProfileFieldWidget(label: "Last Name", value: lastName),
-                      ProfileFieldWidget(label: "Gender", value: doctorProfile['gender'] ?? ''),
-                      ProfileFieldWidget(label: "Phone Number", value: doctorProfile['phoneNumber'] ?? ''),
+                      ProfileFieldWidget(
+                          label: "Gender",
+                          value: doctorProfile['gender'] ?? ''),
+                      ProfileFieldWidget(
+                          label: "Phone Number",
+                          value: doctorProfile['phoneNumber'] ?? ''),
                       ProfileFieldWidget(
                         label: "Birthday",
                         value: doctorProfile['birthday'] != null
-                            ? DateFormat('yyyy-MM-dd').format(DateTime.parse(doctorProfile['birthday']))
+                            ? DateFormat('yyyy-MM-dd').format(
+                                DateTime.parse(doctorProfile['birthday']))
                             : '',
                       ),
-                      ProfileFieldWidget(label: "Professional ID Number", value: doctorProfile['professionalIdentificationNumber']?.toString() ?? ''),
-                      ProfileFieldWidget(label: "SubSpecialty", value: doctorProfile['subSpecialty'] ?? ''),
+                      ProfileFieldWidget(
+                          label: "Professional ID Number",
+                          value:
+                              doctorProfile['professionalIdentificationNumber']
+                                      ?.toString() ??
+                                  ''),
+                      ProfileFieldWidget(
+                          label: "SubSpecialty",
+                          value: doctorProfile['subSpecialty'] ?? ''),
                     ],
                   );
                 },
@@ -224,9 +264,15 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
               FutureBuilder<Map<String, dynamic>>(
                 future: _doctorProfileDetails,
                 builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) return Center(child: CircularProgressIndicator());
-                  if (snapshot.hasError) return Center(child: Text('Error: ${snapshot.error}'));
-                  if (!snapshot.hasData || snapshot.data!.isEmpty) return Center(child: Text('No data found'));
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  }
+                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return const Center(child: Text('No data found'));
+                  }
                   return EditModeDoctorWidget(
                     doctorProfile: snapshot.data!,
                     onCancel: toggleEditMode,
