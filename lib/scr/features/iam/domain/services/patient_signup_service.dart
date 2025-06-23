@@ -43,8 +43,8 @@ class PatientSignUpService {
       throw Exception('Error creating profile');
     }
 
-    final profileData = json.decode(profileResponse.body);
-    final profileId = profileData['id'];
+    // final profileData = json.decode(profileResponse.body);
+    // final profileId = profileData['id'];
 
     // Create patient profile
     final patientResponse = await http.post(
