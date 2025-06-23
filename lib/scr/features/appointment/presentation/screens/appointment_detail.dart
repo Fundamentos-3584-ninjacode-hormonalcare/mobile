@@ -3,13 +3,13 @@ import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:trabajo_moviles_ninjacode/scr/features/appointment/data/data_sources/remote/medical_appointment_api.dart';
 import 'package:trabajo_moviles_ninjacode/scr/features/appointment/presentation/screens/edit_appointment.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:trabajo_moviles_ninjacode/scr/features/appointment/presentation/pages/video_call_page.dart';
 
 class AppointmentDetail extends StatefulWidget {
   final int appointmentId;
 
-  const AppointmentDetail({Key? key, required this.appointmentId}) : super(key: key);
+  const AppointmentDetail({Key? key, required this.appointmentId})
+      : super(key: key);
 
   @override
   _AppointmentDetailState createState() => _AppointmentDetailState();
@@ -28,8 +28,10 @@ class _AppointmentDetailState extends State<AppointmentDetail> {
 
   Future<void> _loadAppointmentDetails() async {
     try {
-      final appointmentDetails = await _appointmentService.fetchAppointmentDetails(widget.appointmentId);
-      final patientDetails = await _appointmentService.fetchPatientDetails(appointmentDetails['patientId']);
+      final appointmentDetails = await _appointmentService
+          .fetchAppointmentDetails(widget.appointmentId);
+      final patientDetails = await _appointmentService
+          .fetchPatientDetails(appointmentDetails['patientId']);
       setState(() {
         _appointmentDetails = appointmentDetails;
         _patientDetails = patientDetails;
@@ -43,15 +45,16 @@ class _AppointmentDetailState extends State<AppointmentDetail> {
 
   Future<void> _deleteAppointment() async {
     try {
-      final success = await _appointmentService.deleteMedicalAppointment((widget.appointmentId).toString());
+      final success = await _appointmentService
+          .deleteMedicalAppointment((widget.appointmentId).toString());
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Appointment deleted successfully!')),
+          const SnackBar(content: Text('Appointment deleted successfully!')),
         );
         Navigator.of(context).pop(true); // Return true to indicate success
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to delete appointment')),
+          const SnackBar(content: Text('Failed to delete appointment')),
         );
       }
     } catch (e) {
@@ -75,14 +78,14 @@ class _AppointmentDetailState extends State<AppointmentDetail> {
     if (_appointmentDetails == null || _patientDetails == null) {
       return Scaffold(
         appBar: AppBar(
-          backgroundColor: Color(0xFF6A828D),
+          backgroundColor: const Color(0xFF6A828D),
           leading: IconButton(
-            icon: Icon(Icons.arrow_back, color: Colors.white),
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
             onPressed: () {
               Navigator.of(context).pop();
             },
           ),
-          title: Text(
+          title: const Text(
             'Appointment Detail',
             style: TextStyle(
               color: Colors.white,
@@ -91,7 +94,7 @@ class _AppointmentDetailState extends State<AppointmentDetail> {
           ),
           centerTitle: true,
         ),
-        body: Center(
+        body: const Center(
           child: CircularProgressIndicator(),
         ),
       );
@@ -101,12 +104,12 @@ class _AppointmentDetailState extends State<AppointmentDetail> {
       appBar: AppBar(
         backgroundColor: Color(0xFF6A828D),
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
             Navigator.of(context).pop();
           },
         ),
-        title: Text(
+        title: const Text(
           'Appointment Detail',
           style: TextStyle(
             color: Colors.white,
@@ -122,12 +125,13 @@ class _AppointmentDetailState extends State<AppointmentDetail> {
           children: [
             Center(
               child: Container(
-                padding: EdgeInsets.all(8.0),
+                padding: const EdgeInsets.all(8.0),
                 decoration: BoxDecoration(
-                  color: Color(0xFF40535B),
+                  color: const Color(0xFF40535B),
                   borderRadius: BorderRadius.circular(8.0),
                 ),
-                width: MediaQuery.of(context).size.width * 0.8, // Adjust width to be 80% of screen width
+                width: MediaQuery.of(context).size.width *
+                    0.8, // Adjust width to be 80% of screen width
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -138,10 +142,10 @@ class _AppointmentDetailState extends State<AppointmentDetail> {
                       radius: 20,
                       backgroundColor: Colors.white,
                     ),
-                    SizedBox(width: 8),
+                    const SizedBox(width: 8),
                     Text(
                       _patientDetails!['fullName'],
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                       ),
@@ -150,8 +154,8 @@ class _AppointmentDetailState extends State<AppointmentDetail> {
                 ),
               ),
             ),
-            SizedBox(height: 16),
-            Container(
+            const SizedBox(height: 16),
+            SizedBox(
               width: MediaQuery.of(context).size.width * 0.8,
               child: Row(
                 children: [
@@ -160,10 +164,13 @@ class _AppointmentDetailState extends State<AppointmentDetail> {
                     height: 24,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Color(int.parse(_appointmentDetails!['color'].startsWith('0x') ? _appointmentDetails!['color'] : '0x${_appointmentDetails!['color']}')),
+                      color: Color(int.parse(
+                          _appointmentDetails!['color'].startsWith('0x')
+                              ? _appointmentDetails!['color']
+                              : '0x${_appointmentDetails!['color']}')),
                     ),
                   ),
-                  SizedBox(width: 8),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       _appointmentDetails!['title'],
@@ -173,16 +180,19 @@ class _AppointmentDetailState extends State<AppointmentDetail> {
                 ],
               ),
             ),
-            SizedBox(height: 8),
-            Container(
+            const SizedBox(height: 8),
+            SizedBox(
               width: MediaQuery.of(context).size.width * 0.8,
               child: Text(
-                _formatDate(_appointmentDetails!['eventDate'], _appointmentDetails!['startTime'], _appointmentDetails!['endTime']),
-                style: TextStyle(fontSize: 18),
+                _formatDate(
+                    _appointmentDetails!['eventDate'],
+                    _appointmentDetails!['startTime'],
+                    _appointmentDetails!['endTime']),
+                style: const TextStyle(fontSize: 18),
               ),
             ),
-            SizedBox(height: 8),
-            Container(
+            const SizedBox(height: 8),
+            SizedBox(
               width: MediaQuery.of(context).size.width * 0.8,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -190,13 +200,16 @@ class _AppointmentDetailState extends State<AppointmentDetail> {
                   Expanded(
                     child: ElevatedButton.icon(
                       onPressed: () {
-                        Clipboard.setData(ClipboardData(text: _appointmentDetails!['description']));
+                        Clipboard.setData(ClipboardData(
+                            text: _appointmentDetails!['description']));
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Meeting link copied to clipboard')),
+                          const SnackBar(
+                              content:
+                                  Text('Meeting link copied to clipboard')),
                         );
                       },
-                      icon: Icon(Icons.copy, color: Colors.blue),
-                      label: Text(
+                      icon: const Icon(Icons.copy, color: Colors.blue),
+                      label: const Text(
                         'Copy Link',
                         style: TextStyle(color: Colors.blue),
                       ),
@@ -206,11 +219,12 @@ class _AppointmentDetailState extends State<AppointmentDetail> {
                       ),
                     ),
                   ),
-                  SizedBox(width: 16),
+                  const SizedBox(width: 16),
                   Expanded(
                     child: ElevatedButton.icon(
                       onPressed: () {
-                        final roomId = "cita_${_appointmentDetails!['id']}"; // o cualquier ID único
+                        final roomId =
+                            "cita_${_appointmentDetails!['id']}"; // o cualquier ID único
                         final displayName = _patientDetails!['fullName'];
 
                         Navigator.push(
@@ -223,8 +237,8 @@ class _AppointmentDetailState extends State<AppointmentDetail> {
                           ),
                         );
                       },
-                      icon: Icon(Icons.video_call, color: Colors.blue),
-                      label: Text(
+                      icon: const Icon(Icons.video_call, color: Colors.blue),
+                      label: const Text(
                         'Iniciar Videollamada',
                         style: TextStyle(color: Colors.blue),
                       ),
@@ -237,8 +251,8 @@ class _AppointmentDetailState extends State<AppointmentDetail> {
                 ],
               ),
             ),
-            Spacer(), // Pushes the buttons to the bottom
-                        Container(
+            const Spacer(), // Pushes the buttons to the bottom
+            SizedBox(
               width: MediaQuery.of(context).size.width * 0.8,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -246,18 +260,22 @@ class _AppointmentDetailState extends State<AppointmentDetail> {
                   Expanded(
                     child: ElevatedButton.icon(
                       onPressed: _deleteAppointment,
-                      icon: Icon(Icons.delete, color: Colors.white),
-                      label: Text('Delete', style: TextStyle(color: Colors.white, fontSize: 18)), // Aumenta el tamaño del texto
+                      icon: const Icon(Icons.delete, color: Colors.white),
+                      label: const Text('Delete',
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18)), // Aumenta el tamaño del texto
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.red,
-                        padding: EdgeInsets.symmetric(vertical: 16), // Aumenta el padding vertical
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 16), // Aumenta el padding vertical
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8.0),
                         ),
                       ),
                     ),
                   ),
-                  SizedBox(width: 16), // Espacio entre los botones
+                  const SizedBox(width: 16), // Espacio entre los botones
                   Expanded(
                     child: ElevatedButton.icon(
                       onPressed: () async {
@@ -270,16 +288,21 @@ class _AppointmentDetailState extends State<AppointmentDetail> {
                             ),
                           ),
                         );
-            
+
                         if (result == true) {
-                          Navigator.of(context).pop(true); // Return true to indicate success
+                          Navigator.of(context)
+                              .pop(true); // Return true to indicate success
                         }
                       },
-                      icon: Icon(Icons.edit, color: Colors.white),
-                      label: Text('Edit', style: TextStyle(color: Colors.white, fontSize: 18)), // Aumenta el tamaño del texto
+                      icon: const Icon(Icons.edit, color: Colors.white),
+                      label: const Text('Edit',
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 18)), // Aumenta el tamaño del texto
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF40535B),
-                        padding: EdgeInsets.symmetric(vertical: 16), // Aumenta el padding vertical
+                        backgroundColor: const Color(0xFF40535B),
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 16), // Aumenta el padding vertical
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8.0),
                         ),
