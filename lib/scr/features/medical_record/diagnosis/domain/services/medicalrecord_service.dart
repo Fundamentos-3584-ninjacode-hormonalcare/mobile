@@ -12,7 +12,7 @@ import '../../domain/models/medicaltype_model.dart';
 
 class MedicalRecordService {
   final String baseUrl =
-      'http://10.0.2.2:8080/api/v1/medical-record/patient/record';
+      'http://10.0.2.2:8080/api/v1/medical-record/patient';
   final String profileBaseUrl = 'http://10.0.2.2:8080/api/v1/profile';
   final String medicationsUrl =
       'http://10.0.2.2:8080/api/v1/medical-record/medications';

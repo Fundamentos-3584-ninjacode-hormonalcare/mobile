@@ -8,7 +8,7 @@ class ProfileService {
   Future<Map<String, dynamic>> fetchProfileDetails(int userId) async {
     final token = await JwtStorage.getToken();
     final response = await http.get(
-      Uri.parse('$baseUrl/profile/$userId'),
+      Uri.parse('$baseUrl/patient/by-user/$userId'),
       headers: {'Authorization': 'Bearer $token'},
     );
 
@@ -23,7 +23,7 @@ class ProfileService {
       int profileId, Map<String, dynamic> updatedProfile) async {
     final token = await JwtStorage.getToken();
     final response = await http.put(
-      Uri.parse('$baseUrl/profile/$profileId/full-update'),
+      Uri.parse('$baseUrl/patient/$profileId'),
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
@@ -40,7 +40,7 @@ class ProfileService {
       int profileId) async {
     final token = await JwtStorage.getToken();
     final response = await http.get(
-      Uri.parse('$baseUrl/doctor/doctor/profile/$profileId'),
+      Uri.parse('$baseUrl/doctor/profile/$profileId'),
       headers: {'Authorization': 'Bearer $token'},
     );
 
@@ -55,7 +55,7 @@ class ProfileService {
       int doctorId, Map<String, dynamic> updatedDoctorProfile) async {
     final token = await JwtStorage.getToken();
     final response = await http.put(
-      Uri.parse('$baseUrl/doctor/doctor/$doctorId'),
+      Uri.parse('$baseUrl/doctor/$doctorId'),
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',

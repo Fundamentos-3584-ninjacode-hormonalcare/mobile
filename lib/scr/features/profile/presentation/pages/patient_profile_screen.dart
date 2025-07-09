@@ -86,7 +86,7 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
     final profileId = await JwtStorage.getProfileId();
     if (profileId != null) {
       final response = await http.put(
-        Uri.parse('http://10.0.2.2:8080/api/v1/profile/$profileId/full-update'),
+        Uri.parse('http://10.0.2.2:8080/api/v1/patient/$profileId'),
         headers: {
           'Authorization': 'Bearer your_token',
           'Content-Type': 'application/json'

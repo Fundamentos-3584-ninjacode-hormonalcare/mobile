@@ -26,7 +26,7 @@ class PatientSignUpService {
 
     // Create profile
     final profileResponse = await http.post(
-      Uri.parse('$baseUrl/profile'),
+      Uri.parse('$baseUrl/patient'),
       headers: {'Content-Type': 'application/json'},
       body: json.encode({
         'firstName': firstName,
@@ -43,12 +43,12 @@ class PatientSignUpService {
       throw Exception('Error creating profile');
     }
 
-    // final profileData = json.decode(profileResponse.body);
-    // final profileId = profileData['id'];
+    final patientData = json.decode(profileResponse.body);
+    final patientId = profileData['id'];
 
     // Create patient profile
-    final patientResponse = await http.post(
-      Uri.parse('$baseUrl/medical-record/patient'),
+    final patientResponse = await http.put(
+      Uri.parse('$baseUrl/patient/$patientId'),
       headers: {'Content-Type': 'application/json'},
       body: json.encode({
         'firstName': firstName,

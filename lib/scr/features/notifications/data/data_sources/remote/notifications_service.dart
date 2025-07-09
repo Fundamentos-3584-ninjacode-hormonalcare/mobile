@@ -25,24 +25,12 @@ class NotificationService {
   Future<Map<String, dynamic>> fetchPatientProfile(int patientId) async {
     final token = await JwtStorage.getToken();
     final patientResponse = await http.get(
-      Uri.parse('$baseUrl/medical-record/patient/$patientId'),
+      Uri.parse('$baseUrl/patient/$patientId'),
       headers: {'Authorization': 'Bearer $token'},
     );
 
     if (patientResponse.statusCode == 200) {
-      final patientData = json.decode(patientResponse.body);
-      final profileId = patientData['profileId'];
-
-      final profileResponse = await http.get(
-        Uri.parse('$baseUrl/profile/$profileId'),
-        headers: {'Authorization': 'Bearer $token'},
-      );
-
-      if (profileResponse.statusCode == 200) {
-        return json.decode(profileResponse.body);
-      } else {
-        throw Exception('Failed to load patient profile');
-      }
+      return json.decode(patientResponse.body);
     } else {
       throw Exception('Failed to load patient data');
     }
