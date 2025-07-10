@@ -33,25 +33,48 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
   }
 
   Future<void> _loadDoctorProfileDetails() async {
-    final profileId = await JwtStorage.getProfileId();
+    try {
+      print("Loading doctor profile details...");
 
-    if (profileId != null) {
-      final profileDetails =
-          await _profileService.fetchProfileDetails(profileId);
-      final doctorProfessionalDetails =
-          await _profileService.fetchDoctorProfessionalDetails(profileId);
+      // First try to get doctor ID from storage
+      int? doctorId = await JwtStorage.getDoctorId();
+      print("Doctor ID retrieved: $doctorId");
 
-      final combinedDetails = {
-        ...profileDetails,
-        ...doctorProfessionalDetails,
-      };
+      if (doctorId != null) {
+        // If we have doctor ID, use it directly to get doctor profile
+        print("Using doctor ID to fetch profile: $doctorId");
+        final doctorData =
+            await _profileService.fetchDoctorProfileDetails(doctorId);
+        print("Doctor profile data received: $doctorData");
 
+        setState(() {
+          _doctorProfileDetails = Future.value(doctorData);
+          _doctorId = doctorData['id'];
+        });
+      } else {
+        // If no doctor ID, get userId and fetch doctor by userId
+        print('Doctor ID not found in storage, using userId instead');
+        final userId = await JwtStorage.getUserId();
+        print("User ID retrieved: $userId");
+
+        if (userId != null) {
+          // Use fetchProfileDetails which calls /api/v1/doctor/by-user/{userId}
+          final doctorData = await _profileService.fetchProfileDetails(userId);
+          print("Doctor profile data received: $doctorData");
+
+          setState(() {
+            _doctorProfileDetails = Future.value(doctorData);
+            _doctorId = doctorData['id'];
+          });
+        } else {
+          throw Exception('No user ID found');
+        }
+      }
+    } catch (e) {
+      print('Error loading doctor profile details: $e');
       setState(() {
-        _doctorProfileDetails = Future.value(combinedDetails);
-        _doctorId = doctorProfessionalDetails['id'];
+        _doctorProfileDetails = Future.error(e);
       });
-    } else {
-      print('Profile ID not found');
     }
   }
 
@@ -96,12 +119,10 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
       Map<String, dynamic> updatedDoctorProfile) async {
     if (_doctorId != null) {
       try {
-        final profileId = await JwtStorage.getProfileId();
-
         // 1. Verificar si hay una imagen nueva
         if (_selectedImageFile != null) {
           final uri =
-              Uri.parse('http://10.0.2.2:8080/api/v1/profile/$profileId/image');
+              Uri.parse('http://10.0.2.2:8080/api/v1/profile/$_doctorId/image');
 
           final request = http.MultipartRequest('PUT', uri)
             ..headers['Authorization'] = 'Bearer ${await JwtStorage.getToken()}'

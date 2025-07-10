@@ -28,11 +28,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _loadProfileData() async {
     try {
-      int? userId = await JwtStorage.getUserId();
-      final data = await ProfileService().fetchProfileDetails(userId!);
-      setState(() {
-        profileData = data;
-      });
+      print("Loading doctor profile data...");
+
+      // First try to get doctor ID from storage
+      int? doctorId = await JwtStorage.getDoctorId();
+      print("Doctor ID retrieved: $doctorId");
+
+      if (doctorId != null) {
+        // If we have doctor ID, use it directly to get doctor profile
+        print("Using doctor ID to fetch profile: $doctorId");
+        final data = await ProfileService().fetchDoctorProfileDetails(doctorId);
+        print("Doctor profile data received: $data");
+
+        setState(() {
+          profileData = data;
+        });
+      } else {
+        // If no doctor ID, get userId and fetch doctor by userId
+        print('Doctor ID not found in storage, using userId instead');
+        final userId = await JwtStorage.getUserId();
+        print("User ID retrieved: $userId");
+
+        if (userId != null) {
+          // Use fetchProfileDetails which now calls /api/v1/doctor/by-user/{userId}
+          final data = await ProfileService().fetchProfileDetails(userId);
+          print("Doctor profile data received: $data");
+
+          setState(() {
+            profileData = data;
+          });
+        } else {
+          throw Exception('No user ID found');
+        }
+      }
     } catch (e) {
       print('Error loading profile: $e');
     }
@@ -42,7 +70,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (profileData == null) return;
 
     final profileId = profileData!['id'];
-    final uri = Uri.parse('http://10.0.2.2/api/v1/profile/$profileId/image');
+    final uri =
+        Uri.parse('http://10.0.2.2:8080/api/v1/profile/$profileId/image');
 
     final request = http.MultipartRequest('PUT', uri)
       ..headers['Authorization'] = 'Bearer ${await JwtStorage.getToken()}'
@@ -149,9 +178,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
             if (!isEditing) ...[
               ProfileFieldWidget(
-                  label: "First name", value: profileData!['firstName'] ?? ''),
-              ProfileFieldWidget(
-                  label: "Last name", value: profileData!['lastName'] ?? ''),
+                  label: "Full name", value: profileData!['fullName'] ?? ''),
               ProfileFieldWidget(
                   label: "Gender", value: profileData!['gender'] ?? ''),
               ProfileFieldWidget(
@@ -160,13 +187,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   label: "Phone number",
                   value: profileData!['phoneNumber'] ?? ''),
               ProfileFieldWidget(
-                  label: "Email", value: profileData!['user']?['email'] ?? ''),
-              ProfileFieldWidget(
-                  label: "Medical license number",
-                  value: profileData!['licenseNumber'] ?? '---'),
+                  label: "Professional ID number",
+                  value: profileData!['professionalIdentificationNumber']
+                          ?.toString() ??
+                      '---'),
               ProfileFieldWidget(
                   label: "Subspecialty",
-                  value: profileData!['subspecialty'] ?? '---'),
+                  value: profileData!['subSpecialty'] ?? '---'),
+              ProfileFieldWidget(
+                  label: "Doctor Record ID",
+                  value: profileData!['doctorRecordId'] ?? '---'),
             ] else ...[
               EditModeWidget(
                 profile: profileData!,

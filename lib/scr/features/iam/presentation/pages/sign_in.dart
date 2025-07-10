@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:trabajo_moviles_ninjacode/scr/core/utils/usecases/jwt_storage.dart';
 import 'package:trabajo_moviles_ninjacode/scr/features/iam/domain/services/auth_service.dart';
 import 'package:trabajo_moviles_ninjacode/scr/features/iam/presentation/pages/sign_up_doctor.dart';
+import 'package:trabajo_moviles_ninjacode/scr/features/profile/data/data_sources/remote/profile_service.dart';
 import 'package:trabajo_moviles_ninjacode/scr/shared/presentation/pages/home_screen.dart';
 
 class SignIn extends StatefulWidget {
@@ -40,18 +41,18 @@ class _SignInState extends State<SignIn> {
 
           print("User ID retrieved: $userId, Role: $role");
 
-          if (userId != null) {
-            // Fetch and save the profile ID
-            print("Fetching profile ID for userId: $userId");
-            final profileId =
-                await _authService.fetchAndSaveProfileId(userId, token);
-            print("Profile ID retrieved and saved: $profileId");
-
-            // If the user is a doctor, also fetch and save the doctor ID
-            if (role == 'ROLE_DOCTOR' && profileId != null) {
-              print("User is a doctor, fetching doctor details");
-              await _authService.fetchAndSaveDoctorId(profileId, token);
-              print("Doctor ID fetched and saved");
+          if (userId != null && role == 'ROLE_DOCTOR') {
+            // For doctors, fetch doctor data by userId to get and save doctor ID
+            print(
+                "User is a doctor, fetching doctor profile by userId: $userId");
+            try {
+              final profileService = ProfileService();
+              final doctorData =
+                  await profileService.fetchProfileDetails(userId);
+              print(
+                  "Doctor data retrieved and doctor ID saved: ${doctorData['id']}");
+            } catch (e) {
+              print("Error fetching doctor data: $e");
             }
           }
 

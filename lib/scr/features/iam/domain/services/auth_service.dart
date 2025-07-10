@@ -74,7 +74,7 @@ class AuthService {
 
   Future<void> fetchAndSaveDoctorId(int profileId, String token) async {
     final doctorResponse = await http.get(
-      Uri.parse('$baseUrl/doctor/doctor/profile/$profileId'),
+      Uri.parse('$baseUrl/doctor/profile/$profileId'),
       headers: {'Authorization': 'Bearer $token'},
     );
 

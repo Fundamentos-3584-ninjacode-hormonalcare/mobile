@@ -187,8 +187,8 @@ class _PatientProfileScreenState extends State<PatientProfileScreen> {
                         ProfileFieldWidget(
                             label: "Birthday",
                             value: profile['birthday'] != null
-                                ? DateFormat('yyyy-MM-dd').format(
-                                DateTime.parse(profile['birthday']))
+                                ? DateFormat('yyyy-MM-dd')
+                                    .format(DateTime.parse(profile['birthday']))
                                 : ''),
                         // Add more fields as needed
                       ],

@@ -43,30 +43,30 @@ class PatientSignUpService {
       throw Exception('Error creating profile');
     }
 
-    final patientData = json.decode(profileResponse.body);
-    final patientId = profileData['id'];
+    // final patientData = json.decode(profileResponse.body);
+    // final patientId = profileData['id'];
 
     // Create patient profile
-    final patientResponse = await http.put(
-      Uri.parse('$baseUrl/patient/$patientId'),
-      headers: {'Content-Type': 'application/json'},
-      body: json.encode({
-        'firstName': firstName,
-        'lastName': lastName,
-        'gender': gender,
-        'phoneNumber': phoneNumber,
-        'image': image,
-        'birthday': birthday,
-        'userId': userId,
-        'typeOfBlood': typeOfBlood,
-        'personalHistory': '',
-        'familyHistory': '',
-        'doctorId': int.parse(doctorId),
-      }),
-    );
+    // final patientResponse = await http.put(
+    //   Uri.parse('$baseUrl/patient/$patientId'),
+    //   headers: {'Content-Type': 'application/json'},
+    //   body: json.encode({
+    //     'firstName': firstName,
+    //     'lastName': lastName,
+    //     'gender': gender,
+    //     'phoneNumber': phoneNumber,
+    //     'image': image,
+    //     'birthday': birthday,
+    //     'userId': userId,
+    //     'typeOfBlood': typeOfBlood,
+    //     'personalHistory': '',
+    //     'familyHistory': '',
+    //     'doctorId': int.parse(doctorId),
+    //   }),
+    // );
 
-    if (patientResponse.statusCode != 201) {
-      throw Exception('Error creating patient profile');
-    }
+    // if (patientResponse.statusCode != 201) {
+    //   throw Exception('Error creating patient profile');
+    // }
   }
 }

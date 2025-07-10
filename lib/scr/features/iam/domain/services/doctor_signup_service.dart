@@ -41,8 +41,8 @@ class DoctorSignUpService {
     print("Request URL params: $queryParams");
 
     // Create URI with query parameters
-    final uri = Uri.parse('$baseUrl/doctor')
-        .replace(queryParameters: queryParams);
+    final uri =
+        Uri.parse('$baseUrl/doctor').replace(queryParameters: queryParams);
 
     print("Full request URL: $uri");
 

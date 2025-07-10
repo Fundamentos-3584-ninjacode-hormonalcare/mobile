@@ -53,7 +53,7 @@ class _HomePatientsScreenState extends State<HomePatientsScreen> {
         final patientDetails =
             await _patientService.fetchPatientDetails(appointment['patientId']);
         final profileDetails = await _profileService
-            .fetchProfileDetails(patientDetails['profileId']);
+            .fetchPatientProfileDetails(patientDetails['profileId']);
         fetchedPatients.add({
           'name': profileDetails['fullName'] ?? 'No name',
           'time': appointment['startTime'] ?? 'No start time',

@@ -60,20 +60,39 @@ class MedicalAppointmentApi {
   }
 
   Future<int> _getDoctorId() async {
-    final token = await _getToken();
-    final profileId = await JwtStorage.getProfileId();
-    if (profileId == null) {
-      throw Exception('Profile ID not found');
+    // First try to get doctor ID directly from storage
+    final doctorId = await JwtStorage.getDoctorId();
+    if (doctorId != null) {
+      print("Doctor ID retrieved from storage: $doctorId");
+      return doctorId;
     }
 
+    // If not available, get userId and fetch doctor profile
+    final userId = await JwtStorage.getUserId();
+    if (userId == null) {
+      throw Exception('User ID not found');
+    }
+
+    final token = await _getToken();
+    if (token == null) {
+      throw Exception('Token not found');
+    }
+
+    print("Fetching doctor profile by userId: $userId");
     final response = await http.get(
-      Uri.parse('$_baseUrl/doctor/profile/$profileId'),
+      Uri.parse('$_baseUrl/doctor/by-user/$userId'),
       headers: {'Authorization': 'Bearer $token'},
     );
 
     if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      return data['id'];
+      final doctorData = json.decode(response.body);
+      final doctorIdFromApi = doctorData['id'];
+
+      // Save doctor ID for future use
+      await JwtStorage.saveDoctorId(doctorIdFromApi);
+      print("Doctor ID saved: $doctorIdFromApi");
+
+      return doctorIdFromApi;
     } else {
       throw Exception('Failed to load doctor ID');
     }

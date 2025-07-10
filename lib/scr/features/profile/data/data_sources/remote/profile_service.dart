@@ -7,15 +7,35 @@ class ProfileService {
 
   Future<Map<String, dynamic>> fetchProfileDetails(int userId) async {
     final token = await JwtStorage.getToken();
+    if (token == null) {
+      throw Exception('No authentication token found');
+    }
+
+    print(
+        "Fetching doctor profile by userId with token: ${token.substring(0, 10)}...");
+    print("Request URL: $baseUrl/doctor/by-user/$userId");
+
     final response = await http.get(
-      Uri.parse('$baseUrl/patient/by-user/$userId'),
+      Uri.parse('$baseUrl/doctor/by-user/$userId'),
       headers: {'Authorization': 'Bearer $token'},
     );
 
+    print("Response status code: ${response.statusCode}");
+    print("Response body: ${response.body}");
+
     if (response.statusCode == 200) {
-      return json.decode(response.body);
+      final doctorData = json.decode(response.body);
+
+      // Save doctor ID for future use
+      if (doctorData['id'] != null) {
+        await JwtStorage.saveDoctorId(doctorData['id']);
+        print("Doctor ID saved: ${doctorData['id']}");
+      }
+
+      return doctorData;
     } else {
-      throw Exception('Failed to load profile details');
+      throw Exception(
+          'Failed to load profile details. Status: ${response.statusCode}, Body: ${response.body}');
     }
   }
 
@@ -65,6 +85,58 @@ class ProfileService {
 
     if (response.statusCode != 200) {
       throw Exception('Failed to update doctor profile');
+    }
+  }
+
+  Future<Map<String, dynamic>> fetchDoctorProfileDetails(int doctorId) async {
+    final token = await JwtStorage.getToken();
+    if (token == null) {
+      throw Exception('No authentication token found');
+    }
+
+    print(
+        "Fetching doctor profile details with token: ${token.substring(0, 10)}...");
+    print("Request URL: $baseUrl/doctor/$doctorId");
+
+    final response = await http.get(
+      Uri.parse('$baseUrl/doctor/$doctorId'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    print("Response status code: ${response.statusCode}");
+    print("Response body: ${response.body}");
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception(
+          'Failed to load doctor profile details. Status: ${response.statusCode}, Body: ${response.body}');
+    }
+  }
+
+  Future<Map<String, dynamic>> fetchPatientProfileDetails(int profileId) async {
+    final token = await JwtStorage.getToken();
+    if (token == null) {
+      throw Exception('No authentication token found');
+    }
+
+    print(
+        "Fetching patient profile details with token: ${token.substring(0, 10)}...");
+    print("Request URL: $baseUrl/profile/$profileId");
+
+    final response = await http.get(
+      Uri.parse('$baseUrl/profile/$profileId'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    print("Response status code: ${response.statusCode}");
+    print("Response body: ${response.body}");
+
+    if (response.statusCode == 200) {
+      return json.decode(response.body);
+    } else {
+      throw Exception(
+          'Failed to load patient profile details. Status: ${response.statusCode}, Body: ${response.body}');
     }
   }
 }
