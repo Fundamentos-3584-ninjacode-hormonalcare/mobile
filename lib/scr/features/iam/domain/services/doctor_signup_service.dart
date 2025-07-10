@@ -2,9 +2,9 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:trabajo_moviles_ninjacode/scr/core/utils/usecases/jwt_storage.dart';
+import 'package:trabajo_moviles_ninjacode/scr/core/config/api_config.dart';
 
 class DoctorSignUpService {
-  static final String baseUrl = 'http://10.0.2.2:8080/api/v1';
 
   static Future<Map<String, dynamic>> createDoctorProfile(
     String firstName,
@@ -42,7 +42,7 @@ class DoctorSignUpService {
 
     // Create URI with query parameters
     final uri =
-        Uri.parse('$baseUrl/doctor').replace(queryParameters: queryParams);
+        Uri.parse('${ApiConfig.doctor}').replace(queryParameters: queryParams);
 
     print("Full request URL: $uri");
 

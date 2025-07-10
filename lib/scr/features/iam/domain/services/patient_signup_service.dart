@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:trabajo_moviles_ninjacode/scr/features/iam/domain/services/auth_service.dart';
+import 'package:trabajo_moviles_ninjacode/scr/core/config/api_config.dart';
 
 class PatientSignUpService {
-  static final String baseUrl = 'http://10.0.2.2:8080/api/v1';
 
   static Future<void> signUpPatient(
     String username,
@@ -26,7 +26,7 @@ class PatientSignUpService {
 
     // Create profile
     final profileResponse = await http.post(
-      Uri.parse('$baseUrl/patient'),
+      Uri.parse('${ApiConfig.patient}'),
       headers: {'Content-Type': 'application/json'},
       body: json.encode({
         'firstName': firstName,

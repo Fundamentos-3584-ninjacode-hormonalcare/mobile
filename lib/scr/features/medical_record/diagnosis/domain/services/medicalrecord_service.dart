@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:trabajo_moviles_ninjacode/scr/core/utils/usecases/jwt_storage.dart';
+import 'package:trabajo_moviles_ninjacode/scr/core/config/api_config.dart';
 import '../../../medical_prescription/domain/models/patient_model.dart';
 import '../../../medical_prescription/domain/models/profile_model.dart';
 import '../../domain/models/medication_model.dart';
@@ -11,18 +12,6 @@ import '../../domain/models/prescriptionpost_model.dart';
 import '../../domain/models/medicaltype_model.dart';
 
 class MedicalRecordService {
-  final String baseUrl = 'http://10.0.2.2:8080/api/v1/medical-record/patient';
-  final String profileBaseUrl = 'http://10.0.2.2:8080/api/v1/profile';
-  final String medicationsUrl =
-      'http://10.0.2.2:8080/api/v1/medical-record/medications';
-  final String prescriptionsUrl =
-      'http://10.0.2.2:8080/api/v1/medical-record/medications/prescriptions';
-  final String treatmentsUrl =
-      'http://10.0.2.2:8080/api/v1/medical-record/treatments/medicalRecordId'; // URL base para tratamientos
-  final String treatmentspostUrl =
-      'http://10.0.2.2:8080/api/v1/medical-record/treatments'; // URL base para tratamientos
-  final String medicaltypesUrl =
-      'http://10.0.2.2:8080/api/v1/medical-record/medications/medicationTypes';
 
   Future<Patient> getPatientById(String patientId) async {
     final token = await JwtStorage.getToken();
@@ -32,13 +21,13 @@ class MedicalRecordService {
     };
 
     final response =
-        await http.get(Uri.parse('$baseUrl/$patientId'), headers: headers);
+        await http.get(Uri.parse('${ApiConfig.medicalRecordPatient}/$patientId'), headers: headers);
     if (response.statusCode == 200) {
       final patientData = json.decode(response.body);
       final profileId = patientData['profileId'];
 
       final profileResponse = await http
-          .get(Uri.parse('$profileBaseUrl/$profileId'), headers: headers);
+          .get(Uri.parse('${ApiConfig.profile}/$profileId'), headers: headers);
       if (profileResponse.statusCode == 200) {
         final profileData = json.decode(profileResponse.body);
         final patient = Patient.fromJson(patientData);
@@ -61,7 +50,7 @@ class MedicalRecordService {
     };
 
     final response =
-        await http.get(Uri.parse(medicationsUrl), headers: headers);
+        await http.get(Uri.parse(ApiConfig.medicalRecordMedications), headers: headers);
     if (response.statusCode == 200) {
       final List<dynamic> medicationsJson = json.decode(response.body);
       return medicationsJson
@@ -83,7 +72,7 @@ class MedicalRecordService {
     };
 
     final response =
-        await http.get(Uri.parse(prescriptionsUrl), headers: headers);
+        await http.get(Uri.parse(ApiConfig.medicalRecordPrescriptions), headers: headers);
     if (response.statusCode == 200) {
       final List<dynamic> prescriptionsJson = json.decode(response.body);
       return prescriptionsJson
@@ -105,7 +94,7 @@ class MedicalRecordService {
     };
 
     final response = await http
-        .get(Uri.parse('$treatmentsUrl/$medicalRecordId'), headers: headers);
+        .get(Uri.parse('${ApiConfig.medicalRecordTreatmentsByRecord}/$medicalRecordId'), headers: headers);
     if (response.statusCode == 200) {
       final List<dynamic> treatmentsJson = json.decode(response.body);
       return treatmentsJson.map((json) => Treatment.fromJson(json)).toList();
@@ -123,7 +112,7 @@ class MedicalRecordService {
     };
 
     final response = await http.post(
-      Uri.parse(medicationsUrl),
+      Uri.parse(ApiConfig.medicalRecordMedications),
       headers: headers,
       body: json.encode(medicationPost.toJson()),
     );
@@ -140,7 +129,7 @@ class MedicalRecordService {
     };
 
     final response = await http.post(
-      Uri.parse(prescriptionsUrl),
+      Uri.parse(ApiConfig.medicalRecordPrescriptions),
       headers: headers,
       body: json.encode(prescriptionPost.toJson()),
     );
@@ -158,7 +147,7 @@ class MedicalRecordService {
     };
 
     final response = await http.post(
-      Uri.parse(treatmentspostUrl),
+      Uri.parse(ApiConfig.medicalRecordTreatments),
       headers: headers,
       body: json.encode(treatment.toJson()),
     );
@@ -174,7 +163,7 @@ class MedicalRecordService {
     };
 
     final response =
-        await http.get(Uri.parse(medicaltypesUrl), headers: headers);
+        await http.get(Uri.parse(ApiConfig.medicalRecordMedicationTypes), headers: headers);
 
     if (response.statusCode == 200) {
       List<dynamic> body = jsonDecode(response.body);

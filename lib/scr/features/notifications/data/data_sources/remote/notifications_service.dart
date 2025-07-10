@@ -1,16 +1,16 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:trabajo_moviles_ninjacode/scr/core/utils/usecases/jwt_storage.dart';
+import 'package:trabajo_moviles_ninjacode/scr/core/config/api_config.dart';
 
 class NotificationService {
-  final String baseUrl = 'http://10.0.2.2:8080/api/v1';
 
   Future<List<Map<String, dynamic>>> fetchDoctorAppointments(
       int doctorId) async {
     final token = await JwtStorage.getToken();
     final response = await http.get(
       Uri.parse(
-          '$baseUrl/medicalAppointment/medicalAppointments/doctor/$doctorId'),
+          '${ApiConfig.medicalAppointment}/medicalAppointments/doctor/$doctorId'),
       headers: {'Authorization': 'Bearer $token'},
     );
 
@@ -25,7 +25,7 @@ class NotificationService {
   Future<Map<String, dynamic>> fetchPatientProfile(int patientId) async {
     final token = await JwtStorage.getToken();
     final patientResponse = await http.get(
-      Uri.parse('$baseUrl/patient/$patientId'),
+      Uri.parse('${ApiConfig.patient}/$patientId'),
       headers: {'Authorization': 'Bearer $token'},
     );
 
@@ -39,7 +39,7 @@ class NotificationService {
   Future<void> deleteAppointment(int appointmentId) async {
     final token = await JwtStorage.getToken();
     final response = await http.delete(
-      Uri.parse('$baseUrl/medicalAppointment/$appointmentId'),
+      Uri.parse('${ApiConfig.medicalAppointment}/$appointmentId'),
       headers: {'Authorization': 'Bearer $token'},
     );
 

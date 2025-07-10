@@ -1,14 +1,14 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:trabajo_moviles_ninjacode/scr/core/utils/usecases/jwt_storage.dart';
+import 'package:trabajo_moviles_ninjacode/scr/core/config/api_config.dart';
 
 class AuthService {
-  final String baseUrl = 'http://10.0.2.2:8080/api/v1';
 
   Future<Map<String, dynamic>> signUp(
       String username, String password, String role) async {
     final response = await http.post(
-      Uri.parse('$baseUrl/authentication/sign-up'),
+      Uri.parse('${ApiConfig.authentication}/sign-up'),
       headers: {'Content-Type': 'application/json'},
       body: json.encode({
         'username': username,
@@ -26,7 +26,7 @@ class AuthService {
 
   Future<String?> signIn(String username, String password) async {
     final response = await http.post(
-      Uri.parse('$baseUrl/authentication/sign-in'),
+      Uri.parse('${ApiConfig.authentication}/sign-in'),
       headers: {'Content-Type': 'application/json'},
       body: json.encode({
         'username': username,
@@ -53,7 +53,7 @@ class AuthService {
 
   Future<int?> fetchAndSaveProfileId(int userId, String token) async {
     final profileResponse = await http.get(
-      Uri.parse('$baseUrl/profile/userId/$userId'),
+      Uri.parse('${ApiConfig.profile}/userId/$userId'),
       headers: {'Authorization': 'Bearer $token'},
     );
 
@@ -74,7 +74,7 @@ class AuthService {
 
   Future<void> fetchAndSaveDoctorId(int profileId, String token) async {
     final doctorResponse = await http.get(
-      Uri.parse('$baseUrl/doctor/profile/$profileId'),
+      Uri.parse('${ApiConfig.doctor}/profile/$profileId'),
       headers: {'Authorization': 'Bearer $token'},
     );
 

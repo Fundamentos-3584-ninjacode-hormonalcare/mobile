@@ -5,7 +5,7 @@ import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
 class MedicalAppointmentApi {
-  static const String _baseUrl = 'http://10.0.2.2:8080/api/v1';
+  static const String _baseUrl = 'http://localhost:8080/api/v1';
 
   MedicalAppointmentApi() {
     tz.initializeTimeZones();
@@ -26,7 +26,7 @@ class MedicalAppointmentApi {
     }
 
     final response = await http.get(
-      Uri.parse('$_baseUrl/patient/$profileId'),
+      Uri.parse('$_baseUrl/profile/profile/$profileId'),
       headers: {'Authorization': 'Bearer $token'},
     );
 
@@ -46,7 +46,7 @@ class MedicalAppointmentApi {
     }
 
     final response = await http.get(
-      Uri.parse('$_baseUrl/patient/$patientId'),
+      Uri.parse('$_baseUrl/medical-record/patient/$patientId/profile-id'),
       headers: {'Authorization': 'Bearer $token'},
     );
 
@@ -60,39 +60,20 @@ class MedicalAppointmentApi {
   }
 
   Future<int> _getDoctorId() async {
-    // First try to get doctor ID directly from storage
-    final doctorId = await JwtStorage.getDoctorId();
-    if (doctorId != null) {
-      print("Doctor ID retrieved from storage: $doctorId");
-      return doctorId;
-    }
-
-    // If not available, get userId and fetch doctor profile
-    final userId = await JwtStorage.getUserId();
+    final token = await _getToken();
+    final userId = await _getUserId();
     if (userId == null) {
       throw Exception('User ID not found');
     }
 
-    final token = await _getToken();
-    if (token == null) {
-      throw Exception('Token not found');
-    }
-
-    print("Fetching doctor profile by userId: $userId");
     final response = await http.get(
       Uri.parse('$_baseUrl/doctor/by-user/$userId'),
       headers: {'Authorization': 'Bearer $token'},
     );
 
     if (response.statusCode == 200) {
-      final doctorData = json.decode(response.body);
-      final doctorIdFromApi = doctorData['id'];
-
-      // Save doctor ID for future use
-      await JwtStorage.saveDoctorId(doctorIdFromApi);
-      print("Doctor ID saved: $doctorIdFromApi");
-
-      return doctorIdFromApi;
+      final data = json.decode(response.body);
+      return data['id'];
     } else {
       throw Exception('Failed to load doctor ID');
     }
@@ -110,22 +91,17 @@ class MedicalAppointmentApi {
     }
 
     final response = await http.get(
-      Uri.parse(
-          '$_baseUrl/medicalAppointment/medicalAppointments/doctor/$doctorId'),
+      Uri.parse('$_baseUrl/medicalAppointment/medicalAppointments/doctor/$doctorId'),
       headers: {'Authorization': 'Bearer $token'},
     );
 
     if (response.statusCode == 200) {
-      final List<Map<String, dynamic>> appointments =
-          List<Map<String, dynamic>>.from(json.decode(response.body));
+      final List<Map<String, dynamic>> appointments = List<Map<String, dynamic>>.from(json.decode(response.body));
       final limaTimeZone = tz.getLocation('America/Lima');
       final today = tz.TZDateTime.now(limaTimeZone);
       final todayAppointments = appointments.where((appointment) {
-        final eventDate = tz.TZDateTime.from(
-            DateTime.parse(appointment['eventDate']), limaTimeZone);
-        return eventDate.year == today.year &&
-            eventDate.month == today.month &&
-            eventDate.day == today.day;
+        final eventDate = tz.TZDateTime.from(DateTime.parse(appointment['eventDate']), limaTimeZone);
+        return eventDate.year == today.year && eventDate.month == today.month && eventDate.day == today.day;
       }).toList();
       return todayAppointments;
     } else if (response.statusCode == 401) {
@@ -135,8 +111,7 @@ class MedicalAppointmentApi {
     }
   }
 
-  Future<List<Map<String, dynamic>>> fetchAppointmentsForTodayPatientListScreen(
-      int doctorId) async {
+   Future<List<Map<String, dynamic>>> fetchAppointmentsForTodayPatientListScreen(int doctorId) async {
     final token = await _getToken();
     if (token == null) {
       throw Exception('Token not found');
@@ -148,16 +123,12 @@ class MedicalAppointmentApi {
     );
 
     if (response.statusCode == 200) {
-      final List<Map<String, dynamic>> appointments =
-          List<Map<String, dynamic>>.from(json.decode(response.body));
+      final List<Map<String, dynamic>> appointments = List<Map<String, dynamic>>.from(json.decode(response.body));
       final limaTimeZone = tz.getLocation('America/Lima');
       final today = tz.TZDateTime.now(limaTimeZone);
       final todayAppointments = appointments.where((appointment) {
-        final eventDate = tz.TZDateTime.from(
-            DateTime.parse(appointment['eventDate']), limaTimeZone);
-        return eventDate.year == today.year &&
-            eventDate.month == today.month &&
-            eventDate.day == today.day;
+        final eventDate = tz.TZDateTime.from(DateTime.parse(appointment['eventDate']), limaTimeZone);
+        return eventDate.year == today.year && eventDate.month == today.month && eventDate.day == today.day;
       }).toList();
       return todayAppointments;
     } else if (response.statusCode == 401) {
@@ -175,8 +146,7 @@ class MedicalAppointmentApi {
     }
 
     final response = await http.get(
-      Uri.parse(
-          '$_baseUrl/medicalAppointment/medicalAppointments/doctor/$doctorId'),
+      Uri.parse('$_baseUrl/medicalAppointment/medicalAppointments/doctor/$doctorId'),
       headers: {'Authorization': 'Bearer $token'},
     );
 
@@ -202,26 +172,7 @@ class MedicalAppointmentApi {
     );
 
     if (response.statusCode == 200) {
-      final List<Map<String, dynamic>> patients =
-          List<Map<String, dynamic>>.from(json.decode(response.body));
-      final List<Map<String, dynamic>> patientProfiles = [];
-
-      for (var patient in patients) {
-        final profileResponse = await http.get(
-          Uri.parse('$_baseUrl/patient/${patient['profileId']}'),
-          headers: {'Authorization': 'Bearer $token'},
-        );
-
-        if (profileResponse.statusCode == 200) {
-          final profileData = json.decode(profileResponse.body);
-          patientProfiles.add({
-            'patientId': patient['id'],
-            'fullName': profileData['fullName'],
-          });
-        }
-      }
-
-      return patientProfiles;
+      return List<Map<String, dynamic>>.from(json.decode(response.body));
     } else if (response.statusCode == 401) {
       throw Exception('Unauthorized: Invalid or expired token');
     } else {
@@ -229,15 +180,15 @@ class MedicalAppointmentApi {
     }
   }
 
-  Future<bool> createMedicalAppointment(
-      Map<String, dynamic> appointmentData) async {
+  Future<bool> createMedicalAppointment(Map<String, dynamic> appointmentData) async {
     final token = await _getToken();
-    final userId = await _getUserId();
-    if (token == null || userId == null) {
-      throw Exception('Token or user ID not found');
+    final doctorId = await _getDoctorId();
+    if (token == null) {
+      throw Exception('Token not found');
     }
 
-    appointmentData['userId'] = userId; // Add userId to the appointment data
+    // doctorId debe estar en el body
+    appointmentData['doctorId'] = doctorId;
 
     final response = await http.post(
       Uri.parse('$_baseUrl/medicalAppointment'),
@@ -254,6 +205,25 @@ class MedicalAppointmentApi {
       throw Exception('Unauthorized: Invalid or expired token');
     } else {
       throw Exception('Failed to create appointment');
+    }
+  }
+  Future<List<Map<String, dynamic>>> fetchAppointmentsForPatient(int patientId) async {
+    final token = await _getToken();
+    if (token == null) {
+      throw Exception('Token not found');
+    }
+
+    final response = await http.get(
+      Uri.parse('$_baseUrl/medicalAppointment/medicalAppointments/patient/$patientId'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode == 200) {
+      return List<Map<String, dynamic>>.from(json.decode(response.body));
+    } else if (response.statusCode == 401) {
+      throw Exception('Unauthorized: Invalid or expired token');
+    } else {
+      throw Exception('Failed to load patient appointments');
     }
   }
 
@@ -288,8 +258,7 @@ class MedicalAppointmentApi {
       throw Exception('Failed to fetch existing appointment data');
     }
 
-    final existingAppointmentData =
-        jsonDecode(existingAppointmentResponse.body);
+    final existingAppointmentData = jsonDecode(existingAppointmentResponse.body);
 
     // Construir el cuerpo de la solicitud PUT con los datos proporcionados y los datos existentes
     final updatedAppointmentData = {
@@ -344,8 +313,7 @@ class MedicalAppointmentApi {
     }
   }
 
-  Future<Map<String, dynamic>> fetchAppointmentDetails(
-      int appointmentId) async {
+  Future<Map<String, dynamic>> fetchAppointmentDetails(int appointmentId) async {
     final token = await _getToken();
     if (token == null) {
       throw Exception('Token not found');
@@ -363,15 +331,21 @@ class MedicalAppointmentApi {
     }
   }
 
-  Future<Map<String, dynamic>> fetchPatientDetails(int patientId) async {
-    final profileId = await getProfileIdByPatientId(patientId);
-    if (profileId == null) {
-      throw Exception('Profile ID not found');
+    Future<Map<String, dynamic>> fetchPatientDetails(int patientId) async {
+      final token = await _getToken();
+      if (token == null) {
+        throw Exception('Token not found');
+      }
+      final response = await http.get(
+        Uri.parse('$_baseUrl/patient/$patientId'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
+      if (response.statusCode == 200) {
+        return json.decode(response.body);
+      } else if (response.statusCode == 401) {
+        throw Exception('Unauthorized: Invalid or expired token');
+      } else {
+        throw Exception('Failed to load patient details');
+      }
     }
-    final profileDetails = await fetchProfileDetails(profileId);
-    if (profileDetails == null) {
-      throw Exception('Failed to load profile details');
-    }
-    return profileDetails;
-  }
 }

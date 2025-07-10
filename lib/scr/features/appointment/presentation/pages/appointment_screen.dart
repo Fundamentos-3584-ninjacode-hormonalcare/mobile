@@ -72,7 +72,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Medical Appointments',
+          'Calendar',
           style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.bold,
@@ -91,7 +91,7 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
                 color: Color(0xFF6A828D),
               ),
               child: Text(
-                'Calendar View',
+                'Calendar Views',
                 style: TextStyle(
                   color: Colors.white,
                   fontSize: 24,

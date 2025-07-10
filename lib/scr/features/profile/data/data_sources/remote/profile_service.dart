@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:trabajo_moviles_ninjacode/scr/core/utils/usecases/jwt_storage.dart';
+import 'package:trabajo_moviles_ninjacode/scr/core/config/api_config.dart';
 
 class ProfileService {
-  final String baseUrl = 'http://10.0.2.2:8080/api/v1';
 
   Future<Map<String, dynamic>> fetchProfileDetails(int userId) async {
     final token = await JwtStorage.getToken();
@@ -13,10 +13,10 @@ class ProfileService {
 
     print(
         "Fetching doctor profile by userId with token: ${token.substring(0, 10)}...");
-    print("Request URL: $baseUrl/doctor/by-user/$userId");
+    print("Request URL: ${ApiConfig.doctor}/by-user/$userId");
 
     final response = await http.get(
-      Uri.parse('$baseUrl/doctor/by-user/$userId'),
+      Uri.parse('${ApiConfig.doctor}/by-user/$userId'),
       headers: {'Authorization': 'Bearer $token'},
     );
 
@@ -43,7 +43,7 @@ class ProfileService {
       int profileId, Map<String, dynamic> updatedProfile) async {
     final token = await JwtStorage.getToken();
     final response = await http.put(
-      Uri.parse('$baseUrl/patient/$profileId'),
+      Uri.parse('${ApiConfig.patient}/$profileId'),
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
@@ -60,7 +60,7 @@ class ProfileService {
       int profileId) async {
     final token = await JwtStorage.getToken();
     final response = await http.get(
-      Uri.parse('$baseUrl/doctor/profile/$profileId'),
+      Uri.parse('${ApiConfig.doctor}/profile/$profileId'),
       headers: {'Authorization': 'Bearer $token'},
     );
 
@@ -75,7 +75,7 @@ class ProfileService {
       int doctorId, Map<String, dynamic> updatedDoctorProfile) async {
     final token = await JwtStorage.getToken();
     final response = await http.put(
-      Uri.parse('$baseUrl/doctor/$doctorId'),
+      Uri.parse('${ApiConfig.doctor}/$doctorId'),
       headers: {
         'Authorization': 'Bearer $token',
         'Content-Type': 'application/json',
@@ -96,10 +96,10 @@ class ProfileService {
 
     print(
         "Fetching doctor profile details with token: ${token.substring(0, 10)}...");
-    print("Request URL: $baseUrl/doctor/$doctorId");
+    print("Request URL: ${ApiConfig.doctor}/$doctorId");
 
     final response = await http.get(
-      Uri.parse('$baseUrl/doctor/$doctorId'),
+      Uri.parse('${ApiConfig.doctor}/$doctorId'),
       headers: {'Authorization': 'Bearer $token'},
     );
 
@@ -122,10 +122,10 @@ class ProfileService {
 
     print(
         "Fetching patient profile details with token: ${token.substring(0, 10)}...");
-    print("Request URL: $baseUrl/profile/$profileId");
+    print("Request URL: ${ApiConfig.profile}/$profileId");
 
     final response = await http.get(
-      Uri.parse('$baseUrl/profile/$profileId'),
+      Uri.parse('${ApiConfig.profile}/$profileId'),
       headers: {'Authorization': 'Bearer $token'},
     );
 

@@ -2,12 +2,11 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:trabajo_moviles_ninjacode/scr/core/utils/usecases/jwt_storage.dart';
 import 'package:trabajo_moviles_ninjacode/scr/features/iam/domain/services/auth_service.dart';
+import 'package:trabajo_moviles_ninjacode/scr/core/config/api_config.dart';
 import '../patient_model.dart';
 import '../profile_model.dart';
 
 class PatientsListService {
-  final String patientBaseUrl = 'http://10.0.2.2:8080/api/v1/patient';
-  final String doctorBaseUrl = 'http://10.0.2.2:8080/api/v1/doctor';
 
   Future<List<Patient>> getPatients() async {
     final token = await JwtStorage.getToken();
@@ -19,7 +18,7 @@ class PatientsListService {
     final authService = AuthService();
     final userId = await authService.getUserId();
     final profileResponse = await http
-        .get(Uri.parse('$patientBaseUrl/by-user/$userId'), headers: headers);
+        .get(Uri.parse('${ApiConfig.patient}/by-user/$userId'), headers: headers);
     if (profileResponse.statusCode != 200) {
       throw Exception('Error fetching profile for user id $userId');
     }
@@ -27,7 +26,7 @@ class PatientsListService {
     final profileId = profileData['id'];
 
     final doctorResponse = await http
-        .get(Uri.parse('$doctorBaseUrl/profile/$profileId'), headers: headers);
+        .get(Uri.parse('${ApiConfig.doctor}/profile/$profileId'), headers: headers);
     if (doctorResponse.statusCode != 200) {
       throw Exception('Error fetching doctor for profile id $profileId');
     }
@@ -35,7 +34,7 @@ class PatientsListService {
     final doctorId = doctorData['id'];
 
     final patientsResponse = await http
-        .get(Uri.parse('$patientBaseUrl/doctor/$doctorId'), headers: headers);
+        .get(Uri.parse('${ApiConfig.patient}/doctor/$doctorId'), headers: headers);
     if (patientsResponse.statusCode != 200) {
       throw Exception('Error fetching patients for doctor id $doctorId');
     }
@@ -47,7 +46,7 @@ class PatientsListService {
 
       // Fetch the profile for each patient
       final profileResponse = await http.get(
-          Uri.parse('$patientBaseUrl/${patient.profileId}'),
+          Uri.parse('${ApiConfig.patient}/${patient.profileId}'),
           headers: headers);
       if (profileResponse.statusCode == 200) {
         final profileData = json.decode(profileResponse.body);

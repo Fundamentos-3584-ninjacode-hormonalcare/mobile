@@ -1,14 +1,14 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:trabajo_moviles_ninjacode/scr/core/utils/usecases/jwt_storage.dart';
+import 'package:trabajo_moviles_ninjacode/scr/core/config/api_config.dart';
 
 class PatientService {
-  final String baseUrl = 'http://10.0.2.2:8080/api/v1/patient';
 
   Future<Map<String, dynamic>> fetchPatientDetails(int patientId) async {
     final token = await JwtStorage.getToken();
     final response = await http.get(
-      Uri.parse('$baseUrl/$patientId'),
+      Uri.parse('${ApiConfig.patient}/$patientId'),
       headers: {'Authorization': 'Bearer $token'},
     );
 

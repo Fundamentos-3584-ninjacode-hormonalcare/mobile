@@ -5,6 +5,7 @@ import 'package:trabajo_moviles_ninjacode/scr/features/profile/data/data_sources
 import 'package:trabajo_moviles_ninjacode/scr/features/profile/data/data_sources/remote/profile_service.dart';
 import 'package:trabajo_moviles_ninjacode/scr/features/appointment/data/data_sources/remote/medical_appointment_api.dart';
 import 'package:trabajo_moviles_ninjacode/scr/core/utils/usecases/jwt_storage.dart';
+import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:url_launcher/url_launcher.dart';
 
@@ -38,44 +39,38 @@ class _HomePatientsScreenState extends State<HomePatientsScreen> {
     });
 
     try {
-      // final userId = await JwtStorage.getUserId();
       final role = await JwtStorage.getRole();
-
       if (role != 'ROLE_DOCTOR') {
         throw Exception('Only doctors can view patients');
       }
 
+      // Obtener solo los appointments de hoy
       final appointments = await _appointmentApi.fetchAppointmentsForToday();
       final List<Map<String, String>> fetchedPatients = [];
-      final limaTimeZone = tz.getLocation('America/Lima');
-
       for (var appointment in appointments) {
-        final patientDetails =
-            await _patientService.fetchPatientDetails(appointment['patientId']);
-        final profileDetails = await _profileService
-            .fetchPatientProfileDetails(patientDetails['profileId']);
+        String imageUrl = '';
+        try {
+          final patientDetails = await _patientService.fetchPatientDetails(appointment['patientId']);
+          imageUrl = patientDetails['image'] ?? '';
+        } catch (_) {}
         fetchedPatients.add({
-          'name': profileDetails['fullName'] ?? 'No name',
+          'name': appointment['title'] ?? 'No name',
           'time': appointment['startTime'] ?? 'No start time',
           'endTime': appointment['endTime'] ?? 'No end time',
-          'image': profileDetails['image'] ??
-              '', // Assuming 'image' is the key for the profile image URL
+          'image': imageUrl,
           'eventDate': appointment['eventDate'] ?? 'No date',
           'patientId': appointment['patientId'].toString(),
           'title': appointment['title'] ?? 'No title',
           'description': appointment['description'] ?? 'No description',
-          'color': appointment['color'] ??
-              '0xFF039BE5', // Default color if none is provided
-          'appointmentId': appointment['id'].toString(), // Add appointment ID
+          'color': appointment['color'] ?? '0xFF039BE5',
+          'appointmentId': appointment['id'].toString(),
         });
       }
 
       // Ordenar las citas por hora
       fetchedPatients.sort((a, b) {
-        final aTime =
-            tz.TZDateTime.from(DateTime.parse(a['eventDate']!), limaTimeZone);
-        final bTime =
-            tz.TZDateTime.from(DateTime.parse(b['eventDate']!), limaTimeZone);
+        final aTime = a['time'] ?? '';
+        final bTime = b['time'] ?? '';
         return aTime.compareTo(bTime);
       });
 
@@ -99,10 +94,10 @@ class _HomePatientsScreenState extends State<HomePatientsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF6A828D),
-        title: const Text("Today's Patients"),
+        backgroundColor: Color(0xFF6A828D),
+        title: Text("Today's Meetings"),
         centerTitle: true,
-        titleTextStyle: const TextStyle(
+        titleTextStyle: TextStyle(
           color: Colors.white,
           fontSize: 20.0,
           fontWeight: FontWeight.bold,
@@ -111,41 +106,31 @@ class _HomePatientsScreenState extends State<HomePatientsScreen> {
       body: RefreshIndicator(
         onRefresh: _fetchPatients,
         child: isLoading
-            ? const Center(child: CircularProgressIndicator())
+            ? Center(child: CircularProgressIndicator())
             : errorMessage.isNotEmpty
                 ? Center(child: Text(errorMessage))
                 : ListView.builder(
                     itemCount: patients.length,
                     itemBuilder: (context, index) {
-                      final eventDate = tz.TZDateTime.from(
-                          DateTime.parse(patients[index]['eventDate']!),
-                          limaTimeZone);
+                      final eventDate = tz.TZDateTime.from(DateTime.parse(patients[index]['eventDate']!), limaTimeZone);
                       final isPast = eventDate.isBefore(now);
 
                       return Card(
-                        color: isPast
-                            ? const Color(0xFFB0BEC5)
-                            : const Color(
-                                0xFFE0E0E0), // Oscurecer las citas pasadas
-                        margin: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 8),
+                        color: isPast ? Color(0xFFE8E4F3) : Color(0xFFF5F3FF), // Purple theme for past and current appointments
+                        margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         child: Stack(
                           children: [
                             ListTile(
                               leading: CircleAvatar(
-                                backgroundImage:
-                                    NetworkImage(patients[index]['image']!),
-                                backgroundColor: const Color(0xFF6A828D),
+                                backgroundImage: NetworkImage(patients[index]['image']!),
+                                backgroundColor: Color(0xFF6A828D),
                               ),
                               title: Text(
                                 patients[index]['name']!,
-                                style: const TextStyle(
-                                    color: Color.fromARGB(255, 0, 0, 0)),
+                                style: TextStyle(color: Color.fromARGB(255, 0, 0, 0)),
                               ),
                               trailing: Padding(
-                                padding: const EdgeInsets.only(
-                                    right:
-                                        16), // Move the container to the left
+                                padding: EdgeInsets.only(right: 16), // Move the container to the left
                                 child: GestureDetector(
                                   onTap: () async {
                                     final url = patients[index]['description']!;
@@ -156,24 +141,19 @@ class _HomePatientsScreenState extends State<HomePatientsScreen> {
                                     }
                                   },
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 4,
-                                        vertical: 4), // Adjusted padding
+                                    padding: EdgeInsets.symmetric(horizontal: 4, vertical: 4), // Adjusted padding
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFF40535B),
+                                      color: Color(0xFF6A828D),
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Row(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
-                                        const Icon(Icons.videocam,
-                                            color: Colors.white),
-                                        const SizedBox(
-                                            width: 4), // Adjusted spacing
+                                        Icon(Icons.videocam, color: Colors.white),
+                                        SizedBox(width: 4), // Adjusted spacing
                                         Text(
                                           '${patients[index]['time']} - ${patients[index]['endTime']}',
-                                          style: const TextStyle(
-                                              color: Colors.white),
+                                          style: TextStyle(color: Colors.white),
                                         ),
                                       ],
                                     ),
@@ -189,24 +169,23 @@ class _HomePatientsScreenState extends State<HomePatientsScreen> {
                                 alignment: Alignment.center,
                                 child: CircleAvatar(
                                   radius: 12, // Half the size of the original
-                                  backgroundColor: const Color(0xFF40535B),
+                                  backgroundColor: Color(0xFF6A828D),
                                   child: Center(
                                     child: IconButton(
                                       padding: EdgeInsets.zero,
-                                      icon: const Icon(Icons.info,
-                                          color: Colors.white, size: 16),
-                                      onPressed: () {
-                                        Navigator.push(
+                                      icon: Icon(Icons.info, color: Colors.white, size: 16),
+                                      onPressed: () async {
+                                        final result = await Navigator.push(
                                           context,
                                           MaterialPageRoute(
-                                            builder: (context) =>
-                                                AppointmentDetail(
-                                              appointmentId: int.parse(
-                                                  patients[index]
-                                                      ['appointmentId']!),
+                                            builder: (context) => AppointmentDetail(
+                                              appointmentId: int.parse(patients[index]['appointmentId']!),
                                             ),
                                           ),
                                         );
+                                        if (result == true) {
+                                          _fetchPatients();
+                                        }
                                       },
                                     ),
                                   ),
@@ -235,8 +214,8 @@ class _HomePatientsScreenState extends State<HomePatientsScreen> {
             _fetchPatients(); // Refresca la pantalla si se ha creado una cita
           }
         },
-        backgroundColor: const Color(0xFF6A828D),
-        child: const Icon(Icons.add),
+        child: Icon(Icons.add),
+        backgroundColor: Color(0xFF6A828D),
       ),
     );
   }
