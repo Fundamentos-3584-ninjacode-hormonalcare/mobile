@@ -30,6 +30,8 @@ class _HomePatientsScreenState extends State<HomePatientsScreen> {
   @override
   void initState() {
     super.initState();
+    print('initState: arrancando _fetchPatients() para doctorId=${widget
+        .doctorId}');
     _fetchPatients();
   }
 
@@ -37,22 +39,31 @@ class _HomePatientsScreenState extends State<HomePatientsScreen> {
     setState(() {
       isLoading = true;
     });
+    print('_fetchPatients: cargando pacientes...');
 
     try {
       final role = await JwtStorage.getRole();
+      print('Rol obtenido: $role');
       if (role != 'ROLE_DOCTOR') {
         throw Exception('Only doctors can view patients');
       }
 
-      // Obtener solo los appointments de hoy
+      print('Llamando a fetchAppointmentsForToday()');
       final appointments = await _appointmentApi.fetchAppointmentsForToday();
+      print('fetchAppointmentsForToday devolvió ${appointments.length} citas');
       final List<Map<String, String>> fetchedPatients = [];
+
       for (var appointment in appointments) {
+        print('— Procesando cita: $appointment');
         String imageUrl = '';
         try {
-          final patientDetails = await _patientService.fetchPatientDetails(appointment['patientId']);
+          final patientDetails = await _patientService.fetchPatientDetails(
+              appointment['patientId']);
+          print('fetchPatientDetails: $patientDetails');
           imageUrl = patientDetails['image'] ?? '';
-        } catch (_) {}
+        } catch (e) {
+          print('error al traer detalles de paciente: $e');
+        }
         fetchedPatients.add({
           'name': appointment['title'] ?? 'No name',
           'time': appointment['startTime'] ?? 'No start time',
@@ -67,19 +78,23 @@ class _HomePatientsScreenState extends State<HomePatientsScreen> {
         });
       }
 
-      // Ordenar las citas por hora
+      print('Ordenando ${fetchedPatients.length} pacientes por hora');
       fetchedPatients.sort((a, b) {
         final aTime = a['time'] ?? '';
         final bTime = b['time'] ?? '';
         return aTime.compareTo(bTime);
       });
+      print('Lista ordenada: $fetchedPatients');
 
       setState(() {
         patients = fetchedPatients;
         errorMessage = '';
         isLoading = false;
       });
-    } catch (e) {
+      print('setState: pacientes cargados en pantalla (${patients.length})');
+    } catch (e, stack) {
+      print('Error en _fetchPatients: $e');
+      print(stack);
       setState(() {
         errorMessage = 'Error fetching patients: $e';
         isLoading = false;
@@ -91,6 +106,10 @@ class _HomePatientsScreenState extends State<HomePatientsScreen> {
   Widget build(BuildContext context) {
     final limaTimeZone = tz.getLocation('America/Lima');
     final now = tz.TZDateTime.now(limaTimeZone);
+
+    print(
+        'build: isLoading=$isLoading, errorMessage="$errorMessage", pacientes=${patients
+            .length}');
 
     return Scaffold(
       appBar: AppBar(
@@ -108,110 +127,136 @@ class _HomePatientsScreenState extends State<HomePatientsScreen> {
         child: isLoading
             ? Center(child: CircularProgressIndicator())
             : errorMessage.isNotEmpty
-                ? Center(child: Text(errorMessage))
-                : ListView.builder(
-                    itemCount: patients.length,
-                    itemBuilder: (context, index) {
-                      final eventDate = tz.TZDateTime.from(DateTime.parse(patients[index]['eventDate']!), limaTimeZone);
-                      final isPast = eventDate.isBefore(now);
+            ? Center(child: Text(errorMessage))
+        // <-- NUEVO: si la lista está vacía mostramos mensaje en lugar de ListView
+            : patients.isEmpty
+            ? Center(
+          child: Text(
+            'No tiene pacientes o Reuniones agendadas',
+            style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+            textAlign: TextAlign.center,
+          ),
+        )
+            : ListView.builder(
+          itemCount: patients.length,
+          itemBuilder: (context, index) {
+            final eventDate = tz.TZDateTime.from(
+              DateTime.parse(patients[index]['eventDate']!),
+              limaTimeZone,
+            );
+            final isPast = eventDate.isBefore(now);
 
-                      return Card(
-                        color: isPast ? Color(0xFFE8E4F3) : Color(0xFFF5F3FF), // Purple theme for past and current appointments
-                        margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        child: Stack(
-                          children: [
-                            ListTile(
-                              leading: CircleAvatar(
-                                backgroundImage: NetworkImage(patients[index]['image']!),
-                                backgroundColor: Color(0xFF6A828D),
+            return Card(
+              color: isPast ? Color(0xFFE8E4F3) : Color(0xFFF5F3FF),
+              margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: Stack(
+                children: [
+                  ListTile(
+                    leading: CircleAvatar(
+                      backgroundImage:
+                      NetworkImage(patients[index]['image']!),
+                      backgroundColor: Color(0xFF6A828D),
+                    ),
+                    title: Text(
+                      patients[index]['name']!,
+                      style: TextStyle(color: Colors.black),
+                    ),
+                    trailing: Padding(
+                      padding: EdgeInsets.only(right: 16),
+                      child: GestureDetector(
+                        onTap: () async {
+                          final url = patients[index]['description']!;
+                          print('Lanzando URL: $url');
+                          if (await canLaunch(url)) {
+                            await launch(url);
+                          } else {
+                            print('No se pudo lanzar $url');
+                            throw 'Could not launch $url';
+                          }
+                        },
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 4, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Color(0xFF6A828D),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.videocam, color: Colors.white),
+                              SizedBox(width: 4),
+                              Text(
+                                '${patients[index]['time']} - ${patients[index]['endTime']}',
+                                style: TextStyle(color: Colors.white),
                               ),
-                              title: Text(
-                                patients[index]['name']!,
-                                style: TextStyle(color: Color.fromARGB(255, 0, 0, 0)),
-                              ),
-                              trailing: Padding(
-                                padding: EdgeInsets.only(right: 16), // Move the container to the left
-                                child: GestureDetector(
-                                  onTap: () async {
-                                    final url = patients[index]['description']!;
-                                    if (await canLaunch(url)) {
-                                      await launch(url);
-                                    } else {
-                                      throw 'Could not launch $url';
-                                    }
-                                  },
-                                  child: Container(
-                                    padding: EdgeInsets.symmetric(horizontal: 4, vertical: 4), // Adjusted padding
-                                    decoration: BoxDecoration(
-                                      color: Color(0xFF6A828D),
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(Icons.videocam, color: Colors.white),
-                                        SizedBox(width: 4), // Adjusted spacing
-                                        Text(
-                                          '${patients[index]['time']} - ${patients[index]['endTime']}',
-                                          style: TextStyle(color: Colors.white),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Positioned(
-                              right: 8,
-                              top: 0,
-                              bottom: 0,
-                              child: Align(
-                                alignment: Alignment.center,
-                                child: CircleAvatar(
-                                  radius: 12, // Half the size of the original
-                                  backgroundColor: Color(0xFF6A828D),
-                                  child: Center(
-                                    child: IconButton(
-                                      padding: EdgeInsets.zero,
-                                      icon: Icon(Icons.info, color: Colors.white, size: 16),
-                                      onPressed: () async {
-                                        final result = await Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (context) => AppointmentDetail(
-                                              appointmentId: int.parse(patients[index]['appointmentId']!),
-                                            ),
-                                          ),
-                                        );
-                                        if (result == true) {
-                                          _fetchPatients();
-                                        }
-                                      },
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                      );
-                    },
+                      ),
+                    ),
                   ),
+                  Positioned(
+                    right: 8,
+                    top: 0,
+                    bottom: 0,
+                    child: Align(
+                      alignment: Alignment.center,
+                      child: CircleAvatar(
+                        radius: 12,
+                        backgroundColor: Color(0xFF6A828D),
+                        child: Center(
+                          child: IconButton(
+                            padding: EdgeInsets.zero,
+                            icon: Icon(Icons.info,
+                                color: Colors.white, size: 16),
+                            onPressed: () async {
+                              print(
+                                  'Navegando a AppointmentDetail para cita ${patients[index]['appointmentId']}');
+                              final result = await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      AppointmentDetail(
+                                        appointmentId: int.parse(
+                                            patients[index]
+                                            ['appointmentId']!),
+                                      ),
+                                ),
+                              );
+                              print(
+                                  'Volvió de AppointmentDetail con resultado: $result');
+                              if (result == true) {
+                                _fetchPatients();
+                              }
+                            },
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           final now = DateTime.now();
+          print('Abriendo AddAppointmentScreen para fecha $now');
           final result = await Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => AddAppointmentScreen(
-                selectedDate: now,
-              ),
+              builder: (context) =>
+                  AddAppointmentScreen(
+                    selectedDate: now,
+                  ),
             ),
           );
-
+          print('Volvió de AddAppointmentScreen: $result');
           if (result == true) {
-            _fetchPatients(); // Refresca la pantalla si se ha creado una cita
+            _fetchPatients();
           }
         },
         child: Icon(Icons.add),
