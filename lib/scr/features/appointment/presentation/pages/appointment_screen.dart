@@ -27,8 +27,8 @@ class _AppointmentScreenState extends State<AppointmentScreen> {
     try {
       final appointments = await _appointmentService.fetchAllAppointments();
       final List<Meeting> loadedMeetings = appointments.map<Meeting>((appointment) {
-        final startTime = DateTime.parse('${appointment['eventDate']}T${appointment['startTime']}:00');
-        final endTime = DateTime.parse('${appointment['eventDate']}T${appointment['endTime']}:00');
+        final startTime = DateTime.parse('${appointment['eventDate']}T${appointment['startTime']}');
+        final endTime = DateTime.parse('${appointment['eventDate']}T${appointment['endTime']}');
         final colorValue = appointment['color'] ?? '0xFF039BE5';
         final color = Color(int.parse(colorValue.startsWith('0x') ? colorValue : '0x$colorValue'));
 
