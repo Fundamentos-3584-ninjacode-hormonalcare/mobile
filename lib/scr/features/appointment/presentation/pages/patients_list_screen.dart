@@ -5,6 +5,8 @@ import 'package:trabajo_moviles_ninjacode/scr/features/profile/data/data_sources
 import 'package:trabajo_moviles_ninjacode/scr/features/profile/data/data_sources/remote/profile_service.dart';
 import 'package:trabajo_moviles_ninjacode/scr/features/appointment/data/data_sources/remote/medical_appointment_api.dart';
 import 'package:trabajo_moviles_ninjacode/scr/core/utils/usecases/jwt_storage.dart';
+import 'package:trabajo_moviles_ninjacode/scr/features/appointment/presentation/pages/video_call_page.dart';
+//import 'package:trabajo_moviles_ninjacode/scr/features/appointment/domain/services/appointment_service.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:url_launcher/url_launcher.dart';
@@ -107,10 +109,6 @@ class _HomePatientsScreenState extends State<HomePatientsScreen> {
     final limaTimeZone = tz.getLocation('America/Lima');
     final now = tz.TZDateTime.now(limaTimeZone);
 
-    print(
-        'build: isLoading=$isLoading, errorMessage="$errorMessage", pacientes=${patients
-            .length}');
-
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Color(0xFF6A828D),
@@ -128,7 +126,6 @@ class _HomePatientsScreenState extends State<HomePatientsScreen> {
             ? Center(child: CircularProgressIndicator())
             : errorMessage.isNotEmpty
             ? Center(child: Text(errorMessage))
-        // <-- NUEVO: si la lista está vacía mostramos mensaje en lugar de ListView
             : patients.isEmpty
             ? Center(
           child: Text(
@@ -153,8 +150,7 @@ class _HomePatientsScreenState extends State<HomePatientsScreen> {
                 children: [
                   ListTile(
                     leading: CircleAvatar(
-                      backgroundImage:
-                      NetworkImage(patients[index]['image']!),
+                      backgroundImage: NetworkImage(patients[index]['image']!),
                       backgroundColor: Color(0xFF6A828D),
                     ),
                     title: Text(
@@ -164,19 +160,29 @@ class _HomePatientsScreenState extends State<HomePatientsScreen> {
                     trailing: Padding(
                       padding: EdgeInsets.only(right: 16),
                       child: GestureDetector(
-                        onTap: () async {
-                          final url = patients[index]['description']!;
-                          print('Lanzando URL: $url');
-                          if (await canLaunch(url)) {
-                            await launch(url);
-                          } else {
-                            print('No se pudo lanzar $url');
-                            throw 'Could not launch $url';
-                          }
+                        onTap: () {
+                          // 1. Genera un enlace único de Jitsi usando el ID de la cita
+                          final meetingLink = JitsiMeetingLinkGenerator.generateMeetingLink(
+                            roomPrefix: patients[index]['appointmentId'],
+                          );
+                          // 2. Extrae el nombre de la sala (la última parte del path)
+                          final uri = Uri.parse(meetingLink);
+                          final roomName = uri.pathSegments.isNotEmpty
+                              ? uri.pathSegments.last
+                              : meetingLink;
+                          // 3. Navega a tu pantalla de videollamada
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => VideoCallPage(
+                                roomName: roomName,
+                                displayName: patients[index]['name']!,
+                              ),
+                            ),
+                          );
                         },
                         child: Container(
-                          padding: EdgeInsets.symmetric(
-                              horizontal: 4, vertical: 4),
+                          padding: EdgeInsets.symmetric(horizontal: 4, vertical: 4),
                           decoration: BoxDecoration(
                             color: Color(0xFF6A828D),
                             borderRadius: BorderRadius.circular(8),
@@ -208,24 +214,16 @@ class _HomePatientsScreenState extends State<HomePatientsScreen> {
                         child: Center(
                           child: IconButton(
                             padding: EdgeInsets.zero,
-                            icon: Icon(Icons.info,
-                                color: Colors.white, size: 16),
+                            icon: Icon(Icons.info, color: Colors.white, size: 16),
                             onPressed: () async {
-                              print(
-                                  'Navegando a AppointmentDetail para cita ${patients[index]['appointmentId']}');
                               final result = await Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) =>
-                                      AppointmentDetail(
-                                        appointmentId: int.parse(
-                                            patients[index]
-                                            ['appointmentId']!),
-                                      ),
+                                  builder: (context) => AppointmentDetail(
+                                    appointmentId: int.parse(patients[index]['appointmentId']!),
+                                  ),
                                 ),
                               );
-                              print(
-                                  'Volvió de AppointmentDetail con resultado: $result');
                               if (result == true) {
                                 _fetchPatients();
                               }
@@ -244,20 +242,13 @@ class _HomePatientsScreenState extends State<HomePatientsScreen> {
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
           final now = DateTime.now();
-          print('Abriendo AddAppointmentScreen para fecha $now');
           final result = await Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) =>
-                  AddAppointmentScreen(
-                    selectedDate: now,
-                  ),
+              builder: (context) => AddAppointmentScreen(selectedDate: now),
             ),
           );
-          print('Volvió de AddAppointmentScreen: $result');
-          if (result == true) {
-            _fetchPatients();
-          }
+          if (result == true) _fetchPatients();
         },
         child: Icon(Icons.add),
         backgroundColor: Color(0xFF6A828D),
