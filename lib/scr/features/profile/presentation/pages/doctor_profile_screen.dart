@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:mime/mime.dart';
 import 'package:intl/intl.dart';
+import 'package:trabajo_moviles_ninjacode/scr/core/config/api_config.dart';
 import 'package:trabajo_moviles_ninjacode/scr/features/profile/data/data_sources/remote/profile_service.dart';
 import 'package:trabajo_moviles_ninjacode/scr/core/utils/usecases/jwt_storage.dart';
 import 'package:trabajo_moviles_ninjacode/scr/features/iam/domain/services/auth_service.dart';
@@ -122,7 +123,7 @@ class _DoctorProfileScreenState extends State<DoctorProfileScreen> {
         // 1. Verificar si hay una imagen nueva
         if (_selectedImageFile != null) {
           final uri =
-              Uri.parse('http://10.0.2.2:8080/api/v1/profile/$_doctorId/image');
+              Uri.parse('${ApiConfig.profile}/$_doctorId/image');
 
           final request = http.MultipartRequest('PUT', uri)
             ..headers['Authorization'] = 'Bearer ${await JwtStorage.getToken()}'

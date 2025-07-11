@@ -1,11 +1,12 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:trabajo_moviles_ninjacode/scr/core/config/api_config.dart';
 import 'package:trabajo_moviles_ninjacode/scr/core/utils/usecases/jwt_storage.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
 class MedicalAppointmentApi {
-  static const String _baseUrl = 'http://localhost:8080/api/v1';
+  static const String _baseUrl = ApiConfig.apiV1;
 
   MedicalAppointmentApi() {
     tz.initializeTimeZones();

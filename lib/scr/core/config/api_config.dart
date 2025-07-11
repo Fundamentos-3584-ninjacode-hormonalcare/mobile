@@ -2,7 +2,8 @@ class ApiConfig {
   // Cambia esta URL según tu entorno de desarrollo
   // Para desarrollo local: 'http://localhost:8080'
   // Para otros desarrolladores: 'http://10.0.1.x:8080' (donde x es su IP)
-  static const String baseUrl = 'http://localhost:8080';
+  //static const String baseUrl = 'http://localhost:8080';
+  static const String baseUrl = 'https://backend-production-e47e.up.railway.app';
   
   // Endpoints base
   static const String apiV1 = '$baseUrl/api/v1';

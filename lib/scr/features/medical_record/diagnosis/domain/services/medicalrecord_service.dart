@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:trabajo_moviles_ninjacode/scr/core/config/api_config.dart';
 import 'package:trabajo_moviles_ninjacode/scr/core/utils/usecases/jwt_storage.dart';
 import '../../../medical_prescription/domain/models/patient_model.dart';
 import '../../domain/models/medication_model.dart';
@@ -10,23 +11,25 @@ import '../../domain/models/prescriptionpost_model.dart';
 import '../../domain/models/medicaltype_model.dart';
 
 class MedicalRecordService {
-  final String baseUrl = 'http://localhost:8080/api/v1/patient/record';
-  final String medicationsUrl = 'http://localhost:8080/api/v1/medical-record/medications';
-  final String prescriptionsUrl = 'http://localhost:8080/api/v1/medical-record/medications/prescriptions';
-  final String treatmentsUrl = 'http://localhost:8080/api/v1/medical-record/treatments/medicalRecordId'; // URL base para tratamientos
-  final String treatmentspostUrl = 'http://localhost:8080/api/v1/medical-record/treatments'; // URL base para tratamientos
-  final String medicaltypesUrl = 'http://localhost:8080/api/v1/medical-record/medications/medicationTypes';
+  //final String baseUrl = 'http://localhost:8080/api/v1/patient/record';
+  //final String medicationsUrl = 'http://localhost:8080/api/v1/medical-record/medications';
+  //final String prescriptionsUrl = 'http://localhost:8080/api/v1/medical-record/medications/prescriptions';
+  //final String treatmentsUrl = 'http://localhost:8080/api/v1/medical-record/treatments/medicalRecordId'; // URL base para tratamientos
+  //final String treatmentspostUrl = 'http://localhost:8080/api/v1/medical-record/treatments'; // URL base para tratamientos
+  //final String medicaltypesUrl = 'http://localhost:8080/api/v1/medical-record/medications/medicationTypes';
 
-
-  Future<Patient> getPatientById(String patientId) async {
+  Future<Map<String, String>> _makeHeaders() async {
     final token = await JwtStorage.getToken();
-    final headers = {
+    return {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer $token',
     };
+  }
 
+  Future<Patient> getPatientById(String patientId) async {
+    final headers = await _makeHeaders();
     // patientId is the same as medical record id
-    final response = await http.get(Uri.parse('$baseUrl/$patientId'), headers: headers);
+    final response = await http.get(Uri.parse('${ApiConfig.patient}/$patientId'), headers: headers);
     if (response.statusCode == 200) {
       final patientData = json.decode(response.body);
       return Patient.fromJson(patientData);
@@ -36,13 +39,8 @@ class MedicalRecordService {
   }
 
   Future<List<Medication>> getMedicationsByRecordId(int medicalRecordId) async {
-    final token = await JwtStorage.getToken();
-    final headers = {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer $token',
-    };
-
-    final response = await http.get(Uri.parse(medicationsUrl), headers: headers);
+    final headers = await _makeHeaders();
+    final response = await http.get(Uri.parse(ApiConfig.medicalRecordMedications), headers: headers);
     if (response.statusCode == 200) {
       final List<dynamic> medicationsJson = json.decode(response.body);
       return medicationsJson
@@ -56,13 +54,8 @@ class MedicalRecordService {
   }
 
   Future<List<Prescription>> getPrescriptionsByRecordId(int medicalRecordId) async {
-    final token = await JwtStorage.getToken();
-    final headers = {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer $token',
-    };
-
-    final response = await http.get(Uri.parse(prescriptionsUrl), headers: headers);
+    final headers = await _makeHeaders();
+    final response = await http.get(Uri.parse(ApiConfig.medicalRecordPrescriptions), headers: headers);
     if (response.statusCode == 200) {
       final List<dynamic> prescriptionsJson = json.decode(response.body);
       return prescriptionsJson
@@ -76,13 +69,8 @@ class MedicalRecordService {
   }
 
   Future<List<Treatment>> getTreatmentsByRecordId(int medicalRecordId) async {
-    final token = await JwtStorage.getToken();
-    final headers = {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer $token',
-    };
-
-    final response = await http.get(Uri.parse('$treatmentsUrl/$medicalRecordId'), headers: headers);
+    final headers = await _makeHeaders();
+    final response = await http.get(Uri.parse('${ApiConfig.medicalRecordTreatmentsByRecord}/$medicalRecordId'), headers: headers);
     if (response.statusCode == 200) {
       final List<dynamic> treatmentsJson = json.decode(response.body);
       return treatmentsJson.map((json) => Treatment.fromJson(json)).toList();
@@ -94,14 +82,9 @@ class MedicalRecordService {
   }
 
   Future<http.Response> addMedication(MedicationPost medicationPost) async {
-    final token = await JwtStorage.getToken();
-    final headers = {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer $token',
-    };
-
+    final headers = await _makeHeaders();
     final response = await http.post(
-      Uri.parse(medicationsUrl),
+      Uri.parse(ApiConfig.medicalRecordMedications),
       headers: headers,
       body: json.encode(medicationPost.toJson()),
     );
@@ -110,14 +93,9 @@ class MedicalRecordService {
   }
 
   Future<http.Response> addPrescription(PrescriptionPost prescriptionPost) async {
-    final token = await JwtStorage.getToken();
-    final headers = {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer $token',
-    };
-
+    final headers = await _makeHeaders();
     final response = await http.post(
-      Uri.parse(prescriptionsUrl),
+      Uri.parse(ApiConfig.medicalRecordPrescriptions),
       headers: headers,
       body: json.encode(prescriptionPost.toJson()),
     );
@@ -126,16 +104,11 @@ class MedicalRecordService {
   }
   
   Future<http.Response> addTreatment(Treatment treatment) async {
-    final token = await JwtStorage.getToken();
-      print('Tokenzzz: $token'); // Agrega este log para verificar el token
-
-    final headers = {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer $token',
-    };
+    final headers = await _makeHeaders();
+    //print('Tokenzzz: $token'); // Agrega este log para verificar el token
 
     final response = await http.post(
-      Uri.parse(treatmentspostUrl),
+      Uri.parse(ApiConfig.medicalRecordTreatments),
       headers: headers,
       body: json.encode(treatment.toJson()),
     );
@@ -144,13 +117,8 @@ class MedicalRecordService {
   }
 
   Future<List<MedicalType>> fetchMedicalTypes() async {
-    final token = await JwtStorage.getToken();
-    final headers = {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer $token',
-    };
-
-    final response = await http.get(Uri.parse(medicaltypesUrl), headers: headers);
+    final headers = await _makeHeaders();
+    final response = await http.get(Uri.parse(ApiConfig.medicalRecordMedicationTypes), headers: headers);
 
     if (response.statusCode == 200) {
       List<dynamic> body = jsonDecode(response.body);
