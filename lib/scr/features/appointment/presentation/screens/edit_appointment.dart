@@ -1,24 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:trabajo_moviles_ninjacode/scr/features/appointment/data/data_sources/remote/medical_appointment_api.dart';
+import 'package:trabajo_moviles_ninjacode/scr/features/appointment/domain/services/appointment_service.dart';
 import 'package:intl/intl.dart';
 import 'dart:math';
-
-class JitsiMeetingLinkGenerator {
-  static const String _baseUrl = 'https://meet.jit.si/';
-
-  static String generateMeetingLink({String? roomPrefix}) {
-    final String randomString = _generateRandomString(10);
-    final String roomName = roomPrefix != null ? '$roomPrefix-$randomString' : randomString;
-    return '$_baseUrl$roomName';
-  }
-
-  static String _generateRandomString(int length) {
-    const String chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
-    final Random random = Random();
-    return List.generate(length, (index) => chars[random.nextInt(chars.length)]).join();
-  }
-}
 
 class EditAppointmentScreen extends StatefulWidget {
   final Map<String, dynamic> appointmentDetails;

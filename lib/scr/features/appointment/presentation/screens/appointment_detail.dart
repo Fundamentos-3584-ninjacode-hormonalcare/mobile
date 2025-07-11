@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import 'package:trabajo_moviles_ninjacode/scr/features/appointment/presentation/pages/video_call_page.dart';
+import 'package:trabajo_moviles_ninjacode/scr/features/appointment/presentation/screens/add_appointment.dart';
 import 'package:trabajo_moviles_ninjacode/scr/features/appointment/data/data_sources/remote/medical_appointment_api.dart';
 import 'package:trabajo_moviles_ninjacode/scr/features/appointment/presentation/screens/edit_appointment.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -186,19 +188,20 @@ class _AppointmentDetailState extends State<AppointmentDetail> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  // 1) COPY LINK: genera un link Jitsi y lo copia
                   Expanded(
                     child: ElevatedButton.icon(
                       onPressed: () {
-                        Clipboard.setData(ClipboardData(text: _appointmentDetails!['description']));
+                        final meetingLink = JitsiMeetingLinkGenerator.generateMeetingLink(
+                          roomPrefix: widget.appointmentId.toString(),
+                        );
+                        Clipboard.setData(ClipboardData(text: meetingLink));
                         ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Meeting link copied to clipboard')),
+                          SnackBar(content: Text('Enlace de reunión generado y copiado')),
                         );
                       },
                       icon: Icon(Icons.copy, color: Colors.blue),
-                      label: Text(
-                        'Copy Link',
-                        style: TextStyle(color: Colors.blue),
-                      ),
+                      label: Text('Copy Link', style: TextStyle(color: Colors.blue)),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
                         side: BorderSide(color: Colors.grey),
@@ -206,23 +209,31 @@ class _AppointmentDetailState extends State<AppointmentDetail> {
                     ),
                   ),
                   SizedBox(width: 16),
+                  // 2) JOIN MEETING: abre tu VideoCallPage
                   Expanded(
                     child: ElevatedButton.icon(
-                      onPressed: () async {
-                        final url = _appointmentDetails!['description'];
-                        if (await canLaunch(url)) {
-                          await launch(url);
-                        } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Could not launch $url')),
-                          );
-                        }
+                      onPressed: () {
+                        // vuelve a generar el mismo link (o podrías guardarlo en un campo si prefieres)
+                        final meetingLink = JitsiMeetingLinkGenerator.generateMeetingLink(
+                          roomPrefix: widget.appointmentId.toString(),
+                        );
+                        // extraemos sólo el nombre de sala
+                        final uri = Uri.parse(meetingLink);
+                        final roomName = uri.pathSegments.isNotEmpty
+                            ? uri.pathSegments.last
+                            : meetingLink;
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => VideoCallPage(
+                              roomName: roomName,
+                              displayName: _patientDetails!['fullName'],
+                            ),
+                          ),
+                        );
                       },
-                      icon: Icon(Icons.link, color: Colors.blue),
-                      label: Text(
-                        'Join Meeting',
-                        style: TextStyle(color: Colors.blue),
-                      ),
+                      icon: Icon(Icons.videocam, color: Colors.blue),
+                      label: Text('Join Meeting', style: TextStyle(color: Colors.blue)),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.white,
                         side: BorderSide(color: Colors.grey),

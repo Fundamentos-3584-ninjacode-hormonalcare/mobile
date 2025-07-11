@@ -6,7 +6,6 @@ import 'package:trabajo_moviles_ninjacode/scr/features/profile/data/data_sources
 import 'package:trabajo_moviles_ninjacode/scr/features/appointment/data/data_sources/remote/medical_appointment_api.dart';
 import 'package:trabajo_moviles_ninjacode/scr/core/utils/usecases/jwt_storage.dart';
 import 'package:trabajo_moviles_ninjacode/scr/features/appointment/presentation/pages/video_call_page.dart';
-//import 'package:trabajo_moviles_ninjacode/scr/features/appointment/domain/services/appointment_service.dart';
 import 'package:timezone/data/latest.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 import 'package:url_launcher/url_launcher.dart';
